@@ -1,0 +1,80 @@
+import 'package:flutter/material.dart';
+import '../models/category.dart';
+import '../models/shopping_item.dart';
+import 'category_header.dart';
+import 'shopping_item_tile.dart';
+
+/// Widget que representa uma seção completa de categoria
+/// 
+/// Inclui:
+/// - Header com nome da categoria e botão de colapso
+/// - Lista de itens (ordenados automaticamente pelo controller)
+/// - Animação de expansão/colapso
+class CategorySection extends StatelessWidget {
+  final Category? category; // null = "Sem categoria"
+  final List<ShoppingItem> items;
+  final bool isCollapsed;
+  final VoidCallback onToggleCollapse;
+  final VoidCallback onAddItem;
+  final Function(String itemId) onToggleItemCheck;
+  final Function(String itemId) onDeleteItem;
+
+  const CategorySection({
+    super.key,
+    this.category,
+    required this.items,
+    required this.isCollapsed,
+    required this.onToggleCollapse,
+    required this.onAddItem,
+    required this.onToggleItemCheck,
+    required this.onDeleteItem,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Header da categoria
+        CategoryHeader(
+          category: category,
+          isCollapsed: isCollapsed,
+          onToggleCollapse: onToggleCollapse,
+          onAddItem: onAddItem,
+        ),
+        
+        // Lista de itens (com animação de colapso)
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          child: isCollapsed
+              ? const SizedBox.shrink()
+              : Column(
+                  children: items.isEmpty
+                      ? [
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              'Nenhum item nesta categoria',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ]
+                      : items.map((item) {
+                          return ShoppingItemTile(
+                            key: ValueKey(item.id),
+                            item: item,
+                            onToggleCheck: () => onToggleItemCheck(item.id),
+                            onDelete: () => onDeleteItem(item.id),
+                          );
+                        }).toList(),
+                ),
+        ),
+      ],
+    );
+  }
+}
