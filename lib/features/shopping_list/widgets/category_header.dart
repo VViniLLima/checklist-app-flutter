@@ -13,6 +13,7 @@ class CategoryHeader extends StatelessWidget {
   final bool isCollapsed;
   final VoidCallback onToggleCollapse;
   final VoidCallback onAddItem;
+  final VoidCallback? onEditCategory; // null para "Sem categoria"
 
   const CategoryHeader({
     super.key,
@@ -20,6 +21,7 @@ class CategoryHeader extends StatelessWidget {
     required this.isCollapsed,
     required this.onToggleCollapse,
     required this.onAddItem,
+    this.onEditCategory,
   });
 
   @override
@@ -36,6 +38,7 @@ class CategoryHeader extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onToggleCollapse,
+          onLongPress: category != null ? onEditCategory : null,
           borderRadius: BorderRadius.circular(8),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

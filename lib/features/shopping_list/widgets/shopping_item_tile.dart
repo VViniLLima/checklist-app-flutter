@@ -12,12 +12,14 @@ class ShoppingItemTile extends StatelessWidget {
   final ShoppingItem item;
   final VoidCallback onToggleCheck;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
   const ShoppingItemTile({
     super.key,
     required this.item,
     required this.onToggleCheck,
     required this.onDelete,
+    required this.onEdit,
   });
 
   @override
@@ -46,10 +48,20 @@ class ShoppingItemTile extends StatelessWidget {
             color: item.isChecked ? Colors.grey.shade600 : Colors.black87,
           ),
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.red),
-          onPressed: onDelete,
-          tooltip: 'Remover item',
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, color: Colors.blue),
+              onPressed: onEdit,
+              tooltip: 'Editar item',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: onDelete,
+              tooltip: 'Remover item',
+            ),
+          ],
         ),
       ),
     );

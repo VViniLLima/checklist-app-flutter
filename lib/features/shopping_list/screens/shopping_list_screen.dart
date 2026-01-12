@@ -17,8 +17,8 @@ class ShoppingListScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lista de Compras'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black,
       ),
       body: Consumer<ShoppingListController>(
         builder: (context, controller, _) {
@@ -27,7 +27,7 @@ class ShoppingListScreen extends StatelessWidget {
           }
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10),
             children: [
               // Seção "Sem categoria" (sempre no topo)
               CategorySection(
@@ -36,7 +36,9 @@ class ShoppingListScreen extends StatelessWidget {
                 isCollapsed: false, // "Sem categoria" nunca colapsa
                 onToggleCollapse: () {}, // Não faz nada
                 onAddItem: () => _showAddItemDialog(context, null),
+                onEditCategory: null, // "Sem categoria" não pode ser editada
                 onToggleItemCheck: controller.toggleItemCheck,
+                onEditItem: (itemId) => _showEditItemDialog(context, itemId),
                 onDeleteItem: (itemId) => _confirmDelete(
                   context,
                   'Deseja remover este item?',
@@ -57,7 +59,9 @@ class ShoppingListScreen extends StatelessWidget {
                   onToggleCollapse: () =>
                       controller.toggleCategoryCollapse(category.id),
                   onAddItem: () => _showAddItemDialog(context, category.id),
+                  onEditCategory: () => _showEditCategoryDialog(context, category.id, category.name),
                   onToggleItemCheck: controller.toggleItemCheck,
+                  onEditItem: (itemId) => _showEditItemDialog(context, itemId),
                   onDeleteItem: (itemId) => _confirmDelete(
                     context,
                     'Deseja remover este item?',
@@ -98,7 +102,22 @@ class ShoppingListScreen extends StatelessWidget {
           textCapitalization: TextCapitalization.words,
           onSubmitted: (value) {
             if (value.trim().isNotEmpty) {
-              controller.addCategory(value.trim());
+              final trimmedName = value.trim();
+              // Verifica se o nome já existe
+              final isDuplicate = controller.categories.any(
+                (cat) => cat.name.toLowerCase() == trimmedName.toLowerCase(),
+              );
+              
+              if (isDuplicate) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Já existe uma categoria com este nome'),
+                  ),
+                );
+                return;
+              }
+              
+              controller.addCategory(trimmedName);
               Navigator.of(context).pop();
             }
           },
@@ -119,10 +138,192 @@ class ShoppingListScreen extends StatelessWidget {
                 );
                 return;
               }
+              
+              // Verifica se o nome já existe
+              final isDuplicate = controller.categories.any(
+                (cat) => cat.name.toLowerCase() == name.toLowerCase(),
+              );
+              
+              if (isDuplicate) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Já existe uma categoria com este nome'),
+                  ),
+                );
+                return;
+              }
+              
               controller.addCategory(name);
               Navigator.of(context).pop();
             },
             child: const Text('Adicionar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Exibe dialog para editar categoria existente
+  void _showEditCategoryDialog(BuildContext context, String categoryId, String currentName) {
+    final controller = context.read<ShoppingListController>();
+    final textController = TextEditingController(text: currentName);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar Categoria'),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Nome da categoria',
+            hintText: 'Ex: Mercearia, Hortifruti...',
+            border: OutlineInputBorder(),
+          ),
+          textCapitalization: TextCapitalization.words,
+          onSubmitted: (value) {
+            if (value.trim().isNotEmpty) {
+              final trimmedName = value.trim();
+              // Verifica se o nome já existe em outra categoria
+              final isDuplicate = controller.categories.any(
+                (cat) => cat.id != categoryId && cat.name.toLowerCase() == trimmedName.toLowerCase(),
+              );
+              
+              if (isDuplicate) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Já existe uma categoria com este nome'),
+                  ),
+                );
+                return;
+              }
+              
+              controller.editCategory(categoryId, trimmedName);
+              Navigator.of(context).pop();
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = textController.text.trim();
+              if (name.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('O nome da categoria não pode estar vazio'),
+                  ),
+                );
+                return;
+              }
+              
+              // Verifica se o nome já existe em outra categoria
+              final isDuplicate = controller.categories.any(
+                (cat) => cat.id != categoryId && cat.name.toLowerCase() == name.toLowerCase(),
+              );
+              
+              if (isDuplicate) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Já existe uma categoria com este nome'),
+                  ),
+                );
+                return;
+              }
+              
+              controller.editCategory(categoryId, name);
+              Navigator.of(context).pop();
+            },
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Exibe dialog para editar item existente
+  void _showEditItemDialog(BuildContext context, String itemId) {
+    final controller = context.read<ShoppingListController>();
+    final item = controller.allItems.firstWhere((i) => i.id == itemId);
+    final textController = TextEditingController(text: item.name);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar Item'),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Nome do item',
+            hintText: 'Ex: Arroz, Feijão...',
+            border: OutlineInputBorder(),
+          ),
+          textCapitalization: TextCapitalization.sentences,
+          onSubmitted: (value) {
+            if (value.trim().isNotEmpty) {
+              final trimmedName = value.trim();
+              // Verifica se o nome já existe na mesma categoria
+              final isDuplicate = controller.allItems.any(
+                (i) => i.id != itemId &&
+                       i.categoryId == item.categoryId &&
+                       i.name.toLowerCase() == trimmedName.toLowerCase(),
+              );
+              
+              if (isDuplicate) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Já existe um item com este nome nesta categoria'),
+                  ),
+                );
+                return;
+              }
+              
+              controller.editItem(itemId, trimmedName);
+              Navigator.of(context).pop();
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = textController.text.trim();
+              if (name.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('O nome do item não pode estar vazio'),
+                  ),
+                );
+                return;
+              }
+              
+              // Verifica se o nome já existe na mesma categoria
+              final isDuplicate = controller.allItems.any(
+                (i) => i.id != itemId &&
+                       i.categoryId == item.categoryId &&
+                       i.name.toLowerCase() == name.toLowerCase(),
+              );
+              
+              if (isDuplicate) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Já existe um item com este nome nesta categoria'),
+                  ),
+                );
+                return;
+              }
+              
+              controller.editItem(itemId, name);
+              Navigator.of(context).pop();
+            },
+            child: const Text('Salvar'),
           ),
         ],
       ),

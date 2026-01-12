@@ -109,6 +109,19 @@ class ShoppingListController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Edita o nome de uma categoria existente
+  Future<void> editCategory(String categoryId, String newName) async {
+    _categories = _categories.map((cat) {
+      if (cat.id == categoryId) {
+        return cat.copyWith(name: newName);
+      }
+      return cat;
+    }).toList();
+
+    await _repository.saveCategories(_categories);
+    notifyListeners();
+  }
+
   /// Alterna estado de colapso de uma categoria
   Future<void> toggleCategoryCollapse(String categoryId) async {
     _categories = _categories.map((cat) {
@@ -141,6 +154,20 @@ class ShoppingListController extends ChangeNotifier {
   /// Remove item da lista
   Future<void> removeItem(String itemId) async {
     _items.removeWhere((item) => item.id == itemId);
+    await _repository.saveItems(_items);
+    notifyListeners();
+  }
+
+  /// Edita o nome de um item existente
+  /// Mantém o estado checked, categoria e timestamps
+  Future<void> editItem(String itemId, String newName) async {
+    _items = _items.map((item) {
+      if (item.id == itemId) {
+        return item.copyWith(name: newName);
+      }
+      return item;
+    }).toList();
+
     await _repository.saveItems(_items);
     notifyListeners();
   }

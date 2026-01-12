@@ -31,17 +31,21 @@ flutter test
 
 1. **Categorias**
    - Criar categorias personalizadas (ex: "Mercearia", "Hortifruti")
+   - Editar nome de categorias existentes (long press no header da categoria)
    - Cada categoria possui um header visual destacado (fundo azul, texto em negrito)
    - Categorias são colapsáveis com ícone chevron animado
    - Seção "Sem categoria" sempre visível para itens não categorizados
+   - Validação: não permite nomes vazios ou duplicados (case-insensitive)
 
 2. **Itens de Compras**
    - Adicionar itens dentro de categorias ou sem categoria
+   - Editar nome de itens existentes (botão de edição no item)
    - Checkbox para marcar/desmarcar itens
    - Visual diferenciado para itens marcados:
      - Fundo mais claro (cinza)
      - Texto tachado (line-through)
      - Checkbox verde quando marcado
+   - Validação: não permite nomes vazios ou duplicados na mesma categoria (case-insensitive)
    
 3. **Ordenação Inteligente**
    - **Itens não marcados aparecem primeiro** (ordenados por data de criação)
@@ -55,7 +59,9 @@ flutter test
    - Carregamento automático ao abrir o aplicativo
 
 5. **Validações**
-   - Não permite criar categorias/itens com nome vazio
+   - Não permite criar/editar categorias/itens com nome vazio
+   - Não permite nomes duplicados (categorias: globalmente; itens: dentro da mesma categoria)
+   - Validação case-insensitive para evitar duplicatas
    - Feedback visual com SnackBar para validações
 
 ## 🏗️ Arquitetura
@@ -204,7 +210,7 @@ flutter test
 
 Funcionalidades que poderiam ser adicionadas:
 
-1. **Editar nome de categoria/item**
+1. ~~**Editar nome de categoria/item**~~ ✅ **Implementado**
 2. **Reordenar categorias manualmente** (drag and drop)
 3. **Busca/filtro de itens**
 4. **Temas claro/escuro**

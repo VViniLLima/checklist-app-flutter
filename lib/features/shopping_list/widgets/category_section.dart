@@ -16,8 +16,10 @@ class CategorySection extends StatelessWidget {
   final bool isCollapsed;
   final VoidCallback onToggleCollapse;
   final VoidCallback onAddItem;
+  final VoidCallback? onEditCategory; // null para "Sem categoria"
   final Function(String itemId) onToggleItemCheck;
   final Function(String itemId) onDeleteItem;
+  final Function(String itemId) onEditItem;
 
   const CategorySection({
     super.key,
@@ -26,7 +28,9 @@ class CategorySection extends StatelessWidget {
     required this.isCollapsed,
     required this.onToggleCollapse,
     required this.onAddItem,
+    this.onEditCategory,
     required this.onToggleItemCheck,
+    required this.onEditItem,
     required this.onDeleteItem,
   });
 
@@ -41,6 +45,7 @@ class CategorySection extends StatelessWidget {
           isCollapsed: isCollapsed,
           onToggleCollapse: onToggleCollapse,
           onAddItem: onAddItem,
+          onEditCategory: onEditCategory,
         ),
         
         // Lista de itens (com animação de colapso)
@@ -65,13 +70,14 @@ class CategorySection extends StatelessWidget {
                           ),
                         ]
                       : items.map((item) {
-                          return ShoppingItemTile(
-                            key: ValueKey(item.id),
-                            item: item,
-                            onToggleCheck: () => onToggleItemCheck(item.id),
-                            onDelete: () => onDeleteItem(item.id),
-                          );
-                        }).toList(),
+                         return ShoppingItemTile(
+                           key: ValueKey(item.id),
+                           item: item,
+                           onToggleCheck: () => onToggleItemCheck(item.id),
+                           onDelete: () => onDeleteItem(item.id),
+                           onEdit: () => onEditItem(item.id),
+                         );
+                       }).toList(),
                 ),
         ),
       ],
