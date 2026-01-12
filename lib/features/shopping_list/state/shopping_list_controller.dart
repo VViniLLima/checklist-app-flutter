@@ -135,6 +135,22 @@ class ShoppingListController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Reordena categorias mantendo "Sem categoria" fora da lista reordenavel
+  Future<void> reorderCategories(int oldIndex, int newIndex) async {
+    if (oldIndex == newIndex) return;
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+
+    final updated = List<models.Category>.from(_categories);
+    final moved = updated.removeAt(oldIndex);
+    updated.insert(newIndex, moved);
+    _categories = updated;
+
+    await _repository.saveCategories(_categories);
+    notifyListeners();
+  }
+
   // ==================== Itens ====================
 
   /// Adiciona novo item a uma categoria (ou sem categoria se categoryId for null)
@@ -198,6 +214,38 @@ class ShoppingListController extends ChangeNotifier {
       return item;
     }).toList();
 
+    await _repository.saveItems(_items);
+    notifyListeners();
+  }
+
+  /// Marca item como checked (ignora se ja estiver marcado)
+  Future<void> markItemChecked(String itemId) async {
+    var didUpdate = false;
+    _items = _items.map((item) {
+      if (item.id == itemId) {
+        if (item.isChecked) return item;
+        didUpdate = true;
+        return ShoppingItem(
+          id: item.id,
+          name: item.name,
+          isChecked: true,
+          categoryId: item.categoryId,
+          createdAt: item.createdAt,
+          checkedAt: DateTime.now(),
+        );
+      }
+      return item;
+    }).toList();
+
+    if (!didUpdate) return;
+    await _repository.saveItems(_items);
+    notifyListeners();
+  }
+
+  /// Restaura um item removido (usado por Undo)
+  Future<void> restoreItem(ShoppingItem item) async {
+    _items.removeWhere((existing) => existing.id == item.id);
+    _items.add(item);
     await _repository.saveItems(_items);
     notifyListeners();
   }

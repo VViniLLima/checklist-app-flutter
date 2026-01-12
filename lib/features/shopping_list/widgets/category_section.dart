@@ -20,6 +20,10 @@ class CategorySection extends StatelessWidget {
   final Function(String itemId) onToggleItemCheck;
   final Function(String itemId) onDeleteItem;
   final Function(String itemId) onEditItem;
+  final Function(ShoppingItem item) onSwipeComplete;
+  final Function(ShoppingItem item) onSwipeDelete;
+  final bool showDragHandle;
+  final Widget Function(Widget header)? headerWrapper;
 
   const CategorySection({
     super.key,
@@ -32,21 +36,29 @@ class CategorySection extends StatelessWidget {
     required this.onToggleItemCheck,
     required this.onEditItem,
     required this.onDeleteItem,
+    required this.onSwipeComplete,
+    required this.onSwipeDelete,
+    this.showDragHandle = false,
+    this.headerWrapper,
   });
 
   @override
   Widget build(BuildContext context) {
+    final header = CategoryHeader(
+      category: category,
+      isCollapsed: isCollapsed,
+      onToggleCollapse: onToggleCollapse,
+      onAddItem: onAddItem,
+      onEditCategory: onEditCategory,
+      showDragHandle: showDragHandle,
+    );
+    final wrappedHeader = headerWrapper != null ? headerWrapper!(header) : header;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Header da categoria
-        CategoryHeader(
-          category: category,
-          isCollapsed: isCollapsed,
-          onToggleCollapse: onToggleCollapse,
-          onAddItem: onAddItem,
-          onEditCategory: onEditCategory,
-        ),
+        wrappedHeader,
         
         // Lista de itens (com animação de colapso)
         AnimatedSize(
@@ -70,14 +82,16 @@ class CategorySection extends StatelessWidget {
                           ),
                         ]
                       : items.map((item) {
-                         return ShoppingItemTile(
-                           key: ValueKey(item.id),
-                           item: item,
-                           onToggleCheck: () => onToggleItemCheck(item.id),
-                           onDelete: () => onDeleteItem(item.id),
-                           onEdit: () => onEditItem(item.id),
-                         );
-                       }).toList(),
+                       return ShoppingItemTile(
+                         key: ValueKey(item.id),
+                         item: item,
+                         onToggleCheck: () => onToggleItemCheck(item.id),
+                         onDelete: () => onDeleteItem(item.id),
+                         onEdit: () => onEditItem(item.id),
+                         onSwipeComplete: () => onSwipeComplete(item),
+                         onSwipeDelete: () => onSwipeDelete(item),
+                       );
+                     }).toList(),
                 ),
         ),
       ],

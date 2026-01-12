@@ -31,11 +31,13 @@ flutter test
 
 1. **Categorias**
    - Criar categorias personalizadas (ex: "Mercearia", "Hortifruti")
-   - Editar nome de categorias existentes (long press no header da categoria)
+   - Editar nome de categorias existentes (botao de edicao no header da categoria)
    - Cada categoria possui um header visual destacado (fundo azul, texto em negrito)
    - Categorias são colapsáveis com ícone chevron animado
    - Seção "Sem categoria" sempre visível para itens não categorizados
    - Validação: não permite nomes vazios ou duplicados (case-insensitive)
+   - Reordenacao manual de categorias com drag-and-drop (pressione e segure o header)
+   - "Sem categoria" permanece fixa no topo para manter itens nao categorizados previsiveis
 
 2. **Itens de Compras**
    - Adicionar itens dentro de categorias ou sem categoria

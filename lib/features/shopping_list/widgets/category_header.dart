@@ -7,13 +7,15 @@ import '../models/category.dart';
 /// - Texto em negrito com fundo destacado
 /// - Ícone de colapso (chevron) que rotaciona
 /// - Ação de tap para expandir/colapsar
-/// - Botão para adicionar item
+/// - Botões para adicionar item e editar categoria
+/// - Indicação visual de arraste quando reordenável
 class CategoryHeader extends StatelessWidget {
   final Category? category; // null = "Sem categoria"
   final bool isCollapsed;
   final VoidCallback onToggleCollapse;
   final VoidCallback onAddItem;
   final VoidCallback? onEditCategory; // null para "Sem categoria"
+  final bool showDragHandle;
 
   const CategoryHeader({
     super.key,
@@ -22,6 +24,7 @@ class CategoryHeader extends StatelessWidget {
     required this.onToggleCollapse,
     required this.onAddItem,
     this.onEditCategory,
+    this.showDragHandle = false,
   });
 
   @override
@@ -38,7 +41,6 @@ class CategoryHeader extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onToggleCollapse,
-          onLongPress: category != null ? onEditCategory : null,
           borderRadius: BorderRadius.circular(8),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -54,6 +56,16 @@ class CategoryHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
+                if (showDragHandle) ...[
+                  Tooltip(
+                    message: 'Pressione e segure para reordenar',
+                    child: const Icon(
+                      Icons.drag_handle,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 
                 // Nome da categoria
                 Expanded(
@@ -74,6 +86,13 @@ class CategoryHeader extends StatelessWidget {
                   onPressed: onAddItem,
                   tooltip: 'Adicionar item',
                 ),
+                if (onEditCategory != null)
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    color: Colors.blue,
+                    onPressed: onEditCategory,
+                    tooltip: 'Editar categoria',
+                  ),
               ],
             ),
           ),

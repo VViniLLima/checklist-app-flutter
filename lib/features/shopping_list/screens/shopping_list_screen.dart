@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/shopping_list_controller.dart';
 import '../widgets/category_section.dart';
+import '../models/shopping_item.dart';
 
 /// Tela principal da lista de compras
 /// 
@@ -26,17 +27,21 @@ class ShoppingListScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          return ListView(
-            padding: const EdgeInsets.all(10),
-            children: [
-              // Seção "Sem categoria" (sempre no topo)
-              CategorySection(
-                category: null,
-                items: controller.getItemsByCategory(null),
-                isCollapsed: false, // "Sem categoria" nunca colapsa
-                onToggleCollapse: () {}, // Não faz nada
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.all(10),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate(
+                    [
+                      // "Sem categoria" fica fixa no topo para evitar confusao com itens nao categorizados.
+                      CategorySection(
+                        category: null,
+                        items: controller.getItemsByCategory(null),
+                        isCollapsed: false, // "Sem categoria" nunca colapsa
+                        onToggleCollapse: () {}, // Nao faz nada
                 onAddItem: () => _showAddItemDialog(context, null),
-                onEditCategory: null, // "Sem categoria" não pode ser editada
+                onEditCategory: null, // "Sem categoria" nao pode ser editada
                 onToggleItemCheck: controller.toggleItemCheck,
                 onEditItem: (itemId) => _showEditItemDialog(context, itemId),
                 onDeleteItem: (itemId) => _confirmDelete(
@@ -44,31 +49,60 @@ class ShoppingListScreen extends StatelessWidget {
                   'Deseja remover este item?',
                   () => controller.removeItem(itemId),
                 ),
+                onSwipeComplete: (item) => controller.markItemChecked(item.id),
+                onSwipeDelete: (item) =>
+                    _handleSwipeDelete(context, controller, item),
               ),
+            ],
+          ),
+        ),
+      ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                sliver: SliverReorderableList(
+                  itemCount: controller.categories.length,
+                  onReorder: (oldIndex, newIndex) {
+                    controller.reorderCategories(oldIndex, newIndex);
+                  },
+                  itemBuilder: (context, index) {
+                    final category = controller.categories[index];
+                    final items = controller.getItemsByCategory(category.id);
+                    final isCollapsed = controller.isCategoryCollapsed(category.id);
 
-              // Categorias criadas
-              ...controller.categories.map((category) {
-                final items = controller.getItemsByCategory(category.id);
-                final isCollapsed = controller.isCategoryCollapsed(category.id);
-
-                return CategorySection(
-                  key: ValueKey(category.id),
-                  category: category,
-                  items: items,
-                  isCollapsed: isCollapsed,
-                  onToggleCollapse: () =>
-                      controller.toggleCategoryCollapse(category.id),
-                  onAddItem: () => _showAddItemDialog(context, category.id),
-                  onEditCategory: () => _showEditCategoryDialog(context, category.id, category.name),
-                  onToggleItemCheck: controller.toggleItemCheck,
-                  onEditItem: (itemId) => _showEditItemDialog(context, itemId),
-                  onDeleteItem: (itemId) => _confirmDelete(
-                    context,
-                    'Deseja remover este item?',
-                    () => controller.removeItem(itemId),
-                  ),
-                );
-              }),
+                    return CategorySection(
+                      key: ValueKey(category.id),
+                      category: category,
+                      items: items,
+                      isCollapsed: isCollapsed,
+                      onToggleCollapse: () =>
+                          controller.toggleCategoryCollapse(category.id),
+                      onAddItem: () => _showAddItemDialog(context, category.id),
+                      onEditCategory: () => _showEditCategoryDialog(
+                        context,
+                        category.id,
+                        category.name,
+                      ),
+                      onToggleItemCheck: controller.toggleItemCheck,
+                      onEditItem: (itemId) => _showEditItemDialog(context, itemId),
+                      onDeleteItem: (itemId) => _confirmDelete(
+                        context,
+                        'Deseja remover este item?',
+                        () => controller.removeItem(itemId),
+                      ),
+                      onSwipeComplete: (item) =>
+                          controller.markItemChecked(item.id),
+                      onSwipeDelete: (item) =>
+                          _handleSwipeDelete(context, controller, item),
+                      showDragHandle: true,
+                      headerWrapper: (header) => ReorderableDelayedDragStartListener(
+                        index: index,
+                        child: header,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
           );
         },
@@ -80,6 +114,27 @@ class ShoppingListScreen extends StatelessWidget {
         backgroundColor: Colors.blue,
       ),
     );
+  }
+
+  void _handleSwipeDelete(
+    BuildContext context,
+    ShoppingListController controller,
+    ShoppingItem item,
+  ) {
+    controller.removeItem(item.id);
+
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text('Item removido'),
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'Desfazer',
+            onPressed: () => controller.restoreItem(item),
+          ),
+        ),
+      );
   }
 
   /// Exibe dialog para adicionar nova categoria

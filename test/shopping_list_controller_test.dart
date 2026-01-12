@@ -24,6 +24,18 @@ void main() {
       expect(controller.categories.first.name, 'Mercearia');
     });
 
+    test('Deve reordenar categorias', () async {
+      await controller.addCategory('A');
+      await controller.addCategory('B');
+      await controller.addCategory('C');
+
+      await controller.reorderCategories(2, 0);
+
+      expect(controller.categories[0].name, 'C');
+      expect(controller.categories[1].name, 'A');
+      expect(controller.categories[2].name, 'B');
+    });
+
     test('Deve colapsar/expandir categoria', () async {
       await controller.addCategory('Hortifruti');
       final categoryId = controller.categories.first.id;
@@ -71,6 +83,32 @@ void main() {
       final item = controller.allItems.firstWhere((i) => i.id == itemId);
       expect(item.isChecked, false);
       expect(item.checkedAt, isNull);
+    });
+
+    test('Deve marcar item como checked sem alternar', () async {
+      await controller.addItem('Bolo', null);
+      final itemId = controller.allItems.first.id;
+
+      await controller.markItemChecked(itemId);
+      final first = controller.allItems.firstWhere((i) => i.id == itemId);
+      expect(first.isChecked, true);
+
+      final checkedAt = first.checkedAt;
+      await controller.markItemChecked(itemId);
+      final second = controller.allItems.firstWhere((i) => i.id == itemId);
+      expect(second.isChecked, true);
+      expect(second.checkedAt, checkedAt);
+    });
+
+    test('Deve restaurar item removido', () async {
+      await controller.addItem('Queijo', null);
+      final item = controller.allItems.first;
+
+      await controller.removeItem(item.id);
+      expect(controller.allItems.any((i) => i.id == item.id), false);
+
+      await controller.restoreItem(item);
+      expect(controller.allItems.any((i) => i.id == item.id), true);
     });
   });
 
@@ -163,6 +201,20 @@ void main() {
 
       expect(newController.categories.length, 1);
       expect(newController.categories.first.name, 'Bebidas');
+    });
+
+    test('Deve persistir ordem das categorias', () async {
+      await controller.addCategory('A');
+      await controller.addCategory('B');
+      await controller.addCategory('C');
+      await controller.reorderCategories(2, 0);
+
+      final newController = ShoppingListController(repository);
+      await newController.initialize();
+
+      expect(newController.categories[0].name, 'C');
+      expect(newController.categories[1].name, 'A');
+      expect(newController.categories[2].name, 'B');
     });
 
     test('Deve persistir e carregar itens', () async {
