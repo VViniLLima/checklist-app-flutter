@@ -22,7 +22,10 @@ class ShoppingListController extends ChangeNotifier {
   // ==================== Getters ====================
 
   bool get isLoading => _isLoading;
-  List<models.Category> get categories => List.unmodifiable(_categories);
+  //List<models.Category> get categories => List.unmodifiable(_categories);
+  List<models.Category> get categories => List.unmodifiable(
+  _categories.where((cat) => cat.id != 'sem-categoria'),
+);
   List<ShoppingItem> get allItems => List.unmodifiable(_items);
 
   /// Retorna itens de uma categoria específica, ordenados conforme regras:
@@ -68,14 +71,41 @@ class ShoppingListController extends ChangeNotifier {
     try {
       _categories = await _repository.loadCategories();
       _items = await _repository.loadItems();
+
+      // Ensure "Sem categoria" exists
+      _ensureSemCategoriaExists();
     } catch (e) {
       debugPrint('Erro ao carregar dados: $e');
       _categories = [];
       _items = [];
+      _ensureSemCategoriaExists();
     }
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  void _ensureSemCategoriaExists() {
+    const semCategoriaId = 'sem-categoria';
+    final semCategoriaExists = _categories.any((cat) => cat.id == semCategoriaId);
+    if (!semCategoriaExists) {
+      final semCategoria = models.Category(
+        id: semCategoriaId,
+        name: 'Sem categoria',
+      );
+      _categories.insert(0, semCategoria); // Insert at beginning
+      _repository.saveCategories(_categories); // Save immediately
+    }
+  }
+
+  /// Get the "Sem categoria" category
+  models.Category? get semCategoria {
+    const semCategoriaId = 'sem-categoria';
+    try {
+      return _categories.firstWhere((cat) => cat.id == semCategoriaId);
+    } catch (e) {
+      return null;
+    }
   }
 
   // ==================== Categorias ====================

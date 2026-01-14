@@ -73,7 +73,7 @@ class CategoryHeader extends StatelessWidget {
                   duration: const Duration(milliseconds: 200),
                   child:  Icon(
                     Icons.expand_more,
-                    color: category !=null ?_getTextColor(backgroundColor) : Color(0xfff8f3ed),
+                    color: _getTextColor(backgroundColor),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -82,7 +82,7 @@ class CategoryHeader extends StatelessWidget {
                     message: 'Pressione e segure para reordenar',
                     child: Icon(
                       Icons.drag_handle,
-                      color: category !=null ?_getTextColor(backgroundColor) : Color(0xfff8f3ed),
+                      color: _getTextColor(backgroundColor) ,
                       
                     ),
                   ),
@@ -97,7 +97,7 @@ class CategoryHeader extends StatelessWidget {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       //color: Color(0xfff8f3ed),
-                      color: category != null ? _getTextColor(backgroundColor) : Color(0xfff8f3ed),
+                      color: _getTextColor(backgroundColor),
                     ),
                   ),
                 ),
@@ -105,13 +105,13 @@ class CategoryHeader extends StatelessWidget {
                 // Botão para adicionar item
                 IconButton(
                   icon:  Icon(Icons.add_circle_outline),
-                  color: category !=null ?_getTextColor(backgroundColor) : Color(0xfff8f3ed),// Colors.blue,
+                  color: _getTextColor(backgroundColor),
                   onPressed: onAddItem,
                   tooltip: 'Adicionar item',
                 ),
                 if (onEditCategory != null)
                   PopupMenuButton<String>(
-                    icon: Icon(Icons.edit_outlined, color: category !=null ?_getTextColor(backgroundColor) : Colors.blue,),
+                    icon: Icon(Icons.edit_outlined, color: _getTextColor(backgroundColor)),
                     tooltip: 'Editar categoria',
                     onSelected: (value) {
                       if (value == 'rename') {
@@ -120,28 +120,47 @@ class CategoryHeader extends StatelessWidget {
                         _showColorPicker(context);
                       }
                     },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'rename',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 8),
-                            Text('Renomear'),
-                          ],
+                    itemBuilder: (context) {
+                      // For "Sem categoria", only show color option
+                      final isSemCategoria = category?.id == 'sem-categoria';
+                      if (isSemCategoria) {
+                        return [
+                          const PopupMenuItem(
+                            value: 'color',
+                            child: Row(
+                              children: [
+                                Icon(Icons.palette, size: 20),
+                                SizedBox(width: 8),
+                                Text('Mudar cor'),
+                              ],
+                            ),
+                          ),
+                        ];
+                      }
+                      // For other categories, show both options
+                      return [
+                        const PopupMenuItem(
+                          value: 'rename',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit, size: 20),
+                              SizedBox(width: 8),
+                              Text('Renomear'),
+                            ],
+                          ),
                         ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'color',
-                        child: Row(
-                          children: [
-                            Icon(Icons.palette, size: 20),
-                            SizedBox(width: 8),
-                            Text('Mudar cor'),
-                          ],
+                        const PopupMenuItem(
+                          value: 'color',
+                          child: Row(
+                            children: [
+                              Icon(Icons.palette, size: 20),
+                              SizedBox(width: 8),
+                              Text('Mudar cor'),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ];
+                    },
                   ),
               ],
             ),

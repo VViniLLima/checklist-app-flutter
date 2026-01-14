@@ -36,12 +36,12 @@ class ShoppingListScreen extends StatelessWidget {
                     [
                       // "Sem categoria" fica fixa no topo para evitar confusao com itens nao categorizados.
                       CategorySection(
-                        category: null,
-                        items: controller.getItemsByCategory(null),
+                        category: controller.semCategoria,
+                        items: controller.getItemsByCategory('sem-categoria'),
                         isCollapsed: false, // "Sem categoria" nunca colapsa
                         onToggleCollapse: () {}, // Nao faz nada
-                onAddItem: () => _showAddItemDialog(context, null),
-                onEditCategory: null, // "Sem categoria" nao pode ser editada
+                onAddItem: () => _showAddItemDialog(context, 'sem-categoria'),
+                onEditCategory: () {}, // Placeholder - color change handled in CategoryHeader
                 onToggleItemCheck: controller.toggleItemCheck,
                 onEditItem: (itemId) => _showEditItemDialog(context, itemId),
                 onDeleteItem: (itemId) => _confirmDelete(
