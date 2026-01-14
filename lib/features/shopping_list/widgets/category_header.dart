@@ -32,24 +32,25 @@ class CategoryHeader extends StatelessWidget {
 
   Color _getTextColor(Color backgroundColor) {
   // Map shade50 colors to their base colors
-  final colorMap = {
-    Colors.blue.shade50: Colors.blue.shade300,
-    Colors.lightBlue.shade50: Colors.lightBlue,
-    Colors.cyan.shade50: Colors.cyan.shade300,
-    Colors.teal.shade50: Colors.teal.shade300,
-    Colors.indigo.shade50: Colors.indigo.shade300,
-    Colors.purple.shade50: Colors.purple.shade300,
-    Colors.pink.shade50: Colors.pink.shade300,
-    Colors.red.shade50: Colors.red.shade300,
-  };
+// Define category title color
+  const categoryTitle = Color(0xfff8f3ed); // creme
   
+  final colorMap = {
+    Color(0xff0f408f): categoryTitle, // azul escuro -> creme
+    Color(0xffbce4fe): categoryTitle, // azul claro -> creme
+    Color(0xff89aeff): categoryTitle, // lilas claro -> creme
+    Color(0xffef7148): categoryTitle, // laranja -> creme
+    Color(0xffdffc8e): Color(0xff0f408f) //categoryTitle, // verde -> creme
+  };
+
   return colorMap[backgroundColor] ?? Colors.blue;
 }
 
   @override
   Widget build(BuildContext context) {
     final categoryName = category?.name ?? 'Sem categoria';
-    final backgroundColor = category?.color ?? Colors.blue.shade50;
+    final backgroundColor = category?.color ?? Color(0xff0f408f);
+    //final backgroundColor = category !=null ?_getTextColor(backgroundColor) : Color(0xfff8f3ed);
 
     return Container(
       margin: const EdgeInsets.only(top: 10, bottom: 8),
@@ -72,8 +73,7 @@ class CategoryHeader extends StatelessWidget {
                   duration: const Duration(milliseconds: 200),
                   child:  Icon(
                     Icons.expand_more,
-                    //color: Colors.blue,
-                    color: category !=null ?_getTextColor(backgroundColor) : Colors.blue,
+                    color: category !=null ?_getTextColor(backgroundColor) : Color(0xfff8f3ed),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -82,7 +82,7 @@ class CategoryHeader extends StatelessWidget {
                     message: 'Pressione e segure para reordenar',
                     child: Icon(
                       Icons.drag_handle,
-                      color: category !=null ?_getTextColor(backgroundColor) : Colors.blue,
+                      color: category !=null ?_getTextColor(backgroundColor) : Color(0xfff8f3ed),
                       
                     ),
                   ),
@@ -96,8 +96,8 @@ class CategoryHeader extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      //color: Colors.blue,
-                      color: category != null ? _getTextColor(backgroundColor) : Colors.blue,
+                      //color: Color(0xfff8f3ed),
+                      color: category != null ? _getTextColor(backgroundColor) : Color(0xfff8f3ed),
                     ),
                   ),
                 ),
@@ -105,8 +105,7 @@ class CategoryHeader extends StatelessWidget {
                 // Botão para adicionar item
                 IconButton(
                   icon:  Icon(Icons.add_circle_outline),
-                  //color: Colors.blue,
-                  color: category !=null ?_getTextColor(backgroundColor) : Colors.blue,
+                  color: category !=null ?_getTextColor(backgroundColor) : Color(0xfff8f3ed),// Colors.blue,
                   onPressed: onAddItem,
                   tooltip: 'Adicionar item',
                 ),
@@ -157,14 +156,19 @@ class CategoryHeader extends StatelessWidget {
 
     // 8 tons de azul similares ao blue.shade50
     final colors = [
-      Colors.blue.shade50,
-      Colors.lightBlue.shade50,
-      Colors.cyan.shade50,
-      Colors.teal.shade50,
-      Colors.indigo.shade50,
-      Colors.purple.shade50,
-      Colors.pink.shade50,
-      Colors.red.shade50,
+      Color(0xff0f408f), // azul escuro
+      Color(0xffbce4fe), // azul claro
+      Color(0xff89aeff), // lilas claro
+      Color(0xffef7148), // laranja
+      Color(0xffdffc8e), 
+      //Colors.blue.shade50,
+      // Colors.lightBlue.shade50,
+      // Colors.cyan.shade50,
+      // Colors.teal.shade50,
+      // Colors.indigo.shade50,
+      // Colors.purple.shade50,
+      // Colors.pink.shade50,
+      // Colors.red.shade50,
     ];
 
     showDialog(

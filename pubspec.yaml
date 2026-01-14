@@ -86,6 +86,53 @@ flutter:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
+# flutter:
+#   uses-material-design: true
+
+  fonts:
+    - family: BwHelderW1
+      fonts:
+        - asset: assets/fonts/BwHelder-W1Thin.otf
+          weight: 100
+        - asset: assets/fonts/BwHelder-W1Light.otf
+          weight: 300
+        - asset: assets/fonts/BwHelder-W1Regular.otf
+          weight: 400
+        - asset: assets/fonts/BwHelder-W1Medium.otf
+          weight: 500
+        - asset: assets/fonts/BwHelder-W1Bold.otf
+          weight: 700
+        - asset: assets/fonts/BwHelder-W1ExtraBold.otf
+          weight: 800
+    - family: BwHelderW2
+      fonts:
+        - asset: assets/fonts/BwHelder-W2Thin.otf
+          weight: 100
+        - asset: assets/fonts/BwHelder-W2Light.otf
+          weight: 300
+        - asset: assets/fonts/BwHelder-W2Regular.otf
+          weight: 400
+        - asset: assets/fonts/BwHelder-W2Medium.otf
+          weight: 500
+        - asset: assets/fonts/BwHelder-W2Bold.otf
+          weight: 700
+        - asset: assets/fonts/BwHelder-W2ExtraBold.otf
+          weight: 800
+    - family: BwHelderW3
+      fonts:
+        - asset: assets/fonts/BwHelder-W3Thin.otf
+          weight: 100
+        - asset: assets/fonts/BwHelder-W3Light.otf
+          weight: 300
+        - asset: assets/fonts/BwHelder-W3Regular.otf
+          weight: 400
+        - asset: assets/fonts/BwHelder-W3Medium.otf
+          weight: 500
+        - asset: assets/fonts/BwHelder-W3Bold.otf
+          weight: 700
+        - asset: assets/fonts/BwHelder-W3ExtraBold.otf
+          weight: 800
+
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

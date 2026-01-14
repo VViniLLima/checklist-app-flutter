@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'features/shopping_list/data/shopping_repository.dart';
 import 'features/shopping_list/state/shopping_list_controller.dart';
 import 'features/shopping_list/screens/shopping_list_screen.dart';
+//import 'package:google_fonts/google_fonts.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,8 @@ class MyApp extends StatelessWidget {
         title: 'Lista de Compras',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          scaffoldBackgroundColor: Color(0xfff8f3ed),
+          fontFamily: 'BwHelderW1',
           useMaterial3: true,
         ),
         debugShowCheckedModeBanner: false,
