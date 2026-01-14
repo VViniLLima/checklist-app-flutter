@@ -32,7 +32,7 @@ class CategoryHeader extends StatelessWidget {
     final categoryName = category?.name ?? 'Sem categoria';
 
     return Container(
-      margin: const EdgeInsets.only(top: 16, bottom: 8),
+      margin: const EdgeInsets.only(top: 10, bottom: 8),
       decoration: BoxDecoration(
         color: Colors.blue.shade50,
         borderRadius: BorderRadius.circular(8),
@@ -43,7 +43,7 @@ class CategoryHeader extends StatelessWidget {
           onTap: onToggleCollapse,
           borderRadius: BorderRadius.circular(8),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
             child: Row(
               children: [
                 // Ícone de colapso (chevron com rotação)
