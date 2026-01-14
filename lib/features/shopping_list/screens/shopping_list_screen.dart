@@ -69,34 +69,36 @@ class ShoppingListScreen extends StatelessWidget {
                     final items = controller.getItemsByCategory(category.id);
                     final isCollapsed = controller.isCategoryCollapsed(category.id);
 
-                    return CategorySection(
+                    return Material(
                       key: ValueKey(category.id),
-                      category: category,
-                      items: items,
-                      isCollapsed: isCollapsed,
-                      onToggleCollapse: () =>
-                          controller.toggleCategoryCollapse(category.id),
-                      onAddItem: () => _showAddItemDialog(context, category.id),
-                      onEditCategory: () => _showEditCategoryDialog(
-                        context,
-                        category.id,
-                        category.name,
-                      ),
-                      onToggleItemCheck: controller.toggleItemCheck,
-                      onEditItem: (itemId) => _showEditItemDialog(context, itemId),
-                      onDeleteItem: (itemId) => _confirmDelete(
-                        context,
-                        'Deseja remover este item?',
-                        () => controller.removeItem(itemId),
-                      ),
-                      onSwipeComplete: (item) =>
-                          controller.markItemChecked(item.id),
-                      onSwipeDelete: (item) =>
-                          _handleSwipeDelete(context, controller, item),
-                      showDragHandle: true,
-                      headerWrapper: (header) => ReorderableDelayedDragStartListener(
-                        index: index,
-                        child: header,
+                      child: CategorySection(
+                        category: category,
+                        items: items,
+                        isCollapsed: isCollapsed,
+                        onToggleCollapse: () =>
+                            controller.toggleCategoryCollapse(category.id),
+                        onAddItem: () => _showAddItemDialog(context, category.id),
+                        onEditCategory: () => _showEditCategoryDialog(
+                          context,
+                          category.id,
+                          category.name,
+                        ),
+                        onToggleItemCheck: controller.toggleItemCheck,
+                        onEditItem: (itemId) => _showEditItemDialog(context, itemId),
+                        onDeleteItem: (itemId) => _confirmDelete(
+                          context,
+                          'Deseja remover este item?',
+                          () => controller.removeItem(itemId),
+                        ),
+                        onSwipeComplete: (item) =>
+                            controller.markItemChecked(item.id),
+                        onSwipeDelete: (item) =>
+                            _handleSwipeDelete(context, controller, item),
+                        showDragHandle: true,
+                        headerWrapper: (header) => ReorderableDelayedDragStartListener(
+                          index: index,
+                          child: header,
+                        ),
                       ),
                     );
                   },
