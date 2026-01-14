@@ -122,6 +122,19 @@ class ShoppingListController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Edita a cor de uma categoria existente
+  Future<void> editCategoryColor(String categoryId, int colorValue) async {
+    _categories = _categories.map((cat) {
+      if (cat.id == categoryId) {
+        return cat.copyWith(colorValue: colorValue);
+      }
+      return cat;
+    }).toList();
+
+    await _repository.saveCategories(_categories);
+    notifyListeners();
+  }
+
   /// Alterna estado de colapso de uma categoria
   Future<void> toggleCategoryCollapse(String categoryId) async {
     _categories = _categories.map((cat) {
