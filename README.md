@@ -29,17 +29,28 @@ flutter test
 
 ### ✅ Implementadas no MVP
 
-1. **Categorias**
+1. **Múltiplas Listas de Compras** ⭐ **NOVO**
+   - Tela inicial (Home) centraliza todas as listas criadas
+   - Criar novas listas com nomes personalizados
+   - Navegação entre listas existentes
+   - Lista padrão "Lista de compras 1" criada automaticamente
+   - Migração automática de dados antigos para a primeira lista
+   - Cada lista mantém suas próprias categorias e itens
+   - Validação: não permite nomes vazios ou duplicados (case-insensitive)
+
+2. **Categorias**
    - Criar categorias personalizadas (ex: "Mercearia", "Hortifruti")
    - Editar nome de categorias existentes (botao de edicao no header da categoria)
-   - Cada categoria possui um header visual destacado (fundo azul, texto em negrito)
+   - Mudar cor de fundo das categorias (8 opções de cores)
+   - Cada categoria possui um header visual destacado (fundo colorido, texto em negrito)
    - Categorias são colapsáveis com ícone chevron animado
    - Seção "Sem categoria" sempre visível para itens não categorizados
+   - "Sem categoria" é uma categoria especial: fixa no topo, não colapsável, permite mudança de cor
    - Validação: não permite nomes vazios ou duplicados (case-insensitive)
    - Reordenacao manual de categorias com drag-and-drop (pressione e segure o header)
    - "Sem categoria" permanece fixa no topo para manter itens nao categorizados previsiveis
 
-2. **Itens de Compras**
+3. **Itens de Compras**
    - Adicionar itens dentro de categorias ou sem categoria
    - Editar nome de itens existentes (botão de edição no item)
    - Checkbox para marcar/desmarcar itens
@@ -49,18 +60,20 @@ flutter test
      - Checkbox verde quando marcado
    - Validação: não permite nomes vazios ou duplicados na mesma categoria (case-insensitive)
    
-3. **Ordenação Inteligente**
+4. **Ordenação Inteligente**
    - **Itens não marcados aparecem primeiro** (ordenados por data de criação)
    - **Itens marcados vão para o fim** (ordenados por data de marcação)
    - Ao desmarcar, item volta para o topo
    - Ordenação é automática e persiste entre sessões
 
-4. **Persistência Local**
+5. **Persistência Local**
    - Dados salvos localmente usando `shared_preferences`
-   - Categorias, itens e estados são preservados ao fechar o app
+   - Múltiplas listas, categorias, itens e estados são preservados ao fechar o app
    - Carregamento automático ao abrir o aplicativo
+   - Migração automática de dados antigos para o novo formato
+   - Cada lista tem seus próprios dados isolados
 
-5. **Validações**
+6. **Validações**
    - Não permite criar/editar categorias/itens com nome vazio
    - Não permite nomes duplicados (categorias: globalmente; itens: dentro da mesma categoria)
    - Validação case-insensitive para evitar duplicatas
@@ -76,7 +89,8 @@ lib/
 └── features/
     └── shopping_list/
         ├── models/                    # Modelos de dados
-        │   ├── category.dart          # Model: Categoria
+        │   ├── shopping_list.dart     # Model: Lista de compras
+        │   ├── category.dart          # Model: Categoria (com cor)
         │   └── shopping_item.dart     # Model: Item de compras
         │
         ├── data/                      # Camada de dados
@@ -86,33 +100,41 @@ lib/
         │   └── shopping_list_controller.dart  # ChangeNotifier com lógica de negócio
         │
         ├── widgets/                   # Componentes reutilizáveis
-        │   ├── category_header.dart   # Header de categoria
+        │   ├── category_header.dart   # Header de categoria (com seletor de cor)
         │   ├── category_section.dart  # Seção completa (header + itens)
         │   └── shopping_item_tile.dart # Card individual de item
         │
         └── screens/                   # Telas
-            └── shopping_list_screen.dart  # Tela principal
+            ├── home_screen.dart       # Tela inicial com lista de listas
+            └── shopping_list_screen.dart  # Tela de uma lista específica
 ```
 
 ### Camadas
 
 #### 1. **Models** (`models/`)
-- `Category`: Representa uma categoria com id, nome e estado de colapso
+- `ShoppingList`: Representa uma lista de compras com id, nome e data de criação
+- `Category`: Representa uma categoria com id, nome, estado de colapso e cor (colorValue)
 - `ShoppingItem`: Representa um item com id, nome, estado checked, categoryId, timestamps
-- Ambos possuem serialização/deserialização JSON para persistência
+- Todos possuem serialização/deserialização JSON para persistência
 
 #### 2. **Data** (`data/`)
 - `ShoppingRepository`: Interface com SharedPreferences
-  - Salva/carrega categorias e itens como JSON
+  - Salva/carrega listas, categorias e itens como JSON
+  - Suporte a múltiplas listas (dados isolados por listId)
+  - Migração automática de dados antigos para o novo formato
   - Tratamento de erros de deserialização
 
 #### 3. **State** (`state/`)
 - `ShoppingListController`: ChangeNotifier que gerencia todo o estado
-  - CRUD de categorias e itens
+  - Gerenciamento de múltiplas listas de compras
+  - Lista ativa (activeListId) determina qual lista está sendo visualizada
+  - CRUD de listas, categorias e itens
   - Lógica de ordenação (itens não marcados primeiro)
   - Colapso/expansão de categorias
+  - Mudança de cor de categorias
   - Persistência automática após mudanças
   - **Regra principal**: Ao marcar item, define `checkedAt` e reordena via `_sortItems()`
+  - **Categoria especial**: "Sem categoria" (id: 'sem-categoria') é criada automaticamente em cada lista
 
 #### 4. **Widgets** (`widgets/`)
 - `CategoryHeader`: Header visual com chevron animado e botão de adicionar
@@ -120,7 +142,12 @@ lib/
 - `CategorySection`: Agrupa header + lista de itens com animação de colapso
 
 #### 5. **Screens** (`screens/`)
-- `ShoppingListScreen`: Tela principal que consome o controller via Provider
+- `HomeScreen`: Tela inicial que exibe todas as listas
+  - Lista todas as listas de compras criadas
+  - Destaca a lista ativa
+  - Dialog para criar nova lista
+  - Navegação para ShoppingListScreen ao selecionar uma lista
+- `ShoppingListScreen`: Tela de uma lista específica
   - Exibe todas as seções (Sem categoria + categorias criadas)
   - Dialogs para adicionar categoria/item
   - Confirmação antes de deletar
@@ -213,13 +240,15 @@ flutter test
 Funcionalidades que poderiam ser adicionadas:
 
 1. ~~**Editar nome de categoria/item**~~ ✅ **Implementado**
-2. **Reordenar categorias manualmente** (drag and drop)
-3. **Busca/filtro de itens**
-4. **Temas claro/escuro**
-5. **Compartilhar lista** (export para texto/PDF)
-6. **Múltiplas listas** (ex: "Supermercado", "Farmácia")
-7. **Sincronização na nuvem** (Firebase)
-8. **Quantidade de itens** (ex: "Arroz - 2kg")
+2. ~~**Reordenar categorias manualmente**~~ ✅ **Implementado** (drag and drop)
+3. ~~**Múltiplas listas**~~ ✅ **Implementado** (Home screen com múltiplas listas)
+4. ~~**Personalização de cores**~~ ✅ **Implementado** (8 cores para categorias)
+5. **Editar/excluir listas de compras**
+6. **Busca/filtro de itens**
+7. **Temas claro/escuro**
+8. **Compartilhar lista** (export para texto/PDF)
+9. **Sincronização na nuvem** (Firebase)
+10. **Quantidade de itens** (ex: "Arroz - 2kg")
 
 ## 📦 Dependências
 

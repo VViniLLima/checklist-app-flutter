@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'features/shopping_list/data/shopping_repository.dart';
 import 'features/shopping_list/state/shopping_list_controller.dart';
-import 'features/shopping_list/screens/shopping_list_screen.dart';
+import 'features/shopping_list/screens/home_screen.dart';
 //import 'package:google_fonts/google_fonts.dart';
 
 void main() async {
@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         debugShowCheckedModeBanner: false,
-        home: const ShoppingListScreen(),
+        home: const HomeScreen(),
       ),
     );
   }
