@@ -69,6 +69,8 @@ class ShoppingListScreen extends StatelessWidget {
                     final items = controller.getItemsByCategory(category.id);
                     final isCollapsed = controller.isCategoryCollapsed(category.id);
 
+                    final isCompleted = controller.isCategoryCompleted(category.id);
+
                     return Material(
                       key: ValueKey(category.id),
                       child: CategorySection(
@@ -94,11 +96,15 @@ class ShoppingListScreen extends StatelessWidget {
                             controller.markItemChecked(item.id),
                         onSwipeDelete: (item) =>
                             _handleSwipeDelete(context, controller, item),
-                        showDragHandle: true,
-                        headerWrapper: (header) => ReorderableDelayedDragStartListener(
-                          index: index,
-                          child: header,
-                        ),
+                        // Disable drag handle for completed categories to avoid
+                        // overriding automatic movement to the end
+                        showDragHandle: !isCompleted,
+                        headerWrapper: !isCompleted
+                            ? (header) => ReorderableDelayedDragStartListener(
+                                  index: index,
+                                  child: header,
+                                )
+                            : null,
                       ),
                     );
                   },

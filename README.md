@@ -61,10 +61,16 @@ flutter test
    - Validação: não permite nomes vazios ou duplicados na mesma categoria (case-insensitive)
    
 4. **Ordenação Inteligente**
-   - **Itens não marcados aparecem primeiro** (ordenados por data de criação)
-   - **Itens marcados vão para o fim** (ordenados por data de marcação)
-   - Ao desmarcar, item volta para o topo
-   - Ordenação é automática e persiste entre sessões
+    - **Itens não marcados aparecem primeiro** (ordenados por data de criação)
+    - **Itens marcados vão para o fim** (ordenados por data de marcação)
+    - Ao desmarcar, item volta para o topo
+    - Ordenação é automática e persiste entre sessões
+    - **Categorias completas são movidas automaticamente para o fim**
+      - Quando TODAS as tarefas de uma categoria (pelo menos 1 item) estiverem marcadas, a categoria será movida automaticamente para o fim da lista de categorias
+      - Categorias vazias NÃO são consideradas completas
+      - A categoria especial "Sem categoria" NÃO participa desse comportamento e permanece fixa no topo
+      - O usuário pode reordenar manualmente as categorias ativas; o reordenamento automático preserva a ordem manual entre categorias ativas e mantém a ordem relativa entre categorias completadas
+      - Mudanças de ordem são persistidas
 
 5. **Persistência Local**
    - Dados salvos localmente usando `shared_preferences`

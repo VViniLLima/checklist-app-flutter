@@ -10,12 +10,14 @@ class Category {
   final String name;
   final bool isCollapsed;
   final int colorValue; // Armazena o valor da cor como int
+  final int sortOrder; // Ordem persistida da categoria (0 = primeiro após sem-categoria)
 
   const Category({
     required this.id,
     required this.name,
     this.isCollapsed = false,
     this.colorValue = 0xFFE3F2FD, // Colors.blue.shade50 default
+    this.sortOrder = 0,
   });
 
   /// Retorna a cor como objeto Color
@@ -26,12 +28,14 @@ class Category {
     String? name,
     bool? isCollapsed,
     int? colorValue,
+    int? sortOrder,
   }) {
     return Category(
       id: id ?? this.id,
       name: name ?? this.name,
       isCollapsed: isCollapsed ?? this.isCollapsed,
       colorValue: colorValue ?? this.colorValue,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 
@@ -41,6 +45,7 @@ class Category {
       'name': name,
       'isCollapsed': isCollapsed,
       'colorValue': colorValue,
+      'sortOrder': sortOrder,
     };
   }
 
@@ -50,6 +55,7 @@ class Category {
       name: json['name'] as String,
       isCollapsed: json['isCollapsed'] as bool? ?? false,
       colorValue: json['colorValue'] as int? ?? 0xFFE3F2FD,
+      sortOrder: json['sortOrder'] as int? ?? 0,
     );
   }
 
@@ -60,11 +66,12 @@ class Category {
         other.id == id &&
         other.name == name &&
         other.isCollapsed == isCollapsed &&
-        other.colorValue == colorValue;
+        other.colorValue == colorValue &&
+        other.sortOrder == sortOrder;
   }
 
   @override
-  int get hashCode => Object.hash(id, name, isCollapsed, colorValue);
+  int get hashCode => Object.hash(id, name, isCollapsed, colorValue, sortOrder);
 
   @override
   String toString() => 'Category(id: $id, name: $name, isCollapsed: $isCollapsed, colorValue: $colorValue)';

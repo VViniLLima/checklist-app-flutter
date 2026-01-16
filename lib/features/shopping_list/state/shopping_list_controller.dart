@@ -127,7 +127,33 @@ class ShoppingListController extends ChangeNotifier {
   Future<void> _loadListData(String listId) async {
     _categories = await _repository.loadCategories(listId);
     _items = await _repository.loadItems(listId);
+
+    // Ensure "Sem categoria" exists and then normalize sortOrder values
     _ensureSemCategoriaExists();
+    await _normalizeCategorySortOrdersIfNeeded();
+  }
+
+  /// Normaliza o campo sortOrder das categorias com base na ordem atual
+  /// Se detectar valores duplicados ou não-ordenados (ex: dados migrados),
+  /// reatribui valores sequenciais (0,1,2...) preservando a ordem atual.
+  Future<void> _normalizeCategorySortOrdersIfNeeded() async {
+    if (_activeListId == null) return;
+
+    final orders = <int>{};
+    var hasDuplicates = false;
+    for (final cat in _categories) {
+      if (orders.contains(cat.sortOrder)) {
+        hasDuplicates = true;
+        break;
+      }
+      orders.add(cat.sortOrder);
+    }
+
+    if (!hasDuplicates) return;
+
+    // Re-sequence based on current order
+    _categories = List.generate(_categories.length, (i) => _categories[i].copyWith(sortOrder: i));
+    await _repository.saveCategories(_activeListId!, _categories);
   }
 
   void _ensureSemCategoriaExists() {
@@ -189,6 +215,8 @@ class ShoppingListController extends ChangeNotifier {
     final newCategory = models.Category(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
+      // Assign next sort order at the end of current categories
+      sortOrder: (_categories.isEmpty ? 0 : _categories.map((c) => c.sortOrder).reduce((a, b) => a > b ? a : b) + 1),
     );
 
     _categories.add(newCategory);
@@ -268,14 +296,49 @@ class ShoppingListController extends ChangeNotifier {
       newIndex -= 1;
     }
 
-    // Get only reorderable categories (excluding sem-categoria)
+    // Reorder only within the active (not-completed) group
     final reorderableCategories = _categories.where((cat) => cat.id != 'sem-categoria').toList();
-    final moved = reorderableCategories.removeAt(oldIndex);
-    reorderableCategories.insert(newIndex, moved);
 
-    // Rebuild full list with sem-categoria at the beginning
+    // Disallow moving a category that is already completed
+    final movedCategory = reorderableCategories[oldIndex];
+    if (isCategoryCompleted(movedCategory.id)) return;
+
+    // Build active and completed groups preserving relative order
+    final activeCats = <models.Category>[];
+    final completedCats = <models.Category>[];
+    for (final c in reorderableCategories) {
+      if (isCategoryCompleted(c.id)) {
+        completedCats.add(c);
+      } else {
+        activeCats.add(c);
+      }
+    }
+
+    // Compute positions within activeCats based on original indexes
+    final activeOldIndex = activeCats.indexWhere((c) => c.id == movedCategory.id);
+    if (activeOldIndex == -1) return; // safety
+
+    // Convert newIndex (index in reorderableCategories) to index within activeCats
+    var activeNewIndex = 0;
+    for (var i = 0; i < newIndex; i++) {
+      if (!isCategoryCompleted(reorderableCategories[i].id)) activeNewIndex++;
+    }
+
+    // Remove and insert within active list
+    activeCats.removeAt(activeOldIndex);
+    // Clamp insertion index
+    if (activeNewIndex < 0) activeNewIndex = 0;
+    if (activeNewIndex > activeCats.length) activeNewIndex = activeCats.length;
+    activeCats.insert(activeNewIndex, movedCategory);
+
+    // Rebuild full categories list with sem-categoria first
     final semCategoria = _categories.firstWhere((cat) => cat.id == 'sem-categoria');
-    _categories = [semCategoria, ...reorderableCategories];
+    _categories = [semCategoria, ...activeCats, ...completedCats];
+
+    // Update sortOrder to reflect new persisted order (preserve sem-categoria at 0)
+    for (var i = 0; i < _categories.length; i++) {
+      _categories[i] = _categories[i].copyWith(sortOrder: i);
+    }
 
     await _repository.saveCategories(_activeListId!, _categories);
     notifyListeners();
@@ -297,6 +360,9 @@ class ShoppingListController extends ChangeNotifier {
     _items.add(newItem);
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
+
+    // Re-evaluate category ordering because adding an item can change completion
+    await reorderCategoriesBasedOnCompletion();
   }
 
   /// Remove item da lista
@@ -306,6 +372,9 @@ class ShoppingListController extends ChangeNotifier {
     _items.removeWhere((item) => item.id == itemId);
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
+
+    // Re-evaluate categories since removing an item may change completion state
+    await reorderCategoriesBasedOnCompletion();
   }
 
   /// Edita o nome de um item existente
@@ -322,6 +391,9 @@ class ShoppingListController extends ChangeNotifier {
 
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
+
+    // Editing an item might affect completion (edge cases) - re-evaluate
+    await reorderCategoriesBasedOnCompletion();
   }
 
   /// Marca/desmarca item
@@ -354,6 +426,9 @@ class ShoppingListController extends ChangeNotifier {
 
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
+
+    // Re-evaluate ordering - toggling can change category completion
+    await reorderCategoriesBasedOnCompletion();
   }
 
   /// Marca item como checked (ignora se ja estiver marcado)
@@ -380,6 +455,9 @@ class ShoppingListController extends ChangeNotifier {
     if (!didUpdate) return;
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
+
+    // Re-evaluate ordering after marking
+    await reorderCategoriesBasedOnCompletion();
   }
 
   /// Restaura um item removido (usado por Undo)
@@ -390,6 +468,9 @@ class ShoppingListController extends ChangeNotifier {
     _items.add(item);
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
+
+    // Restoring an item can change completion state
+    await reorderCategoriesBasedOnCompletion();
   }
 
   // ==================== Utilidades ====================
@@ -402,6 +483,62 @@ class ShoppingListController extends ChangeNotifier {
       orElse: () => const models.Category(id: '', name: '', isCollapsed: false),
     );
     return category.isCollapsed;
+  }
+
+  /// Retorna true se a categoria for considerada COMPLETA:
+  /// - Não é a categoria especial 'sem-categoria'
+  /// - Possui ao menos 1 item
+  /// - Todos os seus itens possuem isChecked == true
+  bool isCategoryCompleted(String? categoryId) {
+    if (categoryId == null) return false;
+    if (categoryId == 'sem-categoria') return false;
+
+    final categoryItems = _items.where((i) => i.categoryId == categoryId).toList();
+    if (categoryItems.isEmpty) return false; // Empty categories are NOT completed
+
+    return categoryItems.every((i) => i.isChecked);
+  }
+
+  /// Reorders categories so that completed categories move to the end
+  /// - Preserves manual order among active (not completed) categories
+  /// - Preserves relative order among completed categories (stable)
+  /// - Does nothing during initial loading
+  Future<void> reorderCategoriesBasedOnCompletion() async {
+    if (_isLoading) return; // do not reorder while loading
+    if (_activeListId == null) return;
+
+    final sem = _categories.firstWhere((c) => c.id == 'sem-categoria', orElse: () => const models.Category(id: 'sem-categoria', name: 'Sem categoria'));
+
+    // Only consider reorderable categories (exclude sem-categoria)
+    final others = _categories.where((c) => c.id != 'sem-categoria').toList();
+
+    final active = <models.Category>[];
+    final completed = <models.Category>[];
+    for (final c in others) {
+      if (isCategoryCompleted(c.id)) {
+        completed.add(c);
+      } else {
+        active.add(c);
+      }
+    }
+
+    final newOrder = [sem, ...active, ...completed];
+
+    // Check if order changed (compare ids)
+    final same = newOrder.length == _categories.length &&
+        Iterable.generate(newOrder.length).every((i) => newOrder[i].id == _categories[i].id);
+
+    if (same) return;
+
+    _categories = newOrder;
+
+    // Update sortOrder values to persist the order (sem-categoria at 0)
+    for (var i = 0; i < _categories.length; i++) {
+      _categories[i] = _categories[i].copyWith(sortOrder: i);
+    }
+
+    await _repository.saveCategories(_activeListId!, _categories);
+    notifyListeners();
   }
 
   /// Limpa todos os dados (para testes)
