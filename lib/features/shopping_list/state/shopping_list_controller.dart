@@ -473,6 +473,56 @@ class ShoppingListController extends ChangeNotifier {
     await reorderCategoriesBasedOnCompletion();
   }
 
+  /// Move an existing item to another category (or to 'sem-categoria' when null)
+  Future<void> moveItemToCategory(String itemId, String? newCategoryId) async {
+    if (_activeListId == null) return;
+
+    final existingIndex = _items.indexWhere((i) => i.id == itemId);
+    if (existingIndex == -1) return;
+
+    final existing = _items[existingIndex];
+    if (existing.categoryId == newCategoryId) return; // no-op
+
+    _items = _items.map((item) {
+      if (item.id == itemId) {
+        return item.copyWith(categoryId: newCategoryId);
+      }
+      return item;
+    }).toList();
+
+    await _repository.saveItems(_activeListId!, _items);
+    notifyListeners();
+
+    // Re-evaluate categories since source/destination completion may change
+    await reorderCategoriesBasedOnCompletion();
+  }
+
+  /// Copy an existing item into another category (creates a new item)
+  /// The copied item will be unchecked by default and have a new id/createdAt.
+  Future<void> copyItemToCategory(String itemId, String? destinationCategoryId) async {
+    if (_activeListId == null) return;
+
+    final originalIndex = _items.indexWhere((i) => i.id == itemId);
+    if (originalIndex == -1) return;
+    final original = _items[originalIndex];
+
+    final newItem = ShoppingItem(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: original.name,
+      categoryId: destinationCategoryId,
+      createdAt: DateTime.now(),
+      isChecked: false,
+      checkedAt: null,
+    );
+
+    _items.add(newItem);
+    await _repository.saveItems(_activeListId!, _items);
+    notifyListeners();
+
+    // Re-evaluate categories since destination completion may change
+    await reorderCategoriesBasedOnCompletion();
+  }
+
   // ==================== Utilidades ====================
 
   /// Verifica se uma categoria está colapsada

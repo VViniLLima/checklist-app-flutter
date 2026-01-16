@@ -58,7 +58,13 @@ flutter test
      - Fundo mais claro (cinza)
      - Texto tachado (line-through)
      - Checkbox verde quando marcado
-   - Validação: não permite nomes vazios ou duplicados na mesma categoria (case-insensitive)
+    - Validação: não permite nomes vazios ou duplicados na mesma categoria (case-insensitive)
+    - Nova interação por item: Overflow menu (três pontos) com ações: Edit, Move, Copy, Delete
+      - Edit: abre diálogo para renomear o item (mantém id, estado checked e categoria)
+      - Move: move o item para outra categoria escolhida (preserva createdAt)
+      - Copy: duplica o item em outra categoria (novo id, unchecked por padrão)
+      - Delete: remove o item (com Undo via SnackBar, quando aplicável)
+    - Os ícones de edição e exclusão inline foram substituídos pelo menu de overflow; os gestos de swipe continuam funcionando
    
 4. **Ordenação Inteligente**
     - **Itens não marcados aparecem primeiro** (ordenados por data de criação)

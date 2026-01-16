@@ -13,6 +13,8 @@ class ShoppingItemTile extends StatelessWidget {
   final VoidCallback onToggleCheck;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final VoidCallback? onMove;
+  final VoidCallback? onCopy;
   final VoidCallback onSwipeComplete;
   final VoidCallback onSwipeDelete;
 
@@ -22,6 +24,8 @@ class ShoppingItemTile extends StatelessWidget {
     required this.onToggleCheck,
     required this.onDelete,
     required this.onEdit,
+    this.onMove,
+    this.onCopy,
     required this.onSwipeComplete,
     required this.onSwipeDelete,
   });
@@ -107,20 +111,30 @@ class ShoppingItemTile extends StatelessWidget {
               color: item.isChecked ? Colors.grey.shade600 : Colors.black87,
             ),
           ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.edit_outlined, color: Colors.blue),
-                onPressed: onEdit,
-                tooltip: 'Editar item',
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                onPressed: onDelete,
-                tooltip: 'Remover item',
-              ),
+          trailing: PopupMenuButton<String>(
+            onSelected: (value) {
+              switch (value) {
+                case 'edit':
+                  onEdit();
+                  break;
+                case 'move':
+                  if (onMove != null) onMove!();
+                  break;
+                case 'copy':
+                  if (onCopy != null) onCopy!();
+                  break;
+                case 'delete':
+                  onDelete();
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'edit', child: Text('Edit')),
+              const PopupMenuItem(value: 'move', child: Text('Move')),
+              const PopupMenuItem(value: 'copy', child: Text('Copy')),
+              const PopupMenuItem(value: 'delete', child: Text('Delete')),
             ],
+            icon: const Icon(Icons.more_vert),
           ),
         ),
       ),

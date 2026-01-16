@@ -20,6 +20,8 @@ class CategorySection extends StatelessWidget {
   final Function(String itemId) onToggleItemCheck;
   final Function(String itemId) onDeleteItem;
   final Function(String itemId) onEditItem;
+  final Function(String itemId)? onMoveItem;
+  final Function(String itemId)? onCopyItem;
   final Function(ShoppingItem item) onSwipeComplete;
   final Function(ShoppingItem item) onSwipeDelete;
   final bool showDragHandle;
@@ -36,6 +38,8 @@ class CategorySection extends StatelessWidget {
     required this.onToggleItemCheck,
     required this.onEditItem,
     required this.onDeleteItem,
+    this.onMoveItem,
+    this.onCopyItem,
     required this.onSwipeComplete,
     required this.onSwipeDelete,
     this.showDragHandle = false,
@@ -81,17 +85,19 @@ class CategorySection extends StatelessWidget {
                             ),
                           ),
                         ]
-                      : items.map((item) {
+                        : items.map((item) {
                        return ShoppingItemTile(
-                         key: ValueKey(item.id),
-                         item: item,
-                         onToggleCheck: () => onToggleItemCheck(item.id),
-                         onDelete: () => onDeleteItem(item.id),
-                         onEdit: () => onEditItem(item.id),
-                         onSwipeComplete: () => onSwipeComplete(item),
-                         onSwipeDelete: () => onSwipeDelete(item),
-                       );
-                     }).toList(),
+                          key: ValueKey(item.id),
+                          item: item,
+                          onToggleCheck: () => onToggleItemCheck(item.id),
+                          onDelete: () => onDeleteItem(item.id),
+                          onEdit: () => onEditItem(item.id),
+                          onMove: () => onMoveItem?.call(item.id),
+                          onCopy: () => onCopyItem?.call(item.id),
+                          onSwipeComplete: () => onSwipeComplete(item),
+                          onSwipeDelete: () => onSwipeDelete(item),
+                        );
+                      }).toList(),
                 ),
         ),
       ],

@@ -40,19 +40,25 @@ class ShoppingListScreen extends StatelessWidget {
                         items: controller.getItemsByCategory('sem-categoria'),
                         isCollapsed: false, // "Sem categoria" nunca colapsa
                         onToggleCollapse: () {}, // Nao faz nada
-                onAddItem: () => _showAddItemDialog(context, 'sem-categoria'),
-                onEditCategory: () {}, // Placeholder - color change handled in CategoryHeader
-                onToggleItemCheck: controller.toggleItemCheck,
-                onEditItem: (itemId) => _showEditItemDialog(context, itemId),
-                onDeleteItem: (itemId) => _confirmDelete(
-                  context,
-                  'Deseja remover este item?',
-                  () => controller.removeItem(itemId),
-                ),
-                onSwipeComplete: (item) => controller.markItemChecked(item.id),
-                onSwipeDelete: (item) =>
-                    _handleSwipeDelete(context, controller, item),
-              ),
+                        onAddItem: () => _showAddItemDialog(context, 'sem-categoria'),
+                        onEditCategory: () {}, // Placeholder - color change handled in CategoryHeader
+                        onToggleItemCheck: controller.toggleItemCheck,
+                        onEditItem: (itemId) => _showEditItemDialog(context, itemId),
+                        onDeleteItem: (itemId) => _confirmDelete(
+                          context,
+                          'Deseja remover este item?',
+                          () => controller.removeItem(itemId),
+                        ),
+                        onSwipeComplete: (item) => controller.markItemChecked(item.id),
+                        onSwipeDelete: (item) =>
+                            _handleSwipeDelete(context, controller, item),
+                        onMoveItem: (itemId) => _showCategoryPicker(context, (catId) async {
+                          await controller.moveItemToCategory(itemId, catId);
+                        }),
+                        onCopyItem: (itemId) => _showCategoryPicker(context, (catId) async {
+                          await controller.copyItemToCategory(itemId, catId);
+                        }),
+                      ),
             ],
           ),
         ),
@@ -96,6 +102,12 @@ class ShoppingListScreen extends StatelessWidget {
                             controller.markItemChecked(item.id),
                         onSwipeDelete: (item) =>
                             _handleSwipeDelete(context, controller, item),
+                        onMoveItem: (itemId) => _showCategoryPicker(context, (catId) async {
+                          await controller.moveItemToCategory(itemId, catId);
+                        }),
+                        onCopyItem: (itemId) => _showCategoryPicker(context, (catId) async {
+                          await controller.copyItemToCategory(itemId, catId);
+                        }),
                         // Disable drag handle for completed categories to avoid
                         // overriding automatic movement to the end
                         showDragHandle: !isCompleted,
@@ -438,6 +450,49 @@ class ShoppingListScreen extends StatelessWidget {
               Navigator.of(context).pop();
             },
             child: const Text('Adicionar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Shared category picker used for Move/Copy operations
+  void _showCategoryPicker(BuildContext context, Function(String? categoryId) onSelected) {
+    final controller = context.read<ShoppingListController>();
+    final categories = <dynamic>[];
+    final sem = controller.semCategoria;
+    if (sem != null) categories.add(sem);
+    categories.addAll(controller.categories);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Escolha a categoria'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              final cat = categories[index];
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: cat.color,
+                  radius: 10,
+                ),
+                title: Text(cat.name),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  onSelected(cat.id);
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
           ),
         ],
       ),
