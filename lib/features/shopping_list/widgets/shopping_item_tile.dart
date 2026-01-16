@@ -90,7 +90,7 @@ class ShoppingItemTile extends StatelessWidget {
           color: item.isChecked ? Colors.grey.shade100 : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: item.isChecked ? Colors.grey.shade300 : Colors.grey.shade200,
+            color: item.isChecked ? Colors.grey.shade100 : const Color.fromARGB(0, 238, 238, 238),
           ),
         ),
         child: ListTile(
