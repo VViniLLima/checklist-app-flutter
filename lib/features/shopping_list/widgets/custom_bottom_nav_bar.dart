@@ -19,8 +19,11 @@ class CustomBottomNavBar extends StatelessWidget {
     const inactiveColor = Color(0xFF9EA6BE);
     const centerButtonColor = Color(0xFF6342E8);
 
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final navBarHeight = 85.0 + bottomPadding;
+
     return SizedBox(
-      height: 100, // Safe height for items + bump + home indicator
+      height: navBarHeight,
       child: Stack(
         children: [
           // Background with painter
