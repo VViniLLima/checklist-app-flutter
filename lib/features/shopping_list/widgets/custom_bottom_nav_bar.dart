@@ -19,8 +19,8 @@ class CustomBottomNavBar extends StatelessWidget {
     const inactiveColor = Color(0xFF9EA6BE);
     const centerButtonColor = Color(0xFF6342E8);
 
-    return Container(
-      height: 100, // Total height including bump and bottom margin
+    return SizedBox(
+      height: 100, // Safe height for items + bump + home indicator
       child: Stack(
         children: [
           // Background with painter
@@ -29,49 +29,55 @@ class CustomBottomNavBar extends StatelessWidget {
           // Navigation Items
           Align(
             alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _NavBarItem(
-                    index: 0,
-                    currentIndex: currentIndex,
-                    icon: Icons.home_rounded,
-                    label: 'Home',
-                    onTap: onTap,
-                    activeColor: activeColor,
-                    inactiveColor: inactiveColor,
-                  ),
-                  _NavBarItem(
-                    index: 1,
-                    currentIndex: currentIndex,
-                    icon: Icons.search_rounded,
-                    label: 'Search',
-                    onTap: onTap,
-                    activeColor: activeColor,
-                    inactiveColor: inactiveColor,
-                  ),
-                  const SizedBox(width: 56), // Space for center button
-                  _NavBarItem(
-                    index: 3,
-                    currentIndex: currentIndex,
-                    icon: Icons.history,
-                    label: 'Histórico',
-                    onTap: onTap,
-                    activeColor: activeColor,
-                    inactiveColor: inactiveColor,
-                  ),
-                  _NavBarItem(
-                    index: 4,
-                    currentIndex: currentIndex,
-                    icon: Icons.person_outline_rounded,
-                    label: 'Profile',
-                    onTap: onTap,
-                    activeColor: activeColor,
-                    inactiveColor: inactiveColor,
-                  ),
-                ],
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _NavBarItem(
+                      index: 0,
+                      currentIndex: currentIndex,
+                      icon: Icons.home_rounded,
+                      label: 'Home',
+                      onTap: onTap,
+                      activeColor: activeColor,
+                      inactiveColor: inactiveColor,
+                    ),
+                    _NavBarItem(
+                      index: 1,
+                      currentIndex: currentIndex,
+                      icon: Icons.search_rounded,
+                      label: 'Search',
+                      onTap: onTap,
+                      activeColor: activeColor,
+                      inactiveColor: inactiveColor,
+                    ),
+                    const SizedBox(width: 56), // Space for center button
+                    _NavBarItem(
+                      index: 3,
+                      currentIndex: currentIndex,
+                      icon: Icons.history,
+                      label: 'Histórico',
+                      onTap: onTap,
+                      activeColor: activeColor,
+                      inactiveColor: inactiveColor,
+                    ),
+                    _NavBarItem(
+                      index: 4,
+                      currentIndex: currentIndex,
+                      icon: Icons.person_outline_rounded,
+                      label: 'Profile',
+                      onTap: onTap,
+                      activeColor: activeColor,
+                      inactiveColor: inactiveColor,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

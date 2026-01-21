@@ -23,179 +23,226 @@ class ShoppingListScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Row(
-              children: [
-                Expanded(
-                  child: Text(listName, overflow: TextOverflow.ellipsis),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 20),
-                  tooltip: 'Renomear Lista',
-                  onPressed: () => _showRenameListDialog(
-                    context,
-                    controller,
-                    activeList?.id,
-                    listName,
-                  ),
-                ),
-              ],
+            title: Text(
+              listName,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () => _showRenameListDialog(
+                  context,
+                  controller,
+                  activeList?.id,
+                  listName,
+                ),
+              ),
+            ],
             backgroundColor: Colors.transparent,
-            foregroundColor: Colors.black,
+            elevation: 0,
           ),
           body: controller.isLoading
               ? const Center(child: CircularProgressIndicator())
-              : CustomScrollView(
-                  slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.all(10),
-                      sliver: SliverList(
-                        delegate: SliverChildListDelegate([
-                          // "Sem categoria" fica fixa no topo para evitar confusao com itens nao categorizados.
-                          CategorySection(
-                            category: controller.semCategoria,
-                            items: controller.getItemsByCategory(
-                              'sem-categoria',
-                            ),
-                            isCollapsed: false, // "Sem categoria" nunca colapsa
-                            onToggleCollapse: () {}, // Nao faz nada
-                            onAddItem: () =>
-                                _showAddItemDialog(context, 'sem-categoria'),
-                            onEditCategory:
-                                () {}, // Placeholder - color change handled in CategoryHeader
-                            onToggleItemCheck: controller.toggleItemCheck,
-                            onEditItem: (itemId) =>
-                                _showEditItemDialog(context, itemId),
-                            onDeleteItem: (itemId) => _confirmDelete(
-                              context,
-                              'Deseja remover este item?',
-                              () {
-                                final item = controller.allItems.firstWhere(
-                                  (i) => i.id == itemId,
-                                );
-                                _performDeleteWithSnackBar(
-                                  context,
-                                  controller,
-                                  item,
-                                );
-                              },
-                            ),
-                            onSwipeComplete: (item) =>
-                                controller.markItemChecked(item.id),
-                            onSwipeDelete: (item) =>
-                                _handleSwipeDelete(context, controller, item),
-                            onMoveItem: (itemId) =>
-                                _showCategoryPicker(context, (catId) async {
-                                  await controller.moveItemToCategory(
-                                    itemId,
-                                    catId,
-                                  );
-                                }),
-                            onCopyItem: (itemId) =>
-                                _showCategoryPicker(context, (catId) async {
-                                  await controller.copyItemToCategory(
-                                    itemId,
-                                    catId,
-                                  );
-                                }),
+              : Column(
+                  children: [
+                    Expanded(
+                      child: CustomScrollView(
+                        slivers: [
+                          // Summary Card
+                          SliverToBoxAdapter(
+                            child: _buildSummaryCard(context, controller),
                           ),
-                        ]),
-                      ),
-                    ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      sliver: SliverReorderableList(
-                        itemCount: controller.categories.length,
-                        onReorder: (oldIndex, newIndex) {
-                          controller.reorderCategories(oldIndex, newIndex);
-                        },
-                        itemBuilder: (context, index) {
-                          final category = controller.categories[index];
-                          final items = controller.getItemsByCategory(
-                            category.id,
-                          );
-                          final isCollapsed = controller.isCategoryCollapsed(
-                            category.id,
-                          );
 
-                          final isCompleted = controller.isCategoryCompleted(
-                            category.id,
-                          );
-
-                          return Material(
-                            key: ValueKey(category.id),
-                            child: CategorySection(
-                              category: category,
-                              items: items,
-                              isCollapsed: isCollapsed,
-                              onToggleCollapse: () => controller
-                                  .toggleCategoryCollapse(category.id),
-                              onAddItem: () =>
-                                  _showAddItemDialog(context, category.id),
-                              onEditCategory: () => _showEditCategoryDialog(
-                                context,
-                                category.id,
-                                category.name,
-                              ),
-                              onToggleItemCheck: controller.toggleItemCheck,
-                              onEditItem: (itemId) =>
-                                  _showEditItemDialog(context, itemId),
-                              onDeleteItem: (itemId) => _confirmDelete(
-                                context,
-                                'Deseja remover este item?',
-                                () {
-                                  final item = controller.allItems.firstWhere(
-                                    (i) => i.id == itemId,
-                                  );
-                                  _performDeleteWithSnackBar(
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            sliver: SliverList(
+                              delegate: SliverChildListDelegate([
+                                CategorySection(
+                                  category: controller.semCategoria,
+                                  items: controller.getItemsByCategory(
+                                    'sem-categoria',
+                                  ),
+                                  isCollapsed: false,
+                                  onToggleCollapse: () {},
+                                  onAddItem: () => _showAddItemDialog(
+                                    context,
+                                    'sem-categoria',
+                                  ),
+                                  onEditCategory: () {},
+                                  onToggleItemCheck: controller.toggleItemCheck,
+                                  onEditItem: (itemId) =>
+                                      _showEditItemBottomSheet(context, itemId),
+                                  onDeleteItem: (itemId) => _confirmDelete(
+                                    context,
+                                    'Deseja remover este item?',
+                                    () {
+                                      final item = controller.allItems
+                                          .firstWhere((i) => i.id == itemId);
+                                      _performDeleteWithSnackBar(
+                                        context,
+                                        controller,
+                                        item,
+                                      );
+                                    },
+                                  ),
+                                  onSwipeComplete: (item) =>
+                                      controller.markItemChecked(item.id),
+                                  onSwipeDelete: (item) => _handleSwipeDelete(
                                     context,
                                     controller,
                                     item,
-                                  );
-                                },
-                              ),
-                              onSwipeComplete: (item) =>
-                                  controller.markItemChecked(item.id),
-                              onSwipeDelete: (item) =>
-                                  _handleSwipeDelete(context, controller, item),
-                              onMoveItem: (itemId) =>
-                                  _showCategoryPicker(context, (catId) async {
-                                    await controller.moveItemToCategory(
-                                      itemId,
-                                      catId,
-                                    );
-                                  }),
-                              onCopyItem: (itemId) =>
-                                  _showCategoryPicker(context, (catId) async {
-                                    await controller.copyItemToCategory(
-                                      itemId,
-                                      catId,
-                                    );
-                                  }),
-                              // Disable drag handle for completed categories to avoid
-                              // overriding automatic movement to the end
-                              showDragHandle: !isCompleted,
-                              headerWrapper: !isCompleted
-                                  ? (header) =>
-                                        ReorderableDelayedDragStartListener(
-                                          index: index,
-                                          child: header,
-                                        )
-                                  : null,
+                                  ),
+                                  onMoveItem: (itemId) => _showCategoryPicker(
+                                    context,
+                                    (catId) async {
+                                      await controller.moveItemToCategory(
+                                        itemId,
+                                        catId,
+                                      );
+                                    },
+                                  ),
+                                  onCopyItem: (itemId) => _showCategoryPicker(
+                                    context,
+                                    (catId) async {
+                                      await controller.copyItemToCategory(
+                                        itemId,
+                                        catId,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ]),
                             ),
-                          );
-                        },
+                          ),
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            sliver: SliverReorderableList(
+                              itemCount: controller.categories.length,
+                              onReorder: (oldIndex, newIndex) {
+                                controller.reorderCategories(
+                                  oldIndex,
+                                  newIndex,
+                                );
+                              },
+                              itemBuilder: (context, index) {
+                                final category = controller.categories[index];
+                                final items = controller.getItemsByCategory(
+                                  category.id,
+                                );
+                                final isCollapsed = controller
+                                    .isCategoryCollapsed(category.id);
+
+                                final isCompleted = controller
+                                    .isCategoryCompleted(category.id);
+
+                                return Material(
+                                  key: ValueKey(category.id),
+                                  color: Colors.transparent,
+                                  child: CategorySection(
+                                    category: category,
+                                    items: items,
+                                    isCollapsed: isCollapsed,
+                                    onToggleCollapse: () => controller
+                                        .toggleCategoryCollapse(category.id),
+                                    onAddItem: () => _showAddItemDialog(
+                                      context,
+                                      category.id,
+                                    ),
+                                    onEditCategory: () =>
+                                        _showEditCategoryDialog(
+                                          context,
+                                          category.id,
+                                          category.name,
+                                        ),
+                                    onToggleItemCheck:
+                                        controller.toggleItemCheck,
+                                    onEditItem: (itemId) =>
+                                        _showEditItemBottomSheet(
+                                          context,
+                                          itemId,
+                                        ),
+                                    onDeleteItem: (itemId) => _confirmDelete(
+                                      context,
+                                      'Deseja remover este item?',
+                                      () {
+                                        final item = controller.allItems
+                                            .firstWhere((i) => i.id == itemId);
+                                        _performDeleteWithSnackBar(
+                                          context,
+                                          controller,
+                                          item,
+                                        );
+                                      },
+                                    ),
+                                    onSwipeComplete: (item) =>
+                                        controller.markItemChecked(item.id),
+                                    onSwipeDelete: (item) => _handleSwipeDelete(
+                                      context,
+                                      controller,
+                                      item,
+                                    ),
+                                    onMoveItem: (itemId) => _showCategoryPicker(
+                                      context,
+                                      (catId) async {
+                                        await controller.moveItemToCategory(
+                                          itemId,
+                                          catId,
+                                        );
+                                      },
+                                    ),
+                                    onCopyItem: (itemId) => _showCategoryPicker(
+                                      context,
+                                      (catId) async {
+                                        await controller.copyItemToCategory(
+                                          itemId,
+                                          catId,
+                                        );
+                                      },
+                                    ),
+                                    showDragHandle: !isCompleted,
+                                    headerWrapper: !isCompleted
+                                        ? (header) =>
+                                              ReorderableDelayedDragStartListener(
+                                                index: index,
+                                                child: header,
+                                              )
+                                        : null,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 24,
+                                horizontal: 16,
+                              ),
+                              child: OutlinedButton.icon(
+                                onPressed: () =>
+                                    _showAddCategoryDialog(context),
+                                icon: const Icon(Icons.add),
+                                label: const Text('Nova Categoria'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                        ],
                       ),
                     ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                    // Finalize Button
+                    _buildFinalizeButton(context),
                   ],
                 ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _showAddCategoryDialog(context),
-            icon: const Icon(Icons.add),
-            label: const Text('Nova Categoria'),
-            backgroundColor: Colors.blue,
-          ),
+          floatingActionButton: null,
         );
       },
     );
@@ -458,94 +505,251 @@ class ShoppingListScreen extends StatelessWidget {
     );
   }
 
-  /// Exibe dialog para editar item existente
-  void _showEditItemDialog(BuildContext context, String itemId) {
-    final controller = context.read<ShoppingListController>();
-    final item = controller.allItems.firstWhere((i) => i.id == itemId);
-    final textController = TextEditingController(text: item.name);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Editar Item'),
-        content: TextField(
-          controller: textController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Nome do item',
-            hintText: 'Ex: Arroz, Feijão...',
-            border: OutlineInputBorder(),
-          ),
-          textCapitalization: TextCapitalization.sentences,
-          onSubmitted: (value) {
-            if (value.trim().isNotEmpty) {
-              final trimmedName = value.trim();
-              // Verifica se o nome já existe na mesma categoria
-              final isDuplicate = controller.allItems.any(
-                (i) =>
-                    i.id != itemId &&
-                    i.categoryId == item.categoryId &&
-                    i.name.toLowerCase() == trimmedName.toLowerCase(),
-              );
-
-              if (isDuplicate) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Já existe um item com este nome nesta categoria',
-                    ),
-                  ),
-                );
-                return;
-              }
-
-              controller.editItem(itemId, trimmedName);
-              Navigator.of(context).pop();
-            }
-          },
+  Widget _buildSummaryCard(
+    BuildContext context,
+    ShoppingListController controller,
+  ) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6342E8), Color(0xFF4A68FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = textController.text.trim();
-              if (name.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('O nome do item não pode estar vazio'),
-                  ),
-                );
-                return;
-              }
-
-              // Verifica se o nome já existe na mesma categoria
-              final isDuplicate = controller.allItems.any(
-                (i) =>
-                    i.id != itemId &&
-                    i.categoryId == item.categoryId &&
-                    i.name.toLowerCase() == name.toLowerCase(),
-              );
-
-              if (isDuplicate) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Já existe um item com este nome nesta categoria',
-                    ),
-                  ),
-                );
-                return;
-              }
-
-              controller.editItem(itemId, name);
-              Navigator.of(context).pop();
-            },
-            child: const Text('Salvar'),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6342E8).withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${controller.checkedItemsCount} de ${controller.totalItemsCount} itens',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'concluídos',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'R\$ ${controller.estimatedTotal.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'total estimado',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: controller.progressRatio,
+              backgroundColor: Colors.white.withOpacity(0.2),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              minHeight: 8,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFinalizeButton(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: ElevatedButton(
+          onPressed: () {}, // No-op for now
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF6342E8),
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
+          ),
+          child: const Text(
+            'Finalizar lista',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Exibe bottom sheet para editar todos os campos do item
+  void _showEditItemBottomSheet(BuildContext context, String itemId) {
+    final controller = context.read<ShoppingListController>();
+    final item = controller.allItems.firstWhere((i) => i.id == itemId);
+
+    final nameController = TextEditingController(text: item.name);
+    final qtyController = TextEditingController(text: item.quantity);
+    final priceController = TextEditingController(
+      text: item.price > 0 ? item.price.toString() : '',
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 24,
+          right: 24,
+          top: 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Editar Item',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: nameController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Nome do item',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.shopping_basket_outlined),
+              ),
+              textCapitalization: TextCapitalization.sentences,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: qtyController,
+                    decoration: const InputDecoration(
+                      labelText: 'Qtd / Unidade',
+                      hintText: 'Ex: 2 un, 500g',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.scale_outlined),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: priceController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: 'Preço (R\$)',
+                      hintText: '0,00',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.attach_money),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                final name = nameController.text.trim();
+                final quantity = qtyController.text.trim();
+                final priceText = priceController.text.trim().replaceAll(
+                  ',',
+                  '.',
+                );
+                final price = double.tryParse(priceText) ?? 0.0;
+
+                if (name.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('O nome do item não pode estar vazio'),
+                    ),
+                  );
+                  return;
+                }
+
+                controller.editItem(
+                  itemId,
+                  name: name,
+                  quantity: quantity,
+                  price: price,
+                );
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6342E8),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: const Text(
+                'Salvar Alterações',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }

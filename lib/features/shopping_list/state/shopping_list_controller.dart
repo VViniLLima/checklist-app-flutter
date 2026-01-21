@@ -41,6 +41,13 @@ class ShoppingListController extends ChangeNotifier {
       List.unmodifiable(_categories.where((cat) => cat.id != 'sem-categoria'));
   List<ShoppingItem> get allItems => List.unmodifiable(_items);
 
+  int get totalItemsCount => _items.length;
+  int get checkedItemsCount => _items.where((item) => item.isChecked).length;
+  double get estimatedTotal =>
+      _items.fold(0.0, (sum, item) => sum + item.price);
+  double get progressRatio =>
+      totalItemsCount == 0 ? 0.0 : checkedItemsCount / totalItemsCount;
+
   /// Retorna itens de uma categoria específica, ordenados conforme regras:
   /// - Itens NÃO marcados primeiro (ordenados por createdAt)
   /// - Itens marcados no final (ordenados por checkedAt)
@@ -406,14 +413,18 @@ class ShoppingListController extends ChangeNotifier {
     await reorderCategoriesBasedOnCompletion();
   }
 
-  /// Edita o nome de um item existente
-  /// Mantém o estado checked, categoria e timestamps
-  Future<void> editItem(String itemId, String newName) async {
+  /// Edita um item existente com todos os campos
+  Future<void> editItem(
+    String itemId, {
+    String? name,
+    String? quantity,
+    double? price,
+  }) async {
     if (_activeListId == null) return;
 
     _items = _items.map((item) {
       if (item.id == itemId) {
-        return item.copyWith(name: newName);
+        return item.copyWith(name: name, quantity: quantity, price: price);
       }
       return item;
     }).toList();
@@ -421,7 +432,6 @@ class ShoppingListController extends ChangeNotifier {
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
 
-    // Editing an item might affect completion (edge cases) - re-evaluate
     await reorderCategoriesBasedOnCompletion();
   }
 
@@ -440,13 +450,8 @@ class ShoppingListController extends ChangeNotifier {
     _items = _items.map((item) {
       if (item.id == itemId) {
         final newCheckedState = !item.isChecked;
-        // Cria novo objeto para garantir que checkedAt seja null quando desmarcado
-        return ShoppingItem(
-          id: item.id,
-          name: item.name,
+        return item.copyWith(
           isChecked: newCheckedState,
-          categoryId: item.categoryId,
-          createdAt: item.createdAt,
           checkedAt: newCheckedState ? DateTime.now() : null,
         );
       }
@@ -469,14 +474,7 @@ class ShoppingListController extends ChangeNotifier {
       if (item.id == itemId) {
         if (item.isChecked) return item;
         didUpdate = true;
-        return ShoppingItem(
-          id: item.id,
-          name: item.name,
-          isChecked: true,
-          categoryId: item.categoryId,
-          createdAt: item.createdAt,
-          checkedAt: DateTime.now(),
-        );
+        return item.copyWith(isChecked: true, checkedAt: DateTime.now());
       }
       return item;
     }).toList();
@@ -541,6 +539,8 @@ class ShoppingListController extends ChangeNotifier {
     final newItem = ShoppingItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: original.name,
+      quantity: original.quantity,
+      price: original.price,
       categoryId: destinationCategoryId,
       createdAt: DateTime.now(),
       isChecked: false,

@@ -4,7 +4,7 @@ import '../models/category.dart';
 import '../state/shopping_list_controller.dart';
 
 /// Widget que exibe o cabeçalho de uma categoria
-/// 
+///
 /// Features:
 /// - Texto em negrito com fundo destacado
 /// - Ícone de colapso (chevron) que rotaciona
@@ -31,137 +31,111 @@ class CategoryHeader extends StatelessWidget {
   });
 
   Color _getTextColor(Color backgroundColor) {
-  // Map shade50 colors to their base colors
-// Define category title color
-  const categoryTitle = Color(0xfff8f3ed); // creme
-  
-  final colorMap = {
-    Color(0xff0f408f): categoryTitle, // azul escuro -> creme
-    Color(0xffbce4fe): categoryTitle, // azul claro -> creme
-    Color(0xff89aeff): categoryTitle, // lilas claro -> creme
-    Color(0xffef7148): categoryTitle, // laranja -> creme
-    Color(0xffdffc8e): Color(0xff0f408f) //categoryTitle, // verde -> creme
-  };
+    // Map shade50 colors to their base colors
+    // Define category title color
+    const categoryTitle = Color(0xfff8f3ed); // creme
 
-  return colorMap[backgroundColor] ?? Colors.blue;
-}
+    final colorMap = {
+      Color(0xff0f408f): categoryTitle, // azul escuro -> creme
+      Color(0xffbce4fe): categoryTitle, // azul claro -> creme
+      Color(0xff89aeff): categoryTitle, // lilas claro -> creme
+      Color(0xffef7148): categoryTitle, // laranja -> creme
+      Color(0xffdffc8e): Color(0xff0f408f), //categoryTitle, // verde -> creme
+    };
+
+    return colorMap[backgroundColor] ?? Colors.blue;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final controller = context.watch<ShoppingListController>();
+    final items = controller.getItemsByCategory(category?.id);
+    final totalItems = items.length;
+    final completedItems = items.where((i) => i.isChecked).length;
+
     final categoryName = category?.name ?? 'Sem categoria';
-    final backgroundColor = category?.color ?? Color(0xff0f408f);
-    //final backgroundColor = category !=null ?_getTextColor(backgroundColor) : Color(0xfff8f3ed);
+    final backgroundColor = category?.color ?? const Color(0xff0f408f);
+    final textColor = _getTextColor(backgroundColor);
 
     return Container(
-      margin: const EdgeInsets.only(top: 10, bottom: 8),
+      margin: const EdgeInsets.only(top: 12, bottom: 4),
       decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
+        color: backgroundColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onToggleCollapse,
-          borderRadius: BorderRadius.circular(8),
+          onLongPress: () => _showLongPressMenu(context),
+          borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               children: [
-                // Ícone de colapso (chevron com rotação)
-                AnimatedRotation(
-                  turns: isCollapsed ? -0.25 : 0, // -90° quando colapsado
-                  duration: const Duration(milliseconds: 200),
-                  child:  Icon(
-                    Icons.expand_more,
-                    color: _getTextColor(backgroundColor),
+                // Cor da categoria como indicador lateral
+                Container(
+                  width: 4,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 const SizedBox(width: 12),
-                if (showDragHandle) ...[
-                  Tooltip(
-                    message: 'Pressione e segure para reordenar',
-                    child: Icon(
-                      Icons.drag_handle,
-                      color: _getTextColor(backgroundColor) ,
-                      
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                
+
                 // Nome da categoria
                 Expanded(
                   child: Text(
                     categoryName,
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 17,
                       fontWeight: FontWeight.bold,
-                      //color: Color(0xfff8f3ed),
-                      color: _getTextColor(backgroundColor),
+                      color: Colors.blueGrey.shade900,
                     ),
                   ),
                 ),
-                
+
+                // Pill de contagem
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$completedItems/$totalItems',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                ),
+
                 // Botão para adicionar item
                 IconButton(
-                  icon:  Icon(Icons.add_circle_outline),
-                  color: _getTextColor(backgroundColor),
+                  icon: const Icon(Icons.add_circle_outline, size: 22),
+                  color: backgroundColor,
                   onPressed: onAddItem,
+                  padding: const EdgeInsets.only(left: 8),
+                  constraints: const BoxConstraints(),
                   tooltip: 'Adicionar item',
                 ),
-                if (onEditCategory != null)
-                  PopupMenuButton<String>(
-                    icon: Icon(Icons.edit_outlined, color: _getTextColor(backgroundColor)),
-                    tooltip: 'Editar categoria',
-                    onSelected: (value) {
-                      if (value == 'rename') {
-                        onEditCategory!();
-                      } else if (value == 'color') {
-                        _showColorPicker(context);
-                      }
-                    },
-                    itemBuilder: (context) {
-                      // For "Sem categoria", only show color option
-                      final isSemCategoria = category?.id == 'sem-categoria';
-                      if (isSemCategoria) {
-                        return [
-                          const PopupMenuItem(
-                            value: 'color',
-                            child: Row(
-                              children: [
-                                Icon(Icons.palette, size: 20),
-                                SizedBox(width: 8),
-                                Text('Mudar cor'),
-                              ],
-                            ),
-                          ),
-                        ];
-                      }
-                      // For other categories, show both options
-                      return [
-                        const PopupMenuItem(
-                          value: 'rename',
-                          child: Row(
-                            children: [
-                              Icon(Icons.edit, size: 20),
-                              SizedBox(width: 8),
-                              Text('Renomear'),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'color',
-                          child: Row(
-                            children: [
-                              Icon(Icons.palette, size: 20),
-                              SizedBox(width: 8),
-                              Text('Mudar cor'),
-                            ],
-                          ),
-                        ),
-                      ];
-                    },
+
+                // Ícone de colapso
+                AnimatedRotation(
+                  turns: isCollapsed ? -0.25 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.expand_more,
+                    color: Colors.blueGrey.shade400,
+                    size: 24,
                   ),
+                ),
               ],
             ),
           ),
@@ -170,57 +144,97 @@ class CategoryHeader extends StatelessWidget {
     );
   }
 
-  void _showColorPicker(BuildContext context) {
-    if (category == null) return;
+  void _showLongPressMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final isSemCategoria = category?.id == 'sem-categoria';
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              if (!isSemCategoria && onEditCategory != null)
+                ListTile(
+                  leading: const Icon(Icons.edit_outlined),
+                  title: const Text('Renomear categoria'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onEditCategory!();
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.palette_outlined),
+                title: const Text('Mudar cor'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showColorPicker(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-    // 8 tons de azul similares ao blue.shade50
+  void _showColorPicker(BuildContext context) {
+    final controller = context.read<ShoppingListController>();
     final colors = [
-      Color(0xff0f408f), // azul escuro
-      Color(0xffbce4fe), // azul claro
-      Color(0xff89aeff), // lilas claro
-      Color(0xffef7148), // laranja
-      Color(0xffdffc8e), 
-      //Colors.blue.shade50,
-      // Colors.lightBlue.shade50,
-      // Colors.cyan.shade50,
-      // Colors.teal.shade50,
-      // Colors.indigo.shade50,
-      // Colors.purple.shade50,
-      // Colors.pink.shade50,
-      // Colors.red.shade50,
+      const Color(0xff0f408f), // Azul Marinho
+      const Color(0xffd32f2f), // Vermelho
+      const Color(0xff388e3c), // Verde
+      const Color(0xfff57c00), // Laranja
+      const Color(0xff7b1fa2), // Roxo
+      const Color(0xff0097a7), // Ciano
+      const Color(0xff455a64), // Blue Grey
+      const Color(0xff6d4c41), // Marrom
     ];
 
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Escolher cor'),
+      builder: (context) => AlertDialog(
+        title: const Text('Escolha uma cor'),
         content: SizedBox(
           width: double.maxFinite,
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          child: GridView.count(
+            crossAxisCount: 4,
+            shrinkWrap: true,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
             children: colors.map((color) {
-              final isSelected = category!.colorValue == color.value;
               return InkWell(
                 onTap: () {
-                  final controller = context.read<ShoppingListController>();
-                  controller.editCategoryColor(category!.id, color.value);
-                  Navigator.of(dialogContext).pop();
+                  controller.editCategoryColor(
+                    category?.id ?? 'sem-categoria',
+                    color.value,
+                  );
+                  Navigator.of(context).pop();
                 },
                 child: Container(
-                  width: 50,
-                  height: 50,
                   decoration: BoxDecoration(
                     color: color,
+                    shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected ? Colors.blue : Colors.grey.shade300,
-                      width: isSelected ? 3 : 1,
+                      color: (category?.color == color)
+                          ? Colors.black
+                          : Colors.transparent,
+                      width: 2,
                     ),
-                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: isSelected
-                      ? const Icon(Icons.check, color: Colors.blue)
-                      : null,
                 ),
               );
             }).toList(),
@@ -228,7 +242,7 @@ class CategoryHeader extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('Fechar'),
           ),
         ],

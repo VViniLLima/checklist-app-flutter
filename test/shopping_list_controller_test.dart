@@ -31,9 +31,11 @@ void main() {
 
       await controller.reorderCategories(2, 0);
 
-      expect(controller.categories[0].name, 'C');
-      expect(controller.categories[1].name, 'A');
-      expect(controller.categories[2].name, 'B');
+      // Index 0 is always 'sem-categoria'
+      expect(controller.categories[0].id, 'sem-categoria');
+      expect(controller.categories[1].name, 'C');
+      expect(controller.categories[2].name, 'A');
+      expect(controller.categories[3].name, 'B');
     });
 
     test('Deve colapsar/expandir categoria', () async {
@@ -100,6 +102,37 @@ void main() {
       expect(second.checkedAt, checkedAt);
     });
 
+    test('Deve preservar quantity e price ao alternar check', () async {
+      await controller.addItem('Arroz', null);
+      final itemId = controller.allItems.first.id;
+
+      // Define quantity e price
+      await controller.editItem(
+        itemId,
+        name: 'Arroz',
+        quantity: '5kg',
+        price: 25.50,
+      );
+
+      var item = controller.allItems.firstWhere((i) => i.id == itemId);
+      expect(item.quantity, '5kg');
+      expect(item.price, 25.50);
+
+      // Marca como checked
+      await controller.toggleItemCheck(itemId);
+      item = controller.allItems.firstWhere((i) => i.id == itemId);
+      expect(item.isChecked, true);
+      expect(item.quantity, '5kg');
+      expect(item.price, 25.50);
+
+      // Desmarca
+      await controller.toggleItemCheck(itemId);
+      item = controller.allItems.firstWhere((i) => i.id == itemId);
+      expect(item.isChecked, false);
+      expect(item.quantity, '5kg');
+      expect(item.price, 25.50);
+    });
+
     test('Deve restaurar item removido', () async {
       await controller.addItem('Queijo', null);
       final item = controller.allItems.first;
@@ -147,7 +180,7 @@ void main() {
       await controller.addItem('D', null);
 
       final allItems = controller.allItems;
-      
+
       // Marca B, depois D, depois A
       await controller.toggleItemCheck(allItems[1].id); // B
       await Future.delayed(const Duration(milliseconds: 10));
@@ -173,7 +206,7 @@ void main() {
       await controller.addItem('Item 2', null);
 
       final firstItemId = controller.allItems[0].id;
-      
+
       // Marca item 1
       await controller.toggleItemCheck(firstItemId);
       var items = controller.getItemsByCategory(null);
@@ -183,7 +216,7 @@ void main() {
       // Desmarca item 1
       await controller.toggleItemCheck(firstItemId);
       items = controller.getItemsByCategory(null);
-      
+
       // Ambos não marcados agora, ordem de criação
       expect(items[0].name, 'Item 1');
       expect(items[1].name, 'Item 2');
@@ -194,7 +227,7 @@ void main() {
   group('Persistência', () {
     test('Deve persistir e carregar categorias', () async {
       await controller.addCategory('Bebidas');
-      
+
       // Cria novo controller com mesmo repositório
       final newController = ShoppingListController(repository);
       await newController.initialize();

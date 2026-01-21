@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 
 /// Representa um item individual na lista de compras
-/// 
+///
 /// Cada item pertence a uma categoria (ou nenhuma se categoryId for null)
 /// e possui estado de marcação (checked/unchecked) com timestamps para ordenação
+const Object _sentinel = Object();
+
 @immutable
 class ShoppingItem {
   final String id;
@@ -12,6 +14,8 @@ class ShoppingItem {
   final String? categoryId; // null = "Sem categoria"
   final DateTime createdAt;
   final DateTime? checkedAt;
+  final double price;
+  final String quantity;
 
   const ShoppingItem({
     required this.id,
@@ -20,23 +24,33 @@ class ShoppingItem {
     this.categoryId,
     required this.createdAt,
     this.checkedAt,
+    this.price = 0.0,
+    this.quantity = '',
   });
 
   ShoppingItem copyWith({
     String? id,
     String? name,
     bool? isChecked,
-    String? categoryId,
+    Object? categoryId = _sentinel,
     DateTime? createdAt,
-    DateTime? checkedAt,
+    Object? checkedAt = _sentinel,
+    double? price,
+    String? quantity,
   }) {
     return ShoppingItem(
       id: id ?? this.id,
       name: name ?? this.name,
       isChecked: isChecked ?? this.isChecked,
-      categoryId: categoryId ?? this.categoryId,
+      categoryId: categoryId == _sentinel
+          ? this.categoryId
+          : categoryId as String?,
       createdAt: createdAt ?? this.createdAt,
-      checkedAt: checkedAt ?? this.checkedAt,
+      checkedAt: checkedAt == _sentinel
+          ? this.checkedAt
+          : checkedAt as DateTime?,
+      price: price ?? this.price,
+      quantity: quantity ?? this.quantity,
     );
   }
 
@@ -48,6 +62,8 @@ class ShoppingItem {
       'categoryId': categoryId,
       'createdAt': createdAt.toIso8601String(),
       'checkedAt': checkedAt?.toIso8601String(),
+      'price': price,
+      'quantity': quantity,
     };
   }
 
@@ -61,6 +77,8 @@ class ShoppingItem {
       checkedAt: json['checkedAt'] != null
           ? DateTime.parse(json['checkedAt'] as String)
           : null,
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      quantity: json['quantity'] as String? ?? '',
     );
   }
 
@@ -73,20 +91,24 @@ class ShoppingItem {
         other.isChecked == isChecked &&
         other.categoryId == categoryId &&
         other.createdAt == createdAt &&
-        other.checkedAt == checkedAt;
+        other.checkedAt == checkedAt &&
+        other.price == price &&
+        other.quantity == quantity;
   }
 
   @override
   int get hashCode => Object.hash(
-        id,
-        name,
-        isChecked,
-        categoryId,
-        createdAt,
-        checkedAt,
-      );
+    id,
+    name,
+    isChecked,
+    categoryId,
+    createdAt,
+    checkedAt,
+    price,
+    quantity,
+  );
 
   @override
   String toString() =>
-      'ShoppingItem(id: $id, name: $name, isChecked: $isChecked, categoryId: $categoryId)';
+      'ShoppingItem(id: $id, name: $name, isChecked: $isChecked, categoryId: $categoryId, price: $price, quantity: $quantity)';
 }

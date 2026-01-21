@@ -11,63 +11,60 @@ class NavBarPainter extends CustomPainter {
       ..color = Colors.black.withOpacity(0.05)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
 
-    const double margin = 16.0;
-    const double borderRadius = 36.0;
-    const double bumpRadius = 40.0;
+    const double borderRadius = 25.0;
+    const double bumpRadius = 45.0;
     const double bumpHeight = 15.0;
 
     final rect = Rect.fromLTWH(
-      margin,
+      0,
       bumpHeight,
-      size.width - (margin * 2),
-      size.height - bumpHeight - 12, // vertical margin
+      size.width,
+      size.height - bumpHeight,
     );
 
     final path = Path();
     final centerX = size.width / 2;
-    
+
     // Top-left corner
     path.moveTo(rect.left + borderRadius, rect.top);
-    
+
     // Smooth transition to bump
-    double bumpStartX = centerX - bumpRadius - 10;
-    double bumpEndX = centerX + bumpRadius + 10;
-    
+    double bumpStartX = centerX - bumpRadius - 25;
+    double bumpEndX = centerX + bumpRadius + 25;
+
     path.lineTo(bumpStartX, rect.top);
-    
+
     // The bump (convex notch)
     path.cubicTo(
-      centerX - bumpRadius + 5, rect.top,
-      centerX - bumpRadius, rect.top - bumpHeight,
-      centerX, rect.top - bumpHeight,
+      centerX - bumpRadius + 5,
+      rect.top,
+      centerX - bumpRadius,
+      rect.top - bumpHeight,
+      centerX,
+      rect.top - bumpHeight,
     );
     path.cubicTo(
-      centerX + bumpRadius, rect.top - bumpHeight,
-      centerX + bumpRadius - 5, rect.top,
-      bumpEndX, rect.top,
+      centerX + bumpRadius,
+      rect.top - bumpHeight,
+      centerX + bumpRadius - 5,
+      rect.top,
+      bumpEndX,
+      rect.top,
     );
-    
+
     // Top-right corner
     path.lineTo(rect.right - borderRadius, rect.top);
     path.arcToPoint(
       Offset(rect.right, rect.top + borderRadius),
       radius: const Radius.circular(borderRadius),
     );
-    
-    // Bottom-right corner
-    path.lineTo(rect.right, rect.bottom - borderRadius);
-    path.arcToPoint(
-      Offset(rect.right - borderRadius, rect.bottom),
-      radius: const Radius.circular(borderRadius),
-    );
-    
-    // Bottom-left corner
-    path.lineTo(rect.left + borderRadius, rect.bottom);
-    path.arcToPoint(
-      Offset(rect.left, rect.bottom - borderRadius),
-      radius: const Radius.circular(borderRadius),
-    );
-    
+
+    // Bottom-right corner (Flush with edge)
+    path.lineTo(rect.right, rect.bottom);
+
+    // Bottom-left corner (Flush with edge)
+    path.lineTo(rect.left, rect.bottom);
+
     // Back to top-left
     path.lineTo(rect.left, rect.top + borderRadius);
     path.arcToPoint(

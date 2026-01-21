@@ -127,12 +127,10 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
-      bottomNavigationBar: SafeArea(
-        child: CustomBottomNavBar(
-          currentIndex: _currentIndex,
-          onTap: _onTabTapped,
-          onCenterTap: () => _showCreateListDialog(context),
-        ),
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped,
+        onCenterTap: () => _showCreateListDialog(context),
       ),
       extendBody:
           true, // Allows the body to go behind the transparent/floating nav bar
