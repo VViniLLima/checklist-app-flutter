@@ -221,10 +221,16 @@ class ShoppingListScreen extends StatelessWidget {
                                   120,
                                 ),
                                 child: ElevatedButton.icon(
-                                  onPressed: () {}, // No-op for now
+                                  onPressed: controller.checkedItemsCount > 0
+                                      ? () {} // No-op for now
+                                      : null,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF6342E8),
                                     foregroundColor: Colors.white,
+                                    disabledBackgroundColor:
+                                        Colors.grey.shade200,
+                                    disabledForegroundColor:
+                                        Colors.grey.shade500,
                                     minimumSize: const Size(
                                       double.infinity,
                                       56,
