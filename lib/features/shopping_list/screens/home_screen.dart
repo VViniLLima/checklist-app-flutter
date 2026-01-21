@@ -136,14 +136,9 @@ class HomeScreen extends StatelessWidget {
             ],
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateListDialog(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Nova Lista'),
-        backgroundColor: Colors.blue,
-      ),
-    );
+   
+    ));
+    
   }
 
   String _formatDate(DateTime date) {
@@ -170,93 +165,6 @@ class HomeScreen extends StatelessWidget {
     await controller.setActiveList(listId);
 
     // Navigate to shopping list screen
-    if (context.mounted) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => const ShoppingListScreen(),
-        ),
-      );
-    }
-  }
-
-  void _showCreateListDialog(BuildContext context) {
-    final controller = context.read<ShoppingListController>();
-    final textController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Nova Lista de Compras'),
-        content: TextField(
-          controller: textController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Nome da lista',
-            hintText: 'Ex: Compras do mês, Feira...',
-            border: OutlineInputBorder(),
-          ),
-          textCapitalization: TextCapitalization.words,
-          onSubmitted: (value) {
-            if (value.trim().isNotEmpty) {
-              _createList(context, controller, value.trim());
-              Navigator.of(dialogContext).pop();
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = textController.text.trim();
-              if (name.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('O nome da lista não pode estar vazio'),
-                  ),
-                );
-                return;
-              }
-
-              // Check for duplicates
-              final isDuplicate = controller.shoppingLists.any(
-                (list) => list.name.toLowerCase() == name.toLowerCase(),
-              );
-
-              if (isDuplicate) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Já existe uma lista com este nome'),
-                  ),
-                );
-                return;
-              }
-
-              _createList(context, controller, name);
-              Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Criar'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _createList(
-    BuildContext context,
-    ShoppingListController controller,
-    String name,
-  ) async {
-    await controller.addShoppingList(name);
-
-    // Get the newly created list
-    final newList = controller.shoppingLists.last;
-
-    // Set it as active and navigate to it
-    await controller.setActiveList(newList.id);
-
     if (context.mounted) {
       Navigator.of(context).push(
         MaterialPageRoute(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:checklist_app/main.dart';
 import '../state/shopping_list_controller.dart';
 import '../widgets/category_section.dart';
 import '../models/shopping_item.dart';
@@ -44,11 +45,14 @@ class ShoppingListScreen extends StatelessWidget {
                         onEditCategory: () {}, // Placeholder - color change handled in CategoryHeader
                         onToggleItemCheck: controller.toggleItemCheck,
                         onEditItem: (itemId) => _showEditItemDialog(context, itemId),
-                        onDeleteItem: (itemId) => _confirmDelete(
-                          context,
-                          'Deseja remover este item?',
-                          () => controller.removeItem(itemId),
-                        ),
+                onDeleteItem: (itemId) => _confirmDelete(
+                  context,
+                  'Deseja remover este item?',
+                  () {
+                    final item = controller.allItems.firstWhere((i) => i.id == itemId);
+                    _performDeleteWithSnackBar(context, controller, item);
+                  },
+                ),
                         onSwipeComplete: (item) => controller.markItemChecked(item.id),
                         onSwipeDelete: (item) =>
                             _handleSwipeDelete(context, controller, item),
@@ -96,7 +100,10 @@ class ShoppingListScreen extends StatelessWidget {
                         onDeleteItem: (itemId) => _confirmDelete(
                           context,
                           'Deseja remover este item?',
-                          () => controller.removeItem(itemId),
+                          () {
+                            final item = controller.allItems.firstWhere((i) => i.id == itemId);
+                            _performDeleteWithSnackBar(context, controller, item);
+                          },
                         ),
                         onSwipeComplete: (item) =>
                             controller.markItemChecked(item.id),
@@ -141,20 +148,29 @@ class ShoppingListScreen extends StatelessWidget {
     ShoppingListController controller,
     ShoppingItem item,
   ) {
+    _performDeleteWithSnackBar(context, controller, item);
+  }
+
+  /// Centralized delete + SnackBar + Undo helper
+  void _performDeleteWithSnackBar(
+    BuildContext context,
+    ShoppingListController controller,
+    ShoppingItem item,
+  ) {
     controller.removeItem(item.id);
 
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: const Text('Item removido'),
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: 'Desfazer',
-            onPressed: () => controller.restoreItem(item),
-          ),
+    final messenger = scaffoldMessengerKey.currentState ?? ScaffoldMessenger.of(context);
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Item removido'),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'Desfazer',
+          onPressed: () => controller.restoreItem(item),
         ),
-      );
+      ),
+    );
   }
 
   /// Exibe dialog para adicionar nova categoria

@@ -3,7 +3,11 @@ import 'package:provider/provider.dart';
 import 'features/shopping_list/data/shopping_repository.dart';
 import 'features/shopping_list/state/shopping_list_controller.dart';
 import 'features/shopping_list/screens/home_screen.dart';
+import 'features/shopping_list/screens/main_screen.dart';
 //import 'package:google_fonts/google_fonts.dart';
+
+// Global scaffold messenger key to centralize SnackBar presentation
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,8 +31,9 @@ class MyApp extends StatelessWidget {
         controller.initialize(); // Carrega dados salvos
         return controller;
       },
-      child: MaterialApp(
-        title: 'Lista de Compras',
+        child: MaterialApp(
+          title: 'Lista de Compras',
+          scaffoldMessengerKey: scaffoldMessengerKey,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           scaffoldBackgroundColor: Color(0xfff8f3ed),
@@ -36,7 +41,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         debugShowCheckedModeBanner: false,
-        home: const HomeScreen(),
+        home: const MainScreen(),
       ),
     );
   }
