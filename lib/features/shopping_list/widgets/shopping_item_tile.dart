@@ -145,9 +145,9 @@ class ShoppingItemTile extends StatelessWidget {
                               : Colors.black87,
                         ),
                       ),
-                      if (item.quantity.isNotEmpty)
+                      if (item.quantityValue > 0)
                         Text(
-                          item.quantity,
+                          '${item.quantityValue % 1 == 0 ? item.quantityValue.toInt() : item.quantityValue} ${item.quantityUnit}',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade600,
@@ -156,11 +156,11 @@ class ShoppingItemTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (item.price > 0)
+                if (item.totalValue > 0)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
-                      'R\$ ${item.price.toStringAsFixed(2)}',
+                      'R\$ ${item.totalValue.toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,

@@ -72,7 +72,11 @@ class HomeScreen extends StatelessWidget {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 120,
+                        ),
                         itemCount: controller.shoppingLists.length,
                         itemBuilder: (context, index) {
                           final list = controller.shoppingLists[index];

@@ -102,36 +102,64 @@ void main() {
       expect(second.checkedAt, checkedAt);
     });
 
-    test('Deve preservar quantity e price ao alternar check', () async {
-      await controller.addItem('Arroz', null);
-      final itemId = controller.allItems.first.id;
+    test(
+      'Deve preservar quantityValue e priceValue ao alternar check',
+      () async {
+        await controller.addItem('Arroz', null);
+        final itemId = controller.allItems.first.id;
 
-      // Define quantity e price
-      await controller.editItem(
-        itemId,
-        name: 'Arroz',
-        quantity: '5kg',
-        price: 25.50,
-      );
+        // Define quantity e price
+        await controller.editItem(
+          itemId,
+          name: 'Arroz',
+          quantityValue: 5.0,
+          quantityUnit: 'kg',
+          priceValue: 25.50,
+          priceUnit: 'kg',
+          totalValue: 127.50,
+        );
 
-      var item = controller.allItems.firstWhere((i) => i.id == itemId);
-      expect(item.quantity, '5kg');
-      expect(item.price, 25.50);
+        var item = controller.allItems.firstWhere((i) => i.id == itemId);
+        expect(item.quantityValue, 5.0);
+        expect(item.priceValue, 25.50);
+        expect(item.totalValue, 127.50);
 
-      // Marca como checked
-      await controller.toggleItemCheck(itemId);
-      item = controller.allItems.firstWhere((i) => i.id == itemId);
-      expect(item.isChecked, true);
-      expect(item.quantity, '5kg');
-      expect(item.price, 25.50);
+        // Marca como checked
+        await controller.toggleItemCheck(itemId);
+        item = controller.allItems.firstWhere((i) => i.id == itemId);
+        expect(item.isChecked, true);
+        expect(item.quantityValue, 5.0);
+        expect(item.priceValue, 25.50);
 
-      // Desmarca
-      await controller.toggleItemCheck(itemId);
-      item = controller.allItems.firstWhere((i) => i.id == itemId);
-      expect(item.isChecked, false);
-      expect(item.quantity, '5kg');
-      expect(item.price, 25.50);
-    });
+        // Desmarca
+        await controller.toggleItemCheck(itemId);
+        item = controller.allItems.firstWhere((i) => i.id == itemId);
+        expect(item.isChecked, false);
+        expect(item.quantityValue, 5.0);
+        expect(item.priceValue, 25.50);
+      },
+    );
+
+    test(
+      'Deve calcular totalValue com conversão de unidades (g para kg)',
+      () async {
+        await controller.addItem('Carne', null);
+        final itemId = controller.allItems.first.id;
+
+        await controller.editItem(
+          itemId,
+          name: 'Carne',
+          quantityValue: 500,
+          quantityUnit: 'g',
+          priceValue: 40.00,
+          priceUnit: 'kg',
+          totalValue: 20.00, // (500/1000) * 40 = 20
+        );
+
+        final item = controller.allItems.firstWhere((i) => i.id == itemId);
+        expect(item.totalValue, 20.00);
+      },
+    );
 
     test('Deve restaurar item removido', () async {
       await controller.addItem('Queijo', null);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:checklist_app/main.dart';
 import '../state/shopping_list_controller.dart';
@@ -64,14 +65,17 @@ class ShoppingListScreen extends StatelessWidget {
                                   ),
                                   isCollapsed: false,
                                   onToggleCollapse: () {},
-                                  onAddItem: () => _showAddItemDialog(
+                                  onAddItem: () => _showItemEditorBottomSheet(
                                     context,
-                                    'sem-categoria',
+                                    categoryId: 'sem-categoria',
                                   ),
                                   onEditCategory: () {},
                                   onToggleItemCheck: controller.toggleItemCheck,
                                   onEditItem: (itemId) =>
-                                      _showEditItemBottomSheet(context, itemId),
+                                      _showItemEditorBottomSheet(
+                                        context,
+                                        itemId: itemId,
+                                      ),
                                   onDeleteItem: (itemId) => _confirmDelete(
                                     context,
                                     'Deseja remover este item?',
@@ -144,9 +148,9 @@ class ShoppingListScreen extends StatelessWidget {
                                     isCollapsed: isCollapsed,
                                     onToggleCollapse: () => controller
                                         .toggleCategoryCollapse(category.id),
-                                    onAddItem: () => _showAddItemDialog(
+                                    onAddItem: () => _showItemEditorBottomSheet(
                                       context,
-                                      category.id,
+                                      categoryId: category.id,
                                     ),
                                     onEditCategory: () =>
                                         _showEditCategoryDialog(
@@ -157,9 +161,9 @@ class ShoppingListScreen extends StatelessWidget {
                                     onToggleItemCheck:
                                         controller.toggleItemCheck,
                                     onEditItem: (itemId) =>
-                                        _showEditItemBottomSheet(
+                                        _showItemEditorBottomSheet(
                                           context,
-                                          itemId,
+                                          itemId: itemId,
                                         ),
                                     onDeleteItem: (itemId) => _confirmDelete(
                                       context,
@@ -234,7 +238,7 @@ class ShoppingListScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                          const SliverToBoxAdapter(child: SizedBox(height: 80)),
                         ],
                       ),
                     ),
@@ -621,16 +625,35 @@ class ShoppingListScreen extends StatelessWidget {
     );
   }
 
-  /// Exibe bottom sheet para editar todos os campos do item
-  void _showEditItemBottomSheet(BuildContext context, String itemId) {
+  /// Exibe bottom sheet para editar ou criar todos os campos do item
+  void _showItemEditorBottomSheet(
+    BuildContext context, {
+    String? itemId,
+    String? categoryId,
+  }) {
     final controller = context.read<ShoppingListController>();
-    final item = controller.allItems.firstWhere((i) => i.id == itemId);
+    final isEditing = itemId != null;
 
-    final nameController = TextEditingController(text: item.name);
-    final qtyController = TextEditingController(text: item.quantity);
-    final priceController = TextEditingController(
-      text: item.price > 0 ? item.price.toString() : '',
+    final item = isEditing
+        ? controller.allItems.firstWhere((i) => i.id == itemId)
+        : null;
+
+    final nameController = TextEditingController(text: item?.name ?? '');
+    final qtyController = TextEditingController(
+      text: (item?.quantityValue ?? 0) > 0
+          ? (item!.quantityValue % 1 == 0
+                ? item.quantityValue.toInt().toString()
+                : item.quantityValue.toString().replaceAll('.', ','))
+          : '',
     );
+    final priceController = TextEditingController(
+      text: (item?.priceValue ?? 0) > 0
+          ? (item!.priceValue.toStringAsFixed(2).replaceAll('.', ','))
+          : '0,00',
+    );
+
+    String qUnit = item?.quantityUnit ?? 'un';
+    String pUnit = item?.priceUnit ?? 'un';
 
     showModalBottomSheet(
       context: context,
@@ -638,169 +661,261 @@ class ShoppingListScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 24,
-          right: 24,
-          top: 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          double calculatePreviewTotal() {
+            final qText = qtyController.text.trim().replaceAll(',', '.');
+            final pText = priceController.text.trim().replaceAll(
+              RegExp(r'\D'),
+              '',
+            );
+
+            final q = double.tryParse(qText) ?? 0.0;
+            final p = (double.tryParse(pText) ?? 0.0) / 100;
+
+            return ShoppingItem.calculateTotal(q, qUnit, p, pUnit);
+          }
+
+          final previewTotal = calculatePreviewTotal();
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 24,
+              right: 24,
+              top: 24,
+            ),
+            child: ListView(
+              shrinkWrap: true,
+              physics: const ClampingScrollPhysics(),
               children: [
-                const Text(
-                  'Editar Item',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEditing ? 'Editar Item' : 'Novo Item',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Nome do item',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.shopping_basket_outlined),
+                  ),
+                  textCapitalization: TextCapitalization.sentences,
                 ),
+                const SizedBox(height: 10),
+
+                // Quantity Group
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: TextField(
+                        controller: qtyController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                        decoration: const InputDecoration(
+                          labelText: 'Quantidade',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.scale_outlined),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: DropdownButtonFormField<String>(
+                        value: qUnit,
+                        decoration: const InputDecoration(
+                          labelText: 'Und',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: ShoppingItem.units
+                            .map(
+                              (u) => DropdownMenuItem(value: u, child: Text(u)),
+                            )
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) setState(() => qUnit = val);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Price Group
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: TextField(
+                        controller: priceController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                        inputFormatters: [_CurrencyInputFormatter()],
+                        decoration: const InputDecoration(
+                          labelText: 'Preço',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.attach_money),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: DropdownButtonFormField<String>(
+                        value: pUnit,
+                        decoration: const InputDecoration(
+                          labelText: 'por',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: ShoppingItem.units
+                            .map(
+                              (u) => DropdownMenuItem(value: u, child: Text(u)),
+                            )
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) setState(() => pUnit = val);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Preview total
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Total do Item:',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        'R\$ ${previewTotal.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: previewTotal > 0
+                              ? const Color(0xFF6342E8)
+                              : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (previewTotal == 0 &&
+                    qtyController.text.isNotEmpty &&
+                    priceController.text.isNotEmpty &&
+                    qUnit != pUnit)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Unidades incompatíveis para cálculo',
+                      style: TextStyle(color: Colors.red, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: () {
+                    final name = nameController.text.trim();
+                    final qtyText = qtyController.text.trim().replaceAll(
+                      ',',
+                      '.',
+                    );
+                    final prcText = priceController.text.trim().replaceAll(
+                      RegExp(r'\D'),
+                      '',
+                    );
+
+                    final qVal = double.tryParse(qtyText) ?? 0.0;
+                    final pVal = (double.tryParse(prcText) ?? 0.0) / 100;
+                    final total = ShoppingItem.calculateTotal(
+                      qVal,
+                      qUnit,
+                      pVal,
+                      pUnit,
+                    );
+
+                    if (name.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('O nome do item não pode estar vazio'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    if (isEditing) {
+                      controller.editItem(
+                        itemId,
+                        name: name,
+                        quantityValue: qVal,
+                        quantityUnit: qUnit,
+                        priceValue: pVal,
+                        priceUnit: pUnit,
+                        totalValue: total,
+                      );
+                    } else {
+                      controller.addItem(
+                        name,
+                        categoryId,
+                        quantityValue: qVal,
+                        quantityUnit: qUnit,
+                        priceValue: pVal,
+                        priceUnit: pUnit,
+                        totalValue: total,
+                      );
+                    }
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6342E8),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    isEditing ? 'Salvar Alterações' : 'Adicionar Item',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
               ],
             ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: nameController,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Nome do item',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.shopping_basket_outlined),
-              ),
-              textCapitalization: TextCapitalization.sentences,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: TextField(
-                    controller: qtyController,
-                    decoration: const InputDecoration(
-                      labelText: 'Qtd / Unidade',
-                      hintText: 'Ex: 2 un, 500g',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.scale_outlined),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 3,
-                  child: TextField(
-                    controller: priceController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Preço (R\$)',
-                      hintText: '0,00',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.attach_money),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                final name = nameController.text.trim();
-                final quantity = qtyController.text.trim();
-                final priceText = priceController.text.trim().replaceAll(
-                  ',',
-                  '.',
-                );
-                final price = double.tryParse(priceText) ?? 0.0;
-
-                if (name.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('O nome do item não pode estar vazio'),
-                    ),
-                  );
-                  return;
-                }
-
-                controller.editItem(
-                  itemId,
-                  name: name,
-                  quantity: quantity,
-                  price: price,
-                );
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6342E8),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: const Text(
-                'Salvar Alterações',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Exibe dialog para adicionar novo item
-  void _showAddItemDialog(BuildContext context, String? categoryId) {
-    final controller = context.read<ShoppingListController>();
-    final textController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Novo Item'),
-        content: TextField(
-          controller: textController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Nome do item',
-            hintText: 'Ex: Arroz, Feijão...',
-            border: OutlineInputBorder(),
-          ),
-          textCapitalization: TextCapitalization.sentences,
-          onSubmitted: (value) {
-            if (value.trim().isNotEmpty) {
-              controller.addItem(value.trim(), categoryId);
-              Navigator.of(context).pop();
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = textController.text.trim();
-              if (name.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('O nome do item não pode estar vazio'),
-                  ),
-                );
-                return;
-              }
-              controller.addItem(name, categoryId);
-              Navigator.of(context).pop();
-            },
-            child: const Text('Adicionar'),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -877,6 +992,40 @@ class ShoppingListScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Formata a entrada de texto como moeda (0,00)
+class _CurrencyInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    // Mantém apenas dígitos
+    final String digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+
+    if (digits.isEmpty) {
+      return newValue.copyWith(
+        text: '0,00',
+        selection: const TextSelection.collapsed(offset: 4),
+      );
+    }
+
+    // Converte para double (centavos)
+    final double value = double.parse(digits) / 100;
+
+    // Formata com vírgula e 2 casas decimais
+    final String formatted = value.toStringAsFixed(2).replaceAll('.', ',');
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

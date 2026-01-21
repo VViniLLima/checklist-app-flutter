@@ -44,7 +44,7 @@ class ShoppingListController extends ChangeNotifier {
   int get totalItemsCount => _items.length;
   int get checkedItemsCount => _items.where((item) => item.isChecked).length;
   double get estimatedTotal =>
-      _items.fold(0.0, (sum, item) => sum + item.price);
+      _items.fold(0.0, (sum, item) => sum + item.totalValue);
   double get progressRatio =>
       totalItemsCount == 0 ? 0.0 : checkedItemsCount / totalItemsCount;
 
@@ -383,13 +383,26 @@ class ShoppingListController extends ChangeNotifier {
   // ==================== Itens ====================
 
   /// Adiciona novo item a uma categoria (ou sem categoria se categoryId for null)
-  Future<void> addItem(String name, String? categoryId) async {
+  Future<void> addItem(
+    String name,
+    String? categoryId, {
+    double? quantityValue,
+    String? quantityUnit,
+    double? priceValue,
+    String? priceUnit,
+    double? totalValue,
+  }) async {
     if (_activeListId == null) return;
 
     final newItem = ShoppingItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       categoryId: categoryId,
+      quantityValue: quantityValue ?? 0.0,
+      quantityUnit: quantityUnit ?? 'un',
+      priceValue: priceValue ?? 0.0,
+      priceUnit: priceUnit ?? 'un',
+      totalValue: totalValue ?? 0.0,
       createdAt: DateTime.now(),
     );
 
@@ -417,14 +430,24 @@ class ShoppingListController extends ChangeNotifier {
   Future<void> editItem(
     String itemId, {
     String? name,
-    String? quantity,
-    double? price,
+    double? quantityValue,
+    String? quantityUnit,
+    double? priceValue,
+    String? priceUnit,
+    double? totalValue,
   }) async {
     if (_activeListId == null) return;
 
     _items = _items.map((item) {
       if (item.id == itemId) {
-        return item.copyWith(name: name, quantity: quantity, price: price);
+        return item.copyWith(
+          name: name,
+          quantityValue: quantityValue,
+          quantityUnit: quantityUnit,
+          priceValue: priceValue,
+          priceUnit: priceUnit,
+          totalValue: totalValue,
+        );
       }
       return item;
     }).toList();
@@ -539,8 +562,11 @@ class ShoppingListController extends ChangeNotifier {
     final newItem = ShoppingItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: original.name,
-      quantity: original.quantity,
-      price: original.price,
+      quantityValue: original.quantityValue,
+      quantityUnit: original.quantityUnit,
+      priceValue: original.priceValue,
+      priceUnit: original.priceUnit,
+      totalValue: original.totalValue,
       categoryId: destinationCategoryId,
       createdAt: DateTime.now(),
       isChecked: false,
