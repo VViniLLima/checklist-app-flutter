@@ -662,7 +662,12 @@ class ShoppingListScreen extends StatelessWidget {
                             )
                             .toList(),
                         onChanged: (val) {
-                          if (val != null) setState(() => qUnit = val);
+                          if (val != null) {
+                            setState(() {
+                              qUnit = val;
+                              pUnit = val;
+                            });
+                          }
                         },
                       ),
                     ),
