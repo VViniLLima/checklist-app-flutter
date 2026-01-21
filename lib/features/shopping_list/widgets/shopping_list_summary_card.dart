@@ -16,8 +16,8 @@ class ShoppingListSummaryCard extends StatelessWidget {
     final listName = controller.activeList?.name ?? 'Lista de Compras';
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF6342E8), Color(0xFF4A68FF)],
@@ -77,7 +77,7 @@ class ShoppingListSummaryCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 0),
           // Row 1: Ratio and Progress
           Row(
             children: [
@@ -105,7 +105,7 @@ class ShoppingListSummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           // Row 2: Budget Metrics
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

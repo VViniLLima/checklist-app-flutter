@@ -24,135 +24,41 @@ class ShoppingListScreen extends StatelessWidget {
         final listName = activeList?.name ?? 'Lista de Compras';
 
         return Scaffold(
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: const SizedBox.shrink(), // Remove default back button
-          ),
-          body: controller.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                  children: [
-                    Expanded(
-                      child: CustomScrollView(
-                        slivers: [
-                          // Summary Card
-                          SliverToBoxAdapter(
-                            child: ShoppingListSummaryCard(
-                              onRename: () => _showRenameListDialog(
-                                context,
-                                controller,
-                                activeList?.id,
-                                listName,
+          body: SafeArea(
+            child: controller.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [
+                      ShoppingListSummaryCard(
+                        onRename: () => _showRenameListDialog(
+                          context,
+                          controller,
+                          activeList?.id,
+                          listName,
+                        ),
+                        onBack: () => Navigator.of(context).pop(),
+                      ),
+                      Expanded(
+                        child: CustomScrollView(
+                          slivers: [
+                            SliverPadding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
                               ),
-                              onBack: () => Navigator.of(context).pop(),
-                            ),
-                          ),
-
-                          SliverPadding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            sliver: SliverList(
-                              delegate: SliverChildListDelegate([
-                                CategorySection(
-                                  category: controller.semCategoria,
-                                  items: controller.getItemsByCategory(
-                                    'sem-categoria',
-                                  ),
-                                  isCollapsed: false,
-                                  onToggleCollapse: () {},
-                                  onAddItem: () => _showItemEditorBottomSheet(
-                                    context,
-                                    categoryId: 'sem-categoria',
-                                  ),
-                                  onEditCategory: () {},
-                                  onToggleItemCheck: controller.toggleItemCheck,
-                                  onEditItem: (itemId) =>
-                                      _showItemEditorBottomSheet(
-                                        context,
-                                        itemId: itemId,
-                                      ),
-                                  onDeleteItem: (itemId) => _confirmDelete(
-                                    context,
-                                    'Deseja remover este item?',
-                                    () {
-                                      final item = controller.allItems
-                                          .firstWhere((i) => i.id == itemId);
-                                      _performDeleteWithSnackBar(
-                                        context,
-                                        controller,
-                                        item,
-                                      );
-                                    },
-                                  ),
-                                  onSwipeComplete: (item) =>
-                                      controller.markItemChecked(item.id),
-                                  onSwipeDelete: (item) => _handleSwipeDelete(
-                                    context,
-                                    controller,
-                                    item,
-                                  ),
-                                  onMoveItem: (itemId) => _showCategoryPicker(
-                                    context,
-                                    (catId) async {
-                                      await controller.moveItemToCategory(
-                                        itemId,
-                                        catId,
-                                      );
-                                    },
-                                  ),
-                                  onCopyItem: (itemId) => _showCategoryPicker(
-                                    context,
-                                    (catId) async {
-                                      await controller.copyItemToCategory(
-                                        itemId,
-                                        catId,
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ]),
-                            ),
-                          ),
-                          SliverPadding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            sliver: SliverReorderableList(
-                              itemCount: controller.categories.length,
-                              onReorder: (oldIndex, newIndex) {
-                                controller.reorderCategories(
-                                  oldIndex,
-                                  newIndex,
-                                );
-                              },
-                              itemBuilder: (context, index) {
-                                final category = controller.categories[index];
-                                final items = controller.getItemsByCategory(
-                                  category.id,
-                                );
-                                final isCollapsed = controller
-                                    .isCategoryCollapsed(category.id);
-
-                                final isCompleted = controller
-                                    .isCategoryCompleted(category.id);
-
-                                return Material(
-                                  key: ValueKey(category.id),
-                                  color: Colors.transparent,
-                                  child: CategorySection(
-                                    category: category,
-                                    items: items,
-                                    isCollapsed: isCollapsed,
-                                    onToggleCollapse: () => controller
-                                        .toggleCategoryCollapse(category.id),
+                              sliver: SliverList(
+                                delegate: SliverChildListDelegate([
+                                  CategorySection(
+                                    category: controller.semCategoria,
+                                    items: controller.getItemsByCategory(
+                                      'sem-categoria',
+                                    ),
+                                    isCollapsed: false,
+                                    onToggleCollapse: () {},
                                     onAddItem: () => _showItemEditorBottomSheet(
                                       context,
-                                      categoryId: category.id,
+                                      categoryId: 'sem-categoria',
                                     ),
-                                    onEditCategory: () =>
-                                        _showEditCategoryDialog(
-                                          context,
-                                          category.id,
-                                          category.name,
-                                        ),
+                                    onEditCategory: () {},
                                     onToggleItemCheck:
                                         controller.toggleItemCheck,
                                     onEditItem: (itemId) =>
@@ -198,50 +104,153 @@ class ShoppingListScreen extends StatelessWidget {
                                         );
                                       },
                                     ),
-                                    showDragHandle: !isCompleted,
-                                    headerWrapper: !isCompleted
-                                        ? (header) =>
-                                              ReorderableDelayedDragStartListener(
-                                                index: index,
-                                                child: header,
-                                              )
-                                        : null,
                                   ),
-                                );
-                              },
+                                ]),
+                              ),
                             ),
-                          ),
-                          SliverToBoxAdapter(
-                            child: Padding(
+                            SliverPadding(
                               padding: const EdgeInsets.symmetric(
-                                vertical: 24,
                                 horizontal: 16,
                               ),
-                              child: OutlinedButton.icon(
-                                onPressed: () =>
-                                    _showAddCategoryDialog(context),
-                                icon: const Icon(Icons.add),
-                                label: const Text('Nova Categoria'),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                              sliver: SliverReorderableList(
+                                itemCount: controller.categories.length,
+                                onReorder: (oldIndex, newIndex) {
+                                  controller.reorderCategories(
+                                    oldIndex,
+                                    newIndex,
+                                  );
+                                },
+                                itemBuilder: (context, index) {
+                                  final category = controller.categories[index];
+                                  final items = controller.getItemsByCategory(
+                                    category.id,
+                                  );
+                                  final isCollapsed = controller
+                                      .isCategoryCollapsed(category.id);
+
+                                  final isCompleted = controller
+                                      .isCategoryCompleted(category.id);
+
+                                  return Material(
+                                    key: ValueKey(category.id),
+                                    color: Colors.transparent,
+                                    child: CategorySection(
+                                      category: category,
+                                      items: items,
+                                      isCollapsed: isCollapsed,
+                                      onToggleCollapse: () => controller
+                                          .toggleCategoryCollapse(category.id),
+                                      onAddItem: () =>
+                                          _showItemEditorBottomSheet(
+                                            context,
+                                            categoryId: category.id,
+                                          ),
+                                      onEditCategory: () =>
+                                          _showEditCategoryDialog(
+                                            context,
+                                            category.id,
+                                            category.name,
+                                          ),
+                                      onToggleItemCheck:
+                                          controller.toggleItemCheck,
+                                      onEditItem: (itemId) =>
+                                          _showItemEditorBottomSheet(
+                                            context,
+                                            itemId: itemId,
+                                          ),
+                                      onDeleteItem: (itemId) => _confirmDelete(
+                                        context,
+                                        'Deseja remover este item?',
+                                        () {
+                                          final item = controller.allItems
+                                              .firstWhere(
+                                                (i) => i.id == itemId,
+                                              );
+                                          _performDeleteWithSnackBar(
+                                            context,
+                                            controller,
+                                            item,
+                                          );
+                                        },
+                                      ),
+                                      onSwipeComplete: (item) =>
+                                          controller.markItemChecked(item.id),
+                                      onSwipeDelete: (item) =>
+                                          _handleSwipeDelete(
+                                            context,
+                                            controller,
+                                            item,
+                                          ),
+                                      onMoveItem: (itemId) =>
+                                          _showCategoryPicker(context, (
+                                            catId,
+                                          ) async {
+                                            await controller.moveItemToCategory(
+                                              itemId,
+                                              catId,
+                                            );
+                                          }),
+                                      onCopyItem: (itemId) =>
+                                          _showCategoryPicker(context, (
+                                            catId,
+                                          ) async {
+                                            await controller.copyItemToCategory(
+                                              itemId,
+                                              catId,
+                                            );
+                                          }),
+                                      showDragHandle: !isCompleted,
+                                      headerWrapper: !isCompleted
+                                          ? (header) =>
+                                                ReorderableDelayedDragStartListener(
+                                                  index: index,
+                                                  child: header,
+                                                )
+                                          : null,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 24,
+                                  horizontal: 16,
+                                ),
+                                child: OutlinedButton.icon(
+                                  onPressed: () =>
+                                      _showAddCategoryDialog(context),
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Nova Categoria'),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                        ],
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: 80),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    // Finalize Button
-                    _buildFinalizeButton(context),
-                  ],
-                ),
-          floatingActionButton: null,
+                      // Finalize Button
+                      _buildFinalizeButton(context),
+                    ],
+                  ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => _showAddCategoryDialog(context),
+            backgroundColor: const Color(0xFF6342E8),
+            foregroundColor: Colors.white,
+            child: const Icon(Icons.add_rounded),
+          ),
         );
       },
     );
