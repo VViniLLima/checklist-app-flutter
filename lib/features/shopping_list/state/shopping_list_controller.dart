@@ -27,6 +27,17 @@ class ShoppingListController extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
   List<ShoppingList> get shoppingLists => List.unmodifiable(_shoppingLists);
+
+  List<ShoppingList> get activeLists =>
+      _shoppingLists.where((list) => !list.isCompleted).toList();
+
+  List<ShoppingList> get completedLists =>
+      _shoppingLists.where((list) => list.isCompleted).toList()..sort(
+        (a, b) => (b.purchaseDate ?? b.createdAt).compareTo(
+          a.purchaseDate ?? a.createdAt,
+        ),
+      );
+
   String? get activeListId => _activeListId;
   ShoppingList? get activeList {
     if (_activeListId == null) return null;
@@ -233,6 +244,34 @@ class ShoppingListController extends ChangeNotifier {
     _shoppingLists[index] = _shoppingLists[index].copyWith(name: newName);
     await _repository.saveShoppingLists(_shoppingLists);
     notifyListeners();
+  }
+
+  /// Finaliza uma lista e salva no histórico
+  Future<void> finalizeList(
+    String listId, {
+    required String location,
+    required DateTime date,
+    required double totalSpent,
+  }) async {
+    final index = _shoppingLists.indexWhere((list) => list.id == listId);
+    if (index == -1) return;
+
+    _shoppingLists[index] = _shoppingLists[index].copyWith(
+      isCompleted: true,
+      purchaseLocation: location,
+      purchaseDate: date,
+      totalSpent: totalSpent,
+    );
+
+    await _repository.saveShoppingLists(_shoppingLists);
+    notifyListeners();
+  }
+
+  /// Recupera dados de uma lista específica (para histórico) sem torná-la ativa
+  Future<Map<String, dynamic>> getHistoryListData(String listId) async {
+    final categories = await _repository.loadCategories(listId);
+    final items = await _repository.loadItems(listId);
+    return {'categories': categories, 'items': items};
   }
 
   // ==================== Categorias ====================

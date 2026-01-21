@@ -42,7 +42,7 @@ class HomeScreen extends StatelessWidget {
 
               // Lista de listas de compras
               Expanded(
-                child: controller.shoppingLists.isEmpty
+                child: controller.activeLists.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -54,7 +54,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'Nenhuma lista criada ainda',
+                              'Nenhuma lista ativa',
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.grey[600],
@@ -62,7 +62,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Toque no botão + para criar sua primeira lista',
+                              'Toque no botão + para criar sua próxima lista',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[500],
@@ -77,9 +77,9 @@ class HomeScreen extends StatelessWidget {
                           right: 16,
                           bottom: 120,
                         ),
-                        itemCount: controller.shoppingLists.length,
+                        itemCount: controller.activeLists.length,
                         itemBuilder: (context, index) {
-                          final list = controller.shoppingLists[index];
+                          final list = controller.activeLists[index];
                           final isActive = list.id == controller.activeListId;
 
                           return Card(

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../state/shopping_list_controller.dart';
 import 'shopping_list_screen.dart';
 import 'home_screen.dart';
+import 'history_screen.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 
 class MainScreen extends StatefulWidget {
@@ -21,10 +22,7 @@ class _MainScreenState extends State<MainScreen> {
     const Center(
       child: Text('Add Item Proxy'),
     ), // Proxy for center button if needed
-    const PlaceholderScreen(
-      title: 'Cart',
-      icon: Icons.shopping_basket_outlined,
-    ),
+    const HistoryScreen(),
     const PlaceholderScreen(
       title: 'Profile',
       icon: Icons.person_outline_rounded,

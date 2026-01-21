@@ -246,9 +246,35 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
 
             // Buttons
             ElevatedButton(
-              onPressed: () {
-                // Future implementation: Save to history
-                Navigator.pop(context);
+              onPressed: () async {
+                final controller = context.read<ShoppingListController>();
+                final activeList = controller.activeList;
+                if (activeList == null) return;
+
+                // Parse location
+                final location = _locationController.text.trim();
+
+                // Parse value
+                // Removes everything except digits and comma
+                String cleanValue = _valueController.text.replaceAll(
+                  RegExp(r'[^0-9,]'),
+                  '',
+                );
+                // Replace comma with dot
+                cleanValue = cleanValue.replaceAll(',', '.');
+                final totalSpent = double.tryParse(cleanValue) ?? 0.0;
+
+                await controller.finalizeList(
+                  activeList.id,
+                  location: location,
+                  date: _selectedDate,
+                  totalSpent: totalSpent,
+                );
+
+                if (mounted) {
+                  // Navigate back to the home screen (pop until first route)
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0F3D81),
