@@ -5,7 +5,7 @@ import '../models/shopping_list.dart';
 import '../data/shopping_repository.dart';
 
 /// Controller principal que gerencia o estado da lista de compras
-/// 
+///
 /// Implementa todas as regras de negócio:
 /// - Gerenciar múltiplas listas de compras
 /// - Adicionar/remover categorias e itens
@@ -37,17 +37,17 @@ class ShoppingListController extends ChangeNotifier {
     }
   }
 
-  List<models.Category> get categories => List.unmodifiable(
-    _categories.where((cat) => cat.id != 'sem-categoria'),
-  );
+  List<models.Category> get categories =>
+      List.unmodifiable(_categories.where((cat) => cat.id != 'sem-categoria'));
   List<ShoppingItem> get allItems => List.unmodifiable(_items);
 
   /// Retorna itens de uma categoria específica, ordenados conforme regras:
   /// - Itens NÃO marcados primeiro (ordenados por createdAt)
   /// - Itens marcados no final (ordenados por checkedAt)
   List<ShoppingItem> getItemsByCategory(String? categoryId) {
-    final categoryItems =
-        _items.where((item) => item.categoryId == categoryId).toList();
+    final categoryItems = _items
+        .where((item) => item.categoryId == categoryId)
+        .toList();
 
     return _sortItems(categoryItems);
   }
@@ -152,13 +152,18 @@ class ShoppingListController extends ChangeNotifier {
     if (!hasDuplicates) return;
 
     // Re-sequence based on current order
-    _categories = List.generate(_categories.length, (i) => _categories[i].copyWith(sortOrder: i));
+    _categories = List.generate(
+      _categories.length,
+      (i) => _categories[i].copyWith(sortOrder: i),
+    );
     await _repository.saveCategories(_activeListId!, _categories);
   }
 
   void _ensureSemCategoriaExists() {
     const semCategoriaId = 'sem-categoria';
-    final semCategoriaExists = _categories.any((cat) => cat.id == semCategoriaId);
+    final semCategoriaExists = _categories.any(
+      (cat) => cat.id == semCategoriaId,
+    );
     if (!semCategoriaExists) {
       final semCategoria = models.Category(
         id: semCategoriaId,
@@ -166,7 +171,10 @@ class ShoppingListController extends ChangeNotifier {
       );
       _categories.insert(0, semCategoria); // Insert at beginning
       if (_activeListId != null) {
-        _repository.saveCategories(_activeListId!, _categories); // Save immediately
+        _repository.saveCategories(
+          _activeListId!,
+          _categories,
+        ); // Save immediately
       }
     }
   }
@@ -206,6 +214,16 @@ class ShoppingListController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Renomeia uma lista de compras existente
+  Future<void> renameShoppingList(String listId, String newName) async {
+    final index = _shoppingLists.indexWhere((list) => list.id == listId);
+    if (index == -1) return;
+
+    _shoppingLists[index] = _shoppingLists[index].copyWith(name: newName);
+    await _repository.saveShoppingLists(_shoppingLists);
+    notifyListeners();
+  }
+
   // ==================== Categorias ====================
 
   /// Adiciona nova categoria
@@ -216,7 +234,12 @@ class ShoppingListController extends ChangeNotifier {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       // Assign next sort order at the end of current categories
-      sortOrder: (_categories.isEmpty ? 0 : _categories.map((c) => c.sortOrder).reduce((a, b) => a > b ? a : b) + 1),
+      sortOrder: (_categories.isEmpty
+          ? 0
+          : _categories
+                    .map((c) => c.sortOrder)
+                    .reduce((a, b) => a > b ? a : b) +
+                1),
     );
 
     _categories.add(newCategory);
@@ -229,7 +252,7 @@ class ShoppingListController extends ChangeNotifier {
     if (_activeListId == null) return;
 
     _categories.removeWhere((cat) => cat.id == categoryId);
-    
+
     // Move itens da categoria removida para "Sem categoria"
     _items = _items.map((item) {
       if (item.categoryId == categoryId) {
@@ -297,7 +320,9 @@ class ShoppingListController extends ChangeNotifier {
     }
 
     // Reorder only within the active (not-completed) group
-    final reorderableCategories = _categories.where((cat) => cat.id != 'sem-categoria').toList();
+    final reorderableCategories = _categories
+        .where((cat) => cat.id != 'sem-categoria')
+        .toList();
 
     // Disallow moving a category that is already completed
     final movedCategory = reorderableCategories[oldIndex];
@@ -315,7 +340,9 @@ class ShoppingListController extends ChangeNotifier {
     }
 
     // Compute positions within activeCats based on original indexes
-    final activeOldIndex = activeCats.indexWhere((c) => c.id == movedCategory.id);
+    final activeOldIndex = activeCats.indexWhere(
+      (c) => c.id == movedCategory.id,
+    );
     if (activeOldIndex == -1) return; // safety
 
     // Convert newIndex (index in reorderableCategories) to index within activeCats
@@ -332,7 +359,9 @@ class ShoppingListController extends ChangeNotifier {
     activeCats.insert(activeNewIndex, movedCategory);
 
     // Rebuild full categories list with sem-categoria first
-    final semCategoria = _categories.firstWhere((cat) => cat.id == 'sem-categoria');
+    final semCategoria = _categories.firstWhere(
+      (cat) => cat.id == 'sem-categoria',
+    );
     _categories = [semCategoria, ...activeCats, ...completedCats];
 
     // Update sortOrder to reflect new persisted order (preserve sem-categoria at 0)
@@ -397,11 +426,11 @@ class ShoppingListController extends ChangeNotifier {
   }
 
   /// Marca/desmarca item
-  /// 
+  ///
   /// Quando marcado:
   /// - Define checkedAt para controlar ordenação
   /// - Item será automaticamente movido para o fim através da ordenação
-  /// 
+  ///
   /// Quando desmarcado:
   /// - Remove checkedAt
   /// - Item volta para o topo (entre os não marcados)
@@ -499,7 +528,10 @@ class ShoppingListController extends ChangeNotifier {
 
   /// Copy an existing item into another category (creates a new item)
   /// The copied item will be unchecked by default and have a new id/createdAt.
-  Future<void> copyItemToCategory(String itemId, String? destinationCategoryId) async {
+  Future<void> copyItemToCategory(
+    String itemId,
+    String? destinationCategoryId,
+  ) async {
     if (_activeListId == null) return;
 
     final originalIndex = _items.indexWhere((i) => i.id == itemId);
@@ -543,8 +575,11 @@ class ShoppingListController extends ChangeNotifier {
     if (categoryId == null) return false;
     if (categoryId == 'sem-categoria') return false;
 
-    final categoryItems = _items.where((i) => i.categoryId == categoryId).toList();
-    if (categoryItems.isEmpty) return false; // Empty categories are NOT completed
+    final categoryItems = _items
+        .where((i) => i.categoryId == categoryId)
+        .toList();
+    if (categoryItems.isEmpty)
+      return false; // Empty categories are NOT completed
 
     return categoryItems.every((i) => i.isChecked);
   }
@@ -557,7 +592,11 @@ class ShoppingListController extends ChangeNotifier {
     if (_isLoading) return; // do not reorder while loading
     if (_activeListId == null) return;
 
-    final sem = _categories.firstWhere((c) => c.id == 'sem-categoria', orElse: () => const models.Category(id: 'sem-categoria', name: 'Sem categoria'));
+    final sem = _categories.firstWhere(
+      (c) => c.id == 'sem-categoria',
+      orElse: () =>
+          const models.Category(id: 'sem-categoria', name: 'Sem categoria'),
+    );
 
     // Only consider reorderable categories (exclude sem-categoria)
     final others = _categories.where((c) => c.id != 'sem-categoria').toList();
@@ -575,8 +614,11 @@ class ShoppingListController extends ChangeNotifier {
     final newOrder = [sem, ...active, ...completed];
 
     // Check if order changed (compare ids)
-    final same = newOrder.length == _categories.length &&
-        Iterable.generate(newOrder.length).every((i) => newOrder[i].id == _categories[i].id);
+    final same =
+        newOrder.length == _categories.length &&
+        Iterable.generate(
+          newOrder.length,
+        ).every((i) => newOrder[i].id == _categories[i].id);
 
     if (same) return;
 

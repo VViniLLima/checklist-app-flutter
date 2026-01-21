@@ -4,7 +4,7 @@ import '../state/shopping_list_controller.dart';
 import 'shopping_list_screen.dart';
 
 /// Tela inicial que exibe todas as listas de compras
-/// 
+///
 /// Permite:
 /// - Visualizar todas as listas criadas
 /// - Criar novas listas
@@ -34,9 +34,9 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
                   'Olá! Aqui estão suas listas de compras 🛒',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.grey[700],
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(color: Colors.grey[700]),
                 ),
               ),
 
@@ -84,7 +84,10 @@ class HomeScreen extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                               side: isActive
-                                  ? const BorderSide(color: Colors.blue, width: 2)
+                                  ? const BorderSide(
+                                      color: Colors.blue,
+                                      width: 2,
+                                    )
                                   : BorderSide.none,
                             ),
                             child: ListTile(
@@ -116,7 +119,7 @@ class HomeScreen extends StatelessWidget {
                                 ),
                               ),
                               subtitle: Text(
-                                'Criada em ${_formatDate(list.createdAt)}',
+                                'Criada ${_formatDate(list.createdAt)}',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[600],
@@ -127,7 +130,8 @@ class HomeScreen extends StatelessWidget {
                                 size: 16,
                                 color: Colors.grey[400],
                               ),
-                              onTap: () => _openList(context, controller, list.id),
+                              onTap: () =>
+                                  _openList(context, controller, list.id),
                             ),
                           );
                         },
@@ -136,9 +140,8 @@ class HomeScreen extends StatelessWidget {
             ],
           );
         },
-   
-    ));
-    
+      ),
+    );
   }
 
   String _formatDate(DateTime date) {
@@ -167,9 +170,7 @@ class HomeScreen extends StatelessWidget {
     // Navigate to shopping list screen
     if (context.mounted) {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => const ShoppingListScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const ShoppingListScreen()),
       );
     }
   }

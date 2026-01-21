@@ -24,12 +24,8 @@ class CustomBottomNavBar extends StatelessWidget {
       child: Stack(
         children: [
           // Background with painter
-          Positioned.fill(
-            child: CustomPaint(
-              painter: NavBarPainter(),
-            ),
-          ),
-          
+          Positioned.fill(child: CustomPaint(painter: NavBarPainter())),
+
           // Navigation Items
           Align(
             alignment: Alignment.bottomCenter,
@@ -101,11 +97,7 @@ class CustomBottomNavBar extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 30,
-                  ),
+                  child: const Icon(Icons.add, color: Colors.white, size: 30),
                 ),
               ),
             ),
@@ -138,7 +130,7 @@ class _NavBarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = index == currentIndex;
-    
+
     return GestureDetector(
       onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
@@ -155,11 +147,7 @@ class _NavBarItem extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Icon(
-            icon,
-            color: isActive ? activeColor : inactiveColor,
-            size: 20,
-          ),
+          Icon(icon, color: isActive ? activeColor : inactiveColor, size: 20),
           const SizedBox(height: 4),
           Text(
             label,

@@ -18,9 +18,17 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const PlaceholderScreen(title: 'Search', icon: Icons.search_rounded),
-    const Center(child: Text('Add Item Proxy')), // Proxy for center button if needed
-    const PlaceholderScreen(title: 'Cart', icon: Icons.shopping_basket_outlined),
-    const PlaceholderScreen(title: 'Profile', icon: Icons.person_outline_rounded),
+    const Center(
+      child: Text('Add Item Proxy'),
+    ), // Proxy for center button if needed
+    const PlaceholderScreen(
+      title: 'Cart',
+      icon: Icons.shopping_basket_outlined,
+    ),
+    const PlaceholderScreen(
+      title: 'Profile',
+      icon: Icons.person_outline_rounded,
+    ),
   ];
 
   void _onTabTapped(int index) {
@@ -110,9 +118,7 @@ class _MainScreenState extends State<MainScreen> {
 
     if (context.mounted) {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => const ShoppingListScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const ShoppingListScreen()),
       );
     }
   }
@@ -120,10 +126,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: SafeArea(
         child: CustomBottomNavBar(
           currentIndex: _currentIndex,
@@ -131,7 +134,8 @@ class _MainScreenState extends State<MainScreen> {
           onCenterTap: () => _showCreateListDialog(context),
         ),
       ),
-      extendBody: true, // Allows the body to go behind the transparent/floating nav bar
+      extendBody:
+          true, // Allows the body to go behind the transparent/floating nav bar
     );
   }
 }
@@ -140,19 +144,12 @@ class PlaceholderScreen extends StatelessWidget {
   final String title;
   final IconData icon;
 
-  const PlaceholderScreen({
-    super.key,
-    required this.title,
-    required this.icon,
-  });
+  const PlaceholderScreen({super.key, required this.title, required this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        backgroundColor: Colors.transparent,
-      ),
+      appBar: AppBar(title: Text(title), backgroundColor: Colors.transparent),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
