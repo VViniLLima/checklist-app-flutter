@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:checklist_app/main.dart';
 import '../state/shopping_list_controller.dart';
+import 'finalize_list_screen.dart';
 import '../widgets/category_section.dart';
 import '../widgets/shopping_list_summary_card.dart';
 import '../models/shopping_item.dart';
@@ -222,7 +223,14 @@ class ShoppingListScreen extends StatelessWidget {
                                 ),
                                 child: ElevatedButton.icon(
                                   onPressed: controller.checkedItemsCount > 0
-                                      ? () {} // No-op for now
+                                      ? () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const FinalizeListScreen(),
+                                            ),
+                                          );
+                                        }
                                       : null,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF6342E8),
