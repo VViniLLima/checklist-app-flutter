@@ -214,42 +214,59 @@ class ShoppingListScreen extends StatelessWidget {
                             ),
                             SliverToBoxAdapter(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 24,
-                                  horizontal: 16,
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  24,
+                                  16,
+                                  120,
                                 ),
-                                child: OutlinedButton.icon(
-                                  onPressed: () =>
-                                      _showAddCategoryDialog(context),
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Nova Categoria'),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {}, // No-op for now
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF6342E8),
+                                    foregroundColor: Colors.white,
+                                    minimumSize: const Size(
+                                      double.infinity,
+                                      56,
                                     ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(30),
                                     ),
+                                    elevation: 0,
+                                  ),
+                                  label: const Text(
+                                    'Finalizar lista',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.check_circle_outline_rounded,
                                   ),
                                 ),
                               ),
                             ),
-                            const SliverToBoxAdapter(
-                              child: SizedBox(height: 80),
-                            ),
                           ],
                         ),
                       ),
-                      // Finalize Button
-                      _buildFinalizeButton(context),
                     ],
                   ),
           ),
-          floatingActionButton: FloatingActionButton(
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButton: FloatingActionButton.extended(
             onPressed: () => _showAddCategoryDialog(context),
             backgroundColor: const Color(0xFF6342E8),
             foregroundColor: Colors.white,
-            child: const Icon(Icons.add_rounded),
+            elevation: 8,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            label: const Text(
+              'Nova Categoria',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            icon: const Icon(Icons.add_rounded),
           ),
         );
       },
@@ -509,41 +526,6 @@ class ShoppingListScreen extends StatelessWidget {
             child: const Text('Salvar'),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFinalizeButton(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: ElevatedButton(
-          onPressed: () {}, // No-op for now
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF6342E8),
-            foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 56),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 0,
-          ),
-          child: const Text(
-            'Finalizar lista',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
       ),
     );
   }
