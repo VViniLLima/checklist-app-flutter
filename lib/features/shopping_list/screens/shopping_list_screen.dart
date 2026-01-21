@@ -25,23 +25,9 @@ class ShoppingListScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(
-              listName,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                onPressed: () => _showRenameListDialog(
-                  context,
-                  controller,
-                  activeList?.id,
-                  listName,
-                ),
-              ),
-            ],
             backgroundColor: Colors.transparent,
             elevation: 0,
+            leading: const SizedBox.shrink(), // Remove default back button
           ),
           body: controller.isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -51,7 +37,17 @@ class ShoppingListScreen extends StatelessWidget {
                       child: CustomScrollView(
                         slivers: [
                           // Summary Card
-                          SliverToBoxAdapter(child: ShoppingListSummaryCard()),
+                          SliverToBoxAdapter(
+                            child: ShoppingListSummaryCard(
+                              onRename: () => _showRenameListDialog(
+                                context,
+                                controller,
+                                activeList?.id,
+                                listName,
+                              ),
+                              onBack: () => Navigator.of(context).pop(),
+                            ),
+                          ),
 
                           SliverPadding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),

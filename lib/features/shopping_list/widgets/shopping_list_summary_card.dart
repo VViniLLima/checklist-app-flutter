@@ -5,11 +5,15 @@ import '../state/shopping_list_controller.dart';
 /// Widget compacto do cartão de resumo da lista de compras
 /// Optimizado para telas pequenas com layout de duas linhas
 class ShoppingListSummaryCard extends StatelessWidget {
-  const ShoppingListSummaryCard({super.key});
+  final VoidCallback? onRename;
+  final VoidCallback? onBack;
+
+  const ShoppingListSummaryCard({super.key, this.onRename, this.onBack});
 
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ShoppingListController>();
+    final listName = controller.activeList?.name ?? 'Lista de Compras';
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -31,7 +35,49 @@ class ShoppingListSummaryCard extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Row 0: List Name and Actions
+          Row(
+            children: [
+              if (onBack != null)
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  onPressed: onBack,
+                ),
+              if (onBack != null) const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  listName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (onRename != null)
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(
+                    Icons.edit_rounded,
+                    color: Colors.white70,
+                    size: 18,
+                  ),
+                  onPressed: onRename,
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
           // Row 1: Ratio and Progress
           Row(
             children: [
