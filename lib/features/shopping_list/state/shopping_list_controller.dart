@@ -43,8 +43,12 @@ class ShoppingListController extends ChangeNotifier {
 
   int get totalItemsCount => _items.length;
   int get checkedItemsCount => _items.where((item) => item.isChecked).length;
-  double get estimatedTotal =>
-      _items.fold(0.0, (sum, item) => sum + item.totalValue);
+  double get estimatedTotal => _items
+      .where((item) => item.totalValue > 0)
+      .fold(0.0, (sum, item) => sum + item.totalValue);
+  double get cartTotal => _items
+      .where((item) => item.isChecked && item.totalValue > 0)
+      .fold(0.0, (sum, item) => sum + item.totalValue);
   double get progressRatio =>
       totalItemsCount == 0 ? 0.0 : checkedItemsCount / totalItemsCount;
 

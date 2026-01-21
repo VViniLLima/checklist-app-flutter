@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:checklist_app/main.dart';
 import '../state/shopping_list_controller.dart';
 import '../widgets/category_section.dart';
+import '../widgets/shopping_list_summary_card.dart';
 import '../models/shopping_item.dart';
 
 /// Tela principal da lista de compras
@@ -50,9 +51,7 @@ class ShoppingListScreen extends StatelessWidget {
                       child: CustomScrollView(
                         slivers: [
                           // Summary Card
-                          SliverToBoxAdapter(
-                            child: _buildSummaryCard(context, controller),
-                          ),
+                          SliverToBoxAdapter(child: ShoppingListSummaryCard()),
 
                           SliverPadding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -503,87 +502,6 @@ class ShoppingListScreen extends StatelessWidget {
               Navigator.of(context).pop();
             },
             child: const Text('Salvar'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard(
-    BuildContext context,
-    ShoppingListController controller,
-  ) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF6342E8), Color(0xFF4A68FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6342E8).withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${controller.checkedItemsCount} de ${controller.totalItemsCount} itens',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'concluídos',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'R\$ ${controller.estimatedTotal.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'total estimado',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: controller.progressRatio,
-              backgroundColor: Colors.white.withOpacity(0.2),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-              minHeight: 8,
-            ),
           ),
         ],
       ),
