@@ -82,48 +82,61 @@ class _HistoryScreenState extends State<HistoryScreen> {
             : totalSpent / filteredLists.length;
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text(''), // Limpando título conforme pedido
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            centerTitle: false,
-          ),
-          body: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSummaryCard(
-                  context,
-                  totalSpent,
-                  filteredLists.length,
-                  avgSpent,
-                ),
-                _buildFilterRow(context),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-                  child: Text(
-                    'Compras realizadas',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Pinned Summary Card with Safe Area
+              Container(
+                color: theme.colorScheme.primary,
+                child: SafeArea(
+                  bottom: false,
+                  child: _buildSummaryCard(
+                    context,
+                    totalSpent,
+                    filteredLists.length,
+                    avgSpent,
                   ),
                 ),
-                if (filteredLists.isEmpty)
-                  _buildEmptyState(context)
-                else
-                  ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredLists.length,
-                    itemBuilder: (context, index) {
-                      final list = filteredLists[index];
-                      return _buildHistoryCard(context, list);
-                    },
+              ),
+
+              // Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(
+                    bottom: 100,
+                  ), // Space for bottom nav
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFilterRow(context),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Text(
+                          'Compras realizadas',
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      if (filteredLists.isEmpty)
+                        _buildEmptyState(context)
+                      else
+                        ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: filteredLists.length,
+                          itemBuilder: (context, index) {
+                            final list = filteredLists[index];
+                            return _buildHistoryCard(context, list);
+                          },
+                        ),
+                    ],
                   ),
-              ],
-            ),
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -150,18 +163,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
     ).format(average);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(24),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       decoration: BoxDecoration(
         color: colorScheme.primary,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.primary.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
