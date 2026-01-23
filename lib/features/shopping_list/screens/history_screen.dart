@@ -167,6 +167,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       decoration: BoxDecoration(
         color: colorScheme.primary,
+        image: const DecorationImage(
+          image: AssetImage('assets/Images/Asset 1.png'),
+          fit: BoxFit.cover,
+        ),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(32),
           bottomRight: Radius.circular(32),

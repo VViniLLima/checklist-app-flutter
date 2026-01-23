@@ -22,6 +22,10 @@ class ShoppingListSummaryCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: colorScheme.primary,
+        image: const DecorationImage(
+          image: AssetImage('assets/Images/Asset 1.png'),
+          fit: BoxFit.cover,
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
