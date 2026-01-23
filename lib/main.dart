@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'features/shopping_list/data/shopping_repository.dart';
 import 'features/shopping_list/state/shopping_list_controller.dart';
 import 'features/shopping_list/screens/main_screen.dart';
@@ -15,6 +16,9 @@ void main() async {
 
   // Inicializa o repositório
   final repository = await ShoppingRepository.create();
+
+  // Inicializa formatação de data para pt_BR
+  await initializeDateFormatting('pt_BR', null);
 
   runApp(MyApp(repository: repository));
 }
