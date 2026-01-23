@@ -246,6 +246,19 @@ class ShoppingListController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Alterna o estado de favorito de uma lista
+  Future<void> toggleFavorite(String listId) async {
+    final index = _shoppingLists.indexWhere((list) => list.id == listId);
+    if (index == -1) return;
+
+    final current = _shoppingLists[index].isFavorite;
+    _shoppingLists[index] = _shoppingLists[index].copyWith(
+      isFavorite: !current,
+    );
+    await _repository.saveShoppingLists(_shoppingLists);
+    notifyListeners();
+  }
+
   /// Finaliza uma lista e salva no histórico
   Future<void> finalizeList(
     String listId, {

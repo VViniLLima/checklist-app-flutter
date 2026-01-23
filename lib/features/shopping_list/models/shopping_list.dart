@@ -9,6 +9,7 @@ class ShoppingList {
   final String name;
   final DateTime createdAt;
   final bool isCompleted;
+  final bool isFavorite;
   final String? purchaseLocation;
   final DateTime? purchaseDate;
   final double? totalSpent;
@@ -18,6 +19,7 @@ class ShoppingList {
     required this.name,
     required this.createdAt,
     this.isCompleted = false,
+    this.isFavorite = false,
     this.purchaseLocation,
     this.purchaseDate,
     this.totalSpent,
@@ -28,6 +30,7 @@ class ShoppingList {
     String? name,
     DateTime? createdAt,
     bool? isCompleted,
+    bool? isFavorite,
     String? purchaseLocation,
     DateTime? purchaseDate,
     double? totalSpent,
@@ -37,6 +40,7 @@ class ShoppingList {
       name: name ?? this.name,
       createdAt: createdAt ?? this.createdAt,
       isCompleted: isCompleted ?? this.isCompleted,
+      isFavorite: isFavorite ?? this.isFavorite,
       purchaseLocation: purchaseLocation ?? this.purchaseLocation,
       purchaseDate: purchaseDate ?? this.purchaseDate,
       totalSpent: totalSpent ?? this.totalSpent,
@@ -49,6 +53,7 @@ class ShoppingList {
       'name': name,
       'createdAt': createdAt.toIso8601String(),
       'isCompleted': isCompleted,
+      'isFavorite': isFavorite,
       'purchaseLocation': purchaseLocation,
       'purchaseDate': purchaseDate?.toIso8601String(),
       'totalSpent': totalSpent,
@@ -61,6 +66,7 @@ class ShoppingList {
       name: json['name'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       isCompleted: json['isCompleted'] as bool? ?? false,
+      isFavorite: json['isFavorite'] as bool? ?? false,
       purchaseLocation: json['purchaseLocation'] as String?,
       purchaseDate: json['purchaseDate'] != null
           ? DateTime.parse(json['purchaseDate'] as String)
@@ -77,6 +83,7 @@ class ShoppingList {
         other.name == name &&
         other.createdAt == createdAt &&
         other.isCompleted == isCompleted &&
+        other.isFavorite == isFavorite &&
         other.purchaseLocation == purchaseLocation &&
         other.purchaseDate == purchaseDate &&
         other.totalSpent == totalSpent;
@@ -88,6 +95,7 @@ class ShoppingList {
     name,
     createdAt,
     isCompleted,
+    isFavorite,
     purchaseLocation,
     purchaseDate,
     totalSpent,

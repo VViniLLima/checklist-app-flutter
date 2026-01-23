@@ -133,9 +133,6 @@ class _ListsScreenState extends State<ListsScreen> {
                               'checkedItems': controller.checkedItemsCount,
                               'progress': controller.progressRatio,
                               'estimatedTotal': controller.estimatedTotal,
-                              'isFavorite':
-                                  _listMetadata[list.id]?['isFavorite'] ??
-                                  false,
                             };
                           } else {
                             metadata =
@@ -145,11 +142,15 @@ class _ListsScreenState extends State<ListsScreen> {
                                   'checkedItems': 0,
                                   'progress': 0.0,
                                   'estimatedTotal': 0.0,
-                                  'isFavorite': false,
                                 };
                           }
 
-                          return _buildListCard(context, list, metadata);
+                          return _buildListCard(
+                            context,
+                            controller,
+                            list,
+                            metadata,
+                          );
                         },
                       ),
               ),
@@ -191,6 +192,7 @@ class _ListsScreenState extends State<ListsScreen> {
 
   Widget _buildListCard(
     BuildContext context,
+    ShoppingListController controller,
     ShoppingList list,
     Map<String, dynamic> metadata,
   ) {
@@ -286,20 +288,10 @@ class _ListsScreenState extends State<ListsScreen> {
                         if (progress == 1.0 && totalItems > 0)
                           const SizedBox(width: 8),
                         InkWell(
-                          onTap: () {
-                            setState(() {
-                              final current =
-                                  _listMetadata[list.id]?['isFavorite'] ??
-                                  false;
-                              _listMetadata[list.id] = {
-                                ...(_listMetadata[list.id] ?? {}),
-                                'isFavorite': !current,
-                              };
-                            });
-                          },
+                          onTap: () => controller.toggleFavorite(list.id),
                           child: Icon(
                             Icons.favorite_rounded,
-                            color: (metadata['isFavorite'] ?? false)
+                            color: list.isFavorite
                                 ? Colors.red
                                 : Colors.grey.withOpacity(0.5),
                             size: 22,
