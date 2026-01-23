@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models/shopping_list.dart';
-import '../models/category.dart' as models;
 import '../models/shopping_item.dart';
 import '../state/shopping_list_controller.dart';
 
@@ -19,7 +18,6 @@ class HistoryListDetailScreen extends StatefulWidget {
 class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
   bool _isLoading = true;
   ShoppingList? _list;
-  List<models.Category> _categories = [];
   List<ShoppingItem> _items = [];
 
   @override
@@ -38,7 +36,6 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
     if (mounted) {
       setState(() {
         _list = list;
-        _categories = data['categories'] as List<models.Category>;
         _items = data['items'] as List<ShoppingItem>;
         _isLoading = false;
       });
@@ -48,11 +45,17 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: Color(0xFFF6F7FB),
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
     if (_list == null) {
-      return const Scaffold(body: Center(child: Text('Lista não encontrada')));
+      return const Scaffold(
+        backgroundColor: Color(0xFFF6F7FB),
+        body: Center(child: Text('Lista não encontrada')),
+      );
     }
 
     final dateStr = _list!.purchaseDate != null
@@ -65,122 +68,30 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
     ).format(_list!.totalSpent ?? 0.0);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF6F7FB),
       appBar: AppBar(
-        title: const Text('Detalhes da Compra'),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: const Color(0xFF1E293B),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Color(0xFF1E293B),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
+      body: SafeArea(
+        child: Stack(
           children: [
-            // "Supermarket Invoice" Style Header
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFF1F5F9)),
-              ),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.check_circle_rounded,
-                    size: 48,
-                    color: Color(0xFF10B981),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _list!.name,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    dateStr,
-                    style: const TextStyle(color: Color(0xFF64748B)),
-                  ),
-                  if (_list!.purchaseLocation != null &&
-                      _list!.purchaseLocation!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      _list!.purchaseLocation!,
-                      style: const TextStyle(
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Divider(color: Color(0xFFE2E8F0)),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Total Pago',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                      Text(
-                        totalSpentFormatted,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F3D81),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+            SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+              child: Center(
+                child: _buildReceiptCard(dateStr, totalSpentFormatted),
               ),
             ),
-            const SizedBox(height: 32),
-
-            // Items List
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Itens da Lista',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ..._buildCategoriesAndItems(),
-              ],
-            ),
-            const SizedBox(height: 40),
-
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  foregroundColor: const Color(0xFF64748B),
-                ),
-                child: const Text(
-                  'Fechar Detalhes',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: _buildBottomActionBar(dateStr),
             ),
           ],
         ),
@@ -188,67 +99,126 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
     );
   }
 
-  List<Widget> _buildCategoriesAndItems() {
-    final widgets = <Widget>[];
-
-    // Combine all relevant categories (those that have items in this list)
-    final listCategories = _categories
-        .where((cat) => _items.any((item) => item.categoryId == cat.id))
-        .toList();
-
-    // Also check for "Sem Categoria"
-    final hasNoCategoryItems = _items.any(
-      (item) => item.categoryId == null || item.categoryId == 'sem-categoria',
-    );
-
-    for (final cat in listCategories) {
-      widgets.add(_buildCategoryHeader(cat.name, cat.colorValue));
-      final catItems = _items
-          .where((item) => item.categoryId == cat.id)
-          .toList();
-      for (final item in catItems) {
-        widgets.add(_buildItemRow(item));
-      }
-      widgets.add(const SizedBox(height: 16));
-    }
-
-    if (hasNoCategoryItems) {
-      widgets.add(_buildCategoryHeader('Sem Categoria', null));
-      final catItems = _items
-          .where(
-            (item) =>
-                item.categoryId == null || item.categoryId == 'sem-categoria',
-          )
-          .toList();
-      for (final item in catItems) {
-        widgets.add(_buildItemRow(item));
-      }
-    }
-
-    return widgets;
-  }
-
-  Widget _buildCategoryHeader(String name, int? colorValue) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12, top: 8),
-      child: Row(
+  Widget _buildReceiptCard(String dateStr, String totalSpentFormatted) {
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 450),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          // Top Icon Badge
           Container(
-            width: 4,
-            height: 16,
-            decoration: BoxDecoration(
-              color: colorValue != null ? Color(colorValue) : Colors.grey,
-              borderRadius: BorderRadius.circular(2),
+            width: 60,
+            height: 60,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF1F5F9),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.shopping_cart_outlined,
+              size: 28,
+              color: Color(0xFF0F3D81),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(height: 16),
+
+          // Title and Subtitle
           Text(
-            name,
+            _list!.name,
+            textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Compra realizada com sucesso',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
               color: Color(0xFF64748B),
-              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Purchase Info Rows
+          _buildInfoRow(
+            Icons.location_on_outlined,
+            'Local:',
+            _list!.purchaseLocation ?? 'Não informado',
+          ),
+          const SizedBox(height: 10),
+          _buildInfoRow(Icons.calendar_today_outlined, 'Data:', dateStr),
+          const SizedBox(height: 10),
+          _buildInfoRow(
+            Icons.shopping_cart_outlined,
+            'Itens:',
+            '${_items.where((i) => i.isChecked).length} produtos',
+          ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+          ),
+
+          // Items List Section
+          ..._items
+              .where((i) => i.isChecked)
+              .map((item) => _buildItemRow(item))
+              .toList(),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+          ),
+
+          // Totals Section
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Text(
+                'Total',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              Text(
+                totalSpentFormatted,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F3D81),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Footer Note
+          Text(
+            'COMPRA SALVA • ${dateStr.toUpperCase()}',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF94A3B8),
+              letterSpacing: 1.2,
             ),
           ),
         ],
@@ -256,56 +226,120 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
     );
   }
 
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF1E293B),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildItemRow(ShoppingItem item) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(bottom: 14),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(
-            item.isChecked ? Icons.check_circle : Icons.circle_outlined,
-            size: 20,
-            color: item.isChecked
-                ? const Color(0xFF10B981)
-                : const Color(0xFFCBD5E1),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.name,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF1E293B),
-                    decoration: item.isChecked
-                        ? null
-                        : TextDecoration.lineThrough,
-                    decorationColor: Colors.grey,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B),
                   ),
                 ),
-                if (item.quantityValue > 0)
-                  Text(
-                    '${item.quantityValue % 1 == 0 ? item.quantityValue.toInt() : item.quantityValue} ${item.quantityUnit}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF94A3B8),
-                    ),
+                Text(
+                  '${item.quantityValue % 1 == 0 ? item.quantityValue.toInt() : item.quantityValue} ${item.quantityUnit}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF94A3B8),
                   ),
+                ),
               ],
             ),
           ),
-          if (item.totalValue > 0)
-            Text(
-              'R\$ ${item.totalValue.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF475569),
-              ),
+          Text(
+            item.totalValue > 0
+                ? NumberFormat.currency(
+                    locale: 'pt_BR',
+                    symbol: r'R$',
+                  ).format(item.totalValue)
+                : '-',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1E293B),
             ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBottomActionBar(String dateStr) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F7FB).withOpacity(0.95),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildActionButton(
+              label: 'Compartilhar',
+              icon: Icons.ios_share_rounded,
+              onPressed: () {},
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildActionButton(
+              label: 'Baixar',
+              icon: Icons.download_rounded,
+              onPressed: () {},
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1E293B),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),
     );
   }
