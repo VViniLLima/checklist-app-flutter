@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../state/shopping_list_controller.dart';
 import 'shopping_list_screen.dart';
 import 'home_screen.dart';
-import 'home_placeholder_screen.dart';
+import 'lists_screen.dart';
 import 'history_screen.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 
@@ -18,8 +18,8 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const HomePlaceholderScreen(),
     const HomeScreen(),
+    const ListsScreen(),
     const Center(child: Text('Add Item Proxy')),
     const HistoryScreen(),
     const PlaceholderScreen(
