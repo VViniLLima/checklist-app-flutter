@@ -23,6 +23,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final Map<String, Map<String, dynamic>> _listMetadata = {};
   bool _isMetadataLoading = false;
+  Offset _tapPosition = Offset.zero;
+
+  void _getTapPosition(TapDownDetails details) {
+    _tapPosition = details.globalPosition;
+  }
 
   @override
   void initState() {
@@ -202,188 +207,194 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      child: InkWell(
-        onTap: () =>
-            _openList(context, context.read<ShoppingListController>(), list.id),
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header: Icon, Name, Date, Status
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE0F2F1), // Light green-ish
-                      borderRadius: BorderRadius.circular(12),
+      child: GestureDetector(
+        onTapDown: _getTapPosition,
+        child: InkWell(
+          onTap: () => _openList(
+            context,
+            context.read<ShoppingListController>(),
+            list.id,
+          ),
+          onLongPress: () => _showContextMenu(context, list),
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header: Icon, Name, Date, Status
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0F2F1), // Light green-ish
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.shopping_basket_rounded,
+                        color: Color(0xFF00897B),
+                        size: 24,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.shopping_basket_rounded,
-                      color: Color(0xFF00897B),
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          list.name,
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF263238),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            list.name,
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF263238),
+                            ),
                           ),
-                        ),
-                        Text(
-                          dateStr,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.4),
+                          Text(
+                            dateStr,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurface.withOpacity(0.4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (progress == 1.0 && totalItems > 0)
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            color: Color(0xFF26A69A),
+                            size: 22,
+                          ),
+                        if (progress == 1.0 && totalItems > 0)
+                          const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              final current =
+                                  _listMetadata[list.id]?['isFavorite'] ??
+                                  false;
+                              _listMetadata[list.id] = {
+                                ...(_listMetadata[list.id] ?? {}),
+                                'isFavorite': !current,
+                              };
+                            });
+                          },
+                          child: Icon(
+                            Icons.favorite_rounded,
+                            color:
+                                (_listMetadata[list.id]?['isFavorite'] ?? false)
+                                ? Colors.red
+                                : Colors.grey.withOpacity(0.5),
+                            size: 22,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (progress == 1.0 && totalItems > 0)
-                        const Icon(
-                          Icons.check_circle_rounded,
-                          color: Color(0xFF26A69A),
-                          size: 22,
-                        ),
-                      if (progress == 1.0 && totalItems > 0)
-                        const SizedBox(width: 8),
-                      InkWell(
-                        onTap: () {
-                          setState(() {
-                            final current =
-                                _listMetadata[list.id]?['isFavorite'] ?? false;
-                            _listMetadata[list.id] = {
-                              ...(_listMetadata[list.id] ?? {}),
-                              'isFavorite': !current,
-                            };
-                          });
-                        },
-                        child: Icon(
-                          Icons.favorite_rounded,
-                          color:
-                              (_listMetadata[list.id]?['isFavorite'] ?? false)
-                              ? Colors.red
-                              : Colors.grey.withOpacity(0.5),
-                          size: 22,
-                        ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Info Row: Items count and Price
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$checkedItems/$totalItems',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.4),
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Info Row: Items count and Price
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '$checkedItems/$totalItems',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.4),
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                  Text(
-                    formattedTotal,
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF263238),
+                    Text(
+                      formattedTotal,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF263238),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+                  ],
+                ),
+                const SizedBox(height: 8),
 
-              // Progress Bar
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: colorScheme.primaryContainer.withOpacity(
-                    0.3,
-                  ),
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    Color(0xFF00BFA5),
+                // Progress Bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 6,
+                    backgroundColor: colorScheme.primaryContainer.withOpacity(
+                      0.3,
+                    ),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFF00BFA5),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-
-              // Horizontal Divider
-              Divider(
-                height: 1,
-                thickness: 0.5,
-                color: colorScheme.outline.withOpacity(0.1),
-              ),
-              const SizedBox(height: 8),
-
-              // Action Buttons Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildActionButton(
-                    Icons.copy_rounded,
-                    'Duplicar',
-                    const Color(0xFF78909C),
-                  ),
-                  _buildActionButton(
-                    Icons.edit_rounded,
-                    'Editar',
-                    const Color(0xFF78909C),
-                  ),
-                  _buildActionButton(
-                    Icons.delete_rounded,
-                    'Excluir',
-                    const Color(0xFF78909C),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildActionButton(IconData icon, String label, Color iconColor) {
-    return InkWell(
-      onTap: () {}, // No action for now
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF1F3F4), // Light gray background for buttons
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: iconColor),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF546E7A),
-              ),
-            ),
-          ],
-        ),
+  void _showContextMenu(BuildContext context, ShoppingList list) {
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    showMenu(
+      context: context,
+      position: RelativeRect.fromRect(
+        _tapPosition & const Size(40, 40),
+        Offset.zero & overlay.size,
       ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      items: [
+        PopupMenuItem(
+          value: 'duplicate',
+          child: Row(
+            children: [
+              Icon(
+                Icons.copy_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 12),
+              const Text('Duplicar'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(
+                Icons.edit_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 12),
+              const Text('Editar'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(
+                Icons.delete_rounded,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Excluir',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
