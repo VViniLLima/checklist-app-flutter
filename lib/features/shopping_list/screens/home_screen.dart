@@ -9,8 +9,67 @@ import 'shopping_list_screen.dart';
 /// - Visualizar todas as listas criadas
 /// - Criar novas listas
 /// - Navegar para uma lista específica
-class HomeScreen extends StatelessWidget {
+import 'package:intl/intl.dart';
+import '../models/shopping_item.dart';
+import '../models/shopping_list.dart';
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final Map<String, Map<String, dynamic>> _listMetadata = {};
+  bool _isMetadataLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAllMetadata();
+  }
+
+  Future<void> _loadAllMetadata() async {
+    if (!mounted) return;
+    setState(() => _isMetadataLoading = true);
+
+    final controller = context.read<ShoppingListController>();
+    for (final list in controller.activeLists) {
+      if (!_listMetadata.containsKey(list.id)) {
+        await _loadMetadataForList(list.id);
+      }
+    }
+
+    if (mounted) {
+      setState(() => _isMetadataLoading = false);
+    }
+  }
+
+  Future<void> _loadMetadataForList(String listId) async {
+    final controller = context.read<ShoppingListController>();
+    final data = await controller.getHistoryListData(listId);
+    final items = data['items'] as List<ShoppingItem>;
+
+    final totalItems = items.length;
+    final checkedItems = items.where((i) => i.isChecked).length;
+    final progress = totalItems == 0 ? 0.0 : checkedItems / totalItems;
+    final estimatedTotal = items.fold(
+      0.0,
+      (sum, item) => sum + item.totalValue,
+    );
+
+    if (mounted) {
+      setState(() {
+        _listMetadata[listId] = {
+          'totalItems': totalItems,
+          'checkedItems': checkedItems,
+          'progress': progress,
+          'estimatedTotal': estimatedTotal,
+        };
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +89,19 @@ class HomeScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
+          final activeLists = controller.activeLists;
+
+          // Trigger metadata load if new lists appear
+          if (activeLists.any((l) => !_listMetadata.containsKey(l.id)) &&
+              !_isMetadataLoading) {
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => _loadAllMetadata(),
+            );
+          }
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Mensagem de boas-vindas
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
@@ -43,102 +111,24 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // Lista de listas de compras
               Expanded(
-                child: controller.activeLists.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.shopping_cart_outlined,
-                              size: 80,
-                              color: colorScheme.onSurface.withOpacity(0.1),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Nenhuma lista ativa',
-                              style: textTheme.titleLarge?.copyWith(
-                                color: colorScheme.onSurface.withOpacity(0.5),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Toque no botão + para criar sua próxima lista',
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurface.withOpacity(0.4),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
+                child: activeLists.isEmpty
+                    ? _buildEmptyState(colorScheme, textTheme)
                     : ListView.builder(
-                        padding: const EdgeInsets.only(
-                          left: 16,
-                          right: 16,
-                          bottom: 120,
-                        ),
-                        itemCount: controller.activeLists.length,
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                        itemCount: activeLists.length,
                         itemBuilder: (context, index) {
-                          final list = controller.activeLists[index];
-                          final isActive = list.id == controller.activeListId;
+                          final list = activeLists[index];
+                          final metadata =
+                              _listMetadata[list.id] ??
+                              {
+                                'totalItems': 0,
+                                'checkedItems': 0,
+                                'progress': 0.0,
+                                'estimatedTotal': 0.0,
+                              };
 
-                          return Card(
-                            elevation: isActive ? 4 : 0,
-                            margin: const EdgeInsets.only(bottom: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: isActive
-                                    ? colorScheme.primary
-                                    : colorScheme.outline.withOpacity(0.1),
-                                width: isActive ? 2 : 1,
-                              ),
-                            ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              leading: Container(
-                                width: 56,
-                                height: 56,
-                                decoration: BoxDecoration(
-                                  color: isActive
-                                      ? colorScheme.primaryContainer
-                                      : colorScheme.surfaceVariant,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  Icons.shopping_basket_rounded,
-                                  color: isActive
-                                      ? colorScheme.primary
-                                      : colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              title: Text(
-                                list.name,
-                                style: textTheme.titleMedium?.copyWith(
-                                  fontWeight: isActive
-                                      ? FontWeight.bold
-                                      : FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: Text(
-                                'Criada ${_formatDate(list.createdAt)}',
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onSurface.withOpacity(0.6),
-                                ),
-                              ),
-                              trailing: Icon(
-                                Icons.chevron_right_rounded,
-                                color: colorScheme.onSurface.withOpacity(0.3),
-                              ),
-                              onTap: () =>
-                                  _openList(context, controller, list.id),
-                            ),
-                          );
+                          return _buildListCard(context, list, metadata);
                         },
                       ),
               ),
@@ -149,19 +139,252 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
+  Widget _buildEmptyState(ColorScheme colorScheme, TextTheme textTheme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.shopping_cart_outlined,
+            size: 80,
+            color: colorScheme.onSurface.withOpacity(0.1),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Nenhuma lista ativa',
+            style: textTheme.titleLarge?.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.5),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Toque no botão + para criar sua próxima lista',
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-    if (difference.inDays == 0) {
-      return 'hoje';
-    } else if (difference.inDays == 1) {
-      return 'ontem';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} dias atrás';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
+  Widget _buildListCard(
+    BuildContext context,
+    ShoppingList list,
+    Map<String, dynamic> metadata,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    final totalItems = metadata['totalItems'] as int;
+    final checkedItems = metadata['checkedItems'] as int;
+    final progress = metadata['progress'] as double;
+    final estimatedTotal = metadata['estimatedTotal'] as double;
+
+    final formattedTotal = NumberFormat.currency(
+      locale: 'pt_BR',
+      symbol: r'R$',
+    ).format(estimatedTotal);
+
+    final dateStr = DateFormat('d MMM', 'pt_BR').format(list.createdAt);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () =>
+            _openList(context, context.read<ShoppingListController>(), list.id),
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header: Icon, Name, Date, Status
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE0F2F1), // Light green-ish
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.shopping_basket_rounded,
+                      color: Color(0xFF00897B),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          list.name,
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF263238),
+                          ),
+                        ),
+                        Text(
+                          dateStr,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface.withOpacity(0.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (progress == 1.0 && totalItems > 0)
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          color: Color(0xFF26A69A),
+                          size: 22,
+                        ),
+                      if (progress == 1.0 && totalItems > 0)
+                        const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            final current =
+                                _listMetadata[list.id]?['isFavorite'] ?? false;
+                            _listMetadata[list.id] = {
+                              ...(_listMetadata[list.id] ?? {}),
+                              'isFavorite': !current,
+                            };
+                          });
+                        },
+                        child: Icon(
+                          Icons.favorite_rounded,
+                          color:
+                              (_listMetadata[list.id]?['isFavorite'] ?? false)
+                              ? Colors.red
+                              : Colors.grey.withOpacity(0.5),
+                          size: 22,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Info Row: Items count and Price
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '$checkedItems/$totalItems',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.4),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    formattedTotal,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF263238),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Progress Bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 6,
+                  backgroundColor: colorScheme.primaryContainer.withOpacity(
+                    0.3,
+                  ),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Color(0xFF00BFA5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Horizontal Divider
+              Divider(
+                height: 1,
+                thickness: 0.5,
+                color: colorScheme.outline.withOpacity(0.1),
+              ),
+              const SizedBox(height: 8),
+
+              // Action Buttons Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildActionButton(
+                    Icons.copy_rounded,
+                    'Duplicar',
+                    const Color(0xFF78909C),
+                  ),
+                  _buildActionButton(
+                    Icons.edit_rounded,
+                    'Editar',
+                    const Color(0xFF78909C),
+                  ),
+                  _buildActionButton(
+                    Icons.delete_rounded,
+                    'Excluir',
+                    const Color(0xFF78909C),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, String label, Color iconColor) {
+    return InkWell(
+      onTap: () {}, // No action for now
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F3F4), // Light gray background for buttons
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: iconColor),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF546E7A),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _openList(
@@ -169,11 +392,8 @@ class HomeScreen extends StatelessWidget {
     ShoppingListController controller,
     String listId,
   ) async {
-    // Set active list and load its data
     await controller.setActiveList(listId);
-
-    // Navigate to shopping list screen
-    if (context.mounted) {
+    if (mounted) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => const ShoppingListScreen()),
       );
