@@ -400,6 +400,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  Text('Total', style: textTheme.bodySmall),
                   Text(
                     totalSpentFormatted,
                     style: textTheme.titleMedium?.copyWith(
