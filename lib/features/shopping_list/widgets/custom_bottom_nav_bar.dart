@@ -54,8 +54,8 @@ class CustomBottomNavBar extends StatelessWidget {
                     _NavBarItem(
                       index: 1,
                       currentIndex: currentIndex,
-                      icon: Icons.search_rounded,
-                      label: 'Search',
+                      icon: Icons.view_list_rounded,
+                      label: 'Lists',
                       onTap: onTap,
                       activeColor: activeColor,
                       inactiveColor: inactiveColor,
