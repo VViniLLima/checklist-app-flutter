@@ -29,6 +29,7 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    final theme = Theme.of(context);
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
@@ -36,11 +37,7 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
       lastDate: DateTime(2101),
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF0F3D81), // Matching the primary button color
-            ),
-          ),
+          data: theme.copyWith(colorScheme: theme.colorScheme),
           child: child!,
         );
       },
@@ -54,6 +51,9 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final controller = context.watch<ShoppingListController>();
     final cartTotalFormatted = NumberFormat.currency(
       locale: 'pt_BR',
@@ -61,14 +61,13 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
     ).format(controller.estimatedTotal);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.black87,
+            color: colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -78,20 +77,18 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Sua compra está pronta',
-              style: TextStyle(
-                fontSize: 28,
+              style: textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Adicione as informações finais para salvar no histórico',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF64748B),
+              style: textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.6),
                 height: 1.4,
               ),
             ),
@@ -101,12 +98,14 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFF1F5F9)),
+                border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withOpacity(
+                      theme.brightness == Brightness.light ? 0.02 : 0.1,
+                    ),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -115,19 +114,24 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
               child: Column(
                 children: [
                   _buildSummaryRow(
+                    context,
                     'Itens comprados',
                     '${controller.checkedItemsCount} de ${controller.totalItemsCount}',
                   ),
                   const SizedBox(height: 12),
-                  _buildSummaryRow('Total estimado', cartTotalFormatted),
+                  _buildSummaryRow(
+                    context,
+                    'Total estimado',
+                    cartTotalFormatted,
+                  ),
                   const SizedBox(height: 16),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
                       value: controller.progressRatio,
-                      backgroundColor: const Color(0xFFF1F5F9),
+                      backgroundColor: colorScheme.outline.withOpacity(0.1),
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF10B981),
+                        Color(0xFF10B981), // Success Green
                       ),
                       minHeight: 8,
                     ),
@@ -138,32 +142,32 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
             const SizedBox(height: 32),
 
             // Form Fields
-            const Text(
+            Text(
               'Local da compra',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF334155),
+              style: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface.withOpacity(0.8),
               ),
             ),
             const SizedBox(height: 8),
             _buildTextField(
+              context,
               controller: _locationController,
               hint: 'Ex: Supermercado Extra',
               icon: Icons.location_on_outlined,
             ),
 
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Valor total gasto',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF334155),
+              style: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface.withOpacity(0.8),
               ),
             ),
             const SizedBox(height: 8),
             _buildTextField(
+              context,
               controller: _valueController,
               hint: r'R$ 0,00',
               icon: Icons.attach_money_rounded,
@@ -171,12 +175,11 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
             ),
 
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Data da compra',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF334155),
+              style: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface.withOpacity(0.8),
               ),
             ),
             const SizedBox(height: 8),
@@ -189,23 +192,23 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
                   vertical: 16,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(
+                    color: colorScheme.outline.withOpacity(0.2),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today_outlined,
-                      color: Color(0xFF64748B),
+                      color: colorScheme.onSurface.withOpacity(0.6),
                       size: 20,
                     ),
                     const SizedBox(width: 12),
                     Text(
                       DateFormat('MM/dd/yyyy').format(_selectedDate),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF1E293B),
+                      style: textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -220,20 +223,19 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0F7FF),
+                color: colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFD0E7FF)),
+                border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
               ),
               child: Row(
                 children: [
                   const Text('💡', style: TextStyle(fontSize: 20)),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Dica: Salve suas compras para acompanhar seus gastos mensais',
-                      style: TextStyle(
-                        color: Color(0xFF1E40AF),
-                        fontSize: 14,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onPrimaryContainer,
                         height: 1.4,
                       ),
                     ),
@@ -255,12 +257,10 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
                 final location = _locationController.text.trim();
 
                 // Parse value
-                // Removes everything except digits and comma
                 String cleanValue = _valueController.text.replaceAll(
                   RegExp(r'[^0-9,]'),
                   '',
                 );
-                // Replace comma with dot
                 cleanValue = cleanValue.replaceAll(',', '.');
                 final totalSpent = double.tryParse(cleanValue) ?? 0.0;
 
@@ -272,18 +272,19 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
                 );
 
                 if (mounted) {
-                  // Navigate back to the home screen (pop until first route)
                   Navigator.of(context).popUntil((route) => route.isFirst);
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F3D81),
-                foregroundColor: Colors.white,
+                backgroundColor: colorScheme.primary,
+                foregroundColor: theme.brightness == Brightness.light
+                    ? Colors.white
+                    : colorScheme.onPrimary,
                 minimumSize: const Size(double.infinity, 56),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                elevation: 0,
+                elevation: 4,
               ),
               child: const Text(
                 'Salvar no histórico',
@@ -294,12 +295,12 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                side: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
                 minimumSize: const Size(double.infinity, 56),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                foregroundColor: const Color(0xFF1E293B),
+                foregroundColor: colorScheme.onSurface,
               ),
               child: const Text(
                 'Voltar para a lista',
@@ -313,23 +314,21 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value) {
+  Widget _buildSummaryRow(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 15,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
             fontWeight: FontWeight.w500,
           ),
         ),
         Text(
           value,
-          style: const TextStyle(
-            color: Color(0xFF1E293B),
-            fontSize: 16,
+          style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -337,36 +336,44 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
     );
   }
 
-  Widget _buildTextField({
+  Widget _buildTextField(
+    BuildContext context, {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-        prefixIcon: Icon(icon, color: const Color(0xFF64748B), size: 20),
+        hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.3)),
+        prefixIcon: Icon(
+          icon,
+          color: colorScheme.onSurface.withOpacity(0.5),
+          size: 20,
+        ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: colorScheme.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF0F3D81), width: 1.5),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
         ),
       ),
     );

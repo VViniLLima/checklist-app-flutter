@@ -5,18 +5,15 @@ class HomePlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
       appBar: AppBar(
-        title: const Text(
-          'Home',
-          style: TextStyle(
-            color: Color(0xFF1E293B),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
+        title: const Text('Home'),
         elevation: 0,
+        backgroundColor: Colors.transparent,
         centerTitle: false,
       ),
       body: Center(
@@ -27,36 +24,38 @@ class HomePlaceholderScreen extends StatelessWidget {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colorScheme.surface,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withOpacity(
+                      theme.brightness == Brightness.light ? 0.05 : 0.2,
+                    ),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
                 ],
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.home_rounded,
                 size: 60,
-                color: Color(0xFF4A68FF),
+                color: colorScheme.primary,
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'Bem-vindo!',
-              style: TextStyle(
-                fontSize: 24,
+              style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'A tela inicial completa chegará em breve.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
+              style: textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.6),
+              ),
             ),
           ],
         ),

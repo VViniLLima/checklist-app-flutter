@@ -45,17 +45,11 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF6F7FB),
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_list == null) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF6F7FB),
-        body: Center(child: Text('Lista não encontrada')),
-      );
+      return const Scaffold(body: Center(child: Text('Lista não encontrada')));
     }
 
     final dateStr = _list!.purchaseDate != null
@@ -68,14 +62,13 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
     ).format(_list!.totalSpent ?? 0.0);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF1E293B),
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -84,14 +77,14 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
         child: Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
               child: Center(
-                child: _buildReceiptCard(dateStr, totalSpentFormatted),
+                child: _buildReceiptCard(context, dateStr, totalSpentFormatted),
               ),
             ),
             Align(
               alignment: Alignment.bottomCenter,
-              child: _buildBottomActionBar(dateStr),
+              child: _buildBottomActionBar(context),
             ),
           ],
         ),
@@ -99,16 +92,27 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
     );
   }
 
-  Widget _buildReceiptCard(String dateStr, String totalSpentFormatted) {
+  Widget _buildReceiptCard(
+    BuildContext context,
+    String dateStr,
+    String totalSpentFormatted,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 450),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(
+              theme.brightness == Brightness.light ? 0.04 : 0.2,
+            ),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -122,14 +126,14 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
           Container(
             width: 60,
             height: 60,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF1F5F9),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.shopping_cart_outlined,
               size: 28,
-              color: Color(0xFF0F3D81),
+              color: colorScheme.primary,
             ),
           ),
           const SizedBox(height: 16),
@@ -138,52 +142,62 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
           Text(
             _list!.name,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1E293B),
+            style: textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Compra realizada com sucesso',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF64748B),
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
           const SizedBox(height: 24),
 
           // Purchase Info Rows
           _buildInfoRow(
+            context,
             Icons.location_on_outlined,
             'Local:',
             _list!.purchaseLocation ?? 'Não informado',
           ),
           const SizedBox(height: 10),
-          _buildInfoRow(Icons.calendar_today_outlined, 'Data:', dateStr),
+          _buildInfoRow(
+            context,
+            Icons.calendar_today_outlined,
+            'Data:',
+            dateStr,
+          ),
           const SizedBox(height: 10),
           _buildInfoRow(
+            context,
             Icons.shopping_cart_outlined,
             'Itens:',
             '${_items.where((i) => i.isChecked).length} produtos',
           ),
 
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Divider(
+              height: 1,
+              color: colorScheme.outline.withOpacity(0.1),
+            ),
           ),
 
           // Items List Section
           ..._items
               .where((i) => i.isChecked)
-              .map((item) => _buildItemRow(item))
+              .map((item) => _buildItemRow(context, item))
               .toList(),
 
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Divider(
+              height: 1,
+              color: colorScheme.outline.withOpacity(0.1),
+            ),
           ),
 
           // Totals Section
@@ -191,20 +205,17 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
+              Text(
                 'Total',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E293B),
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
                 totalSpentFormatted,
-                style: const TextStyle(
-                  fontSize: 26,
+                style: textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F3D81),
+                  color: colorScheme.primary,
                 ),
               ),
             ],
@@ -214,10 +225,9 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
           // Footer Note
           Text(
             'COMPRA SALVA • ${dateStr.toUpperCase()}',
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF94A3B8),
+            style: textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface.withOpacity(0.3),
               letterSpacing: 1.2,
             ),
           ),
@@ -226,22 +236,31 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
+  Widget _buildInfoRow(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+        Icon(icon, size: 18, color: colorScheme.onSurface.withOpacity(0.4)),
         const SizedBox(width: 10),
         Text(
           label,
-          style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+          style: TextStyle(
+            fontSize: 13,
+            color: colorScheme.onSurface.withOpacity(0.5),
+          ),
         ),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF1E293B),
+              color: colorScheme.onSurface,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -250,7 +269,8 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
     );
   }
 
-  Widget _buildItemRow(ShoppingItem item) {
+  Widget _buildItemRow(BuildContext context, ShoppingItem item) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
@@ -262,17 +282,14 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
               children: [
                 Text(
                   item.name,
-                  style: const TextStyle(
-                    fontSize: 15,
+                  style: theme.textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
                   ),
                 ),
                 Text(
                   '${item.quantityValue % 1 == 0 ? item.quantityValue.toInt() : item.quantityValue} ${item.quantityUnit}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF94A3B8),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.4),
                   ),
                 ),
               ],
@@ -285,10 +302,8 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
                     symbol: r'R$',
                   ).format(item.totalValue)
                 : '-',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -296,16 +311,18 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
     );
   }
 
-  Widget _buildBottomActionBar(String dateStr) {
+  Widget _buildBottomActionBar(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F7FB).withOpacity(0.95),
+        color: theme.colorScheme.surface.withOpacity(0.95),
       ),
       child: Row(
         children: [
           Expanded(
             child: _buildActionButton(
+              context,
               label: 'Compartilhar',
               icon: Icons.ios_share_rounded,
               onPressed: () {},
@@ -314,6 +331,7 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: _buildActionButton(
+              context,
               label: 'Baixar',
               icon: Icons.download_rounded,
               onPressed: () {},
@@ -324,19 +342,21 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
     );
   }
 
-  Widget _buildActionButton({
+  Widget _buildActionButton(
+    BuildContext context, {
     required String label,
     required IconData icon,
     required VoidCallback onPressed,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return OutlinedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, size: 20),
       label: Text(label),
       style: OutlinedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+        side: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),

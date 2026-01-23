@@ -31,36 +31,31 @@ class CategoryHeader extends StatelessWidget {
   });
 
   Color _getTextColor(Color backgroundColor) {
-    // Map shade50 colors to their base colors
-    // Define category title color
-    const categoryTitle = Color(0xfff8f3ed); // creme
-
-    final colorMap = {
-      Color(0xff0f408f): categoryTitle, // azul escuro -> creme
-      Color(0xffbce4fe): categoryTitle, // azul claro -> creme
-      Color(0xff89aeff): categoryTitle, // lilas claro -> creme
-      Color(0xffef7148): categoryTitle, // laranja -> creme
-      Color(0xffdffc8e): Color(0xff0f408f), //categoryTitle, // verde -> creme
-    };
-
-    return colorMap[backgroundColor] ?? Colors.blue;
+    // Determine if white or black text is better based on luminance
+    return backgroundColor.computeLuminance() > 0.5
+        ? Colors.black87
+        : Colors.white;
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final controller = context.watch<ShoppingListController>();
     final items = controller.getItemsByCategory(category?.id);
     final totalItems = items.length;
     final completedItems = items.where((i) => i.isChecked).length;
 
     final categoryName = category?.name ?? 'Sem categoria';
-    final backgroundColor = category?.color ?? const Color(0xff0f408f);
+    final backgroundColor = category?.color ?? colorScheme.primary;
     final textColor = _getTextColor(backgroundColor);
 
     return Container(
       margin: const EdgeInsets.only(top: 12, bottom: 4),
       decoration: BoxDecoration(
-        color: backgroundColor.withOpacity(0.1),
+        color: backgroundColor.withOpacity(
+          theme.brightness == Brightness.light ? 0.08 : 0.15,
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Material(
@@ -88,10 +83,9 @@ class CategoryHeader extends StatelessWidget {
                 Expanded(
                   child: Text(
                     categoryName,
-                    style: TextStyle(
-                      fontSize: 17,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.blueGrey.shade900,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -132,7 +126,7 @@ class CategoryHeader extends StatelessWidget {
                   duration: const Duration(milliseconds: 200),
                   child: Icon(
                     Icons.expand_more,
-                    color: Colors.blueGrey.shade400,
+                    color: colorScheme.onSurface.withOpacity(0.3),
                     size: 24,
                   ),
                 ),
@@ -145,6 +139,7 @@ class CategoryHeader extends StatelessWidget {
   }
 
   void _showLongPressMenu(BuildContext context) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -162,7 +157,7 @@ class CategoryHeader extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: theme.colorScheme.outline.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -192,16 +187,20 @@ class CategoryHeader extends StatelessWidget {
   }
 
   void _showColorPicker(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final controller = context.read<ShoppingListController>();
+
+    // Palette colors from design system
     final colors = [
-      const Color(0xff0f408f), // Azul Marinho
-      const Color(0xffd32f2f), // Vermelho
-      const Color(0xff388e3c), // Verde
-      const Color(0xfff57c00), // Laranja
-      const Color(0xff7b1fa2), // Roxo
-      const Color(0xff0097a7), // Ciano
-      const Color(0xff455a64), // Blue Grey
-      const Color(0xff6d4c41), // Marrom
+      colorScheme.primary, // Dark Blue (Primary)
+      const Color(0xFF179BE6), // Secondary Blue
+      const Color(0xFF10B981), // Success Green
+      const Color(0xFFEC9A3A), // Warning Orange
+      const Color(0xFFE05252), // Error Coral
+      const Color(0xFF9052E0), // Purple
+      const Color(0xFF00C9BD), // Accent Turquoise
+      const Color(0xFF0E1A2B), // Text Primary (Near Black)
     ];
 
     showDialog(
@@ -216,6 +215,7 @@ class CategoryHeader extends StatelessWidget {
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
             children: colors.map((color) {
+              final isSelected = category?.color.value == color.value;
               return InkWell(
                 onTap: () {
                   controller.editCategoryColor(
@@ -229,12 +229,15 @@ class CategoryHeader extends StatelessWidget {
                     color: color,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: (category?.color == color)
-                          ? Colors.black
+                      color: isSelected
+                          ? colorScheme.onSurface
                           : Colors.transparent,
-                      width: 2,
+                      width: 2.5,
                     ),
                   ),
+                  child: isSelected
+                      ? Icon(Icons.check, size: 16, color: _getTextColor(color))
+                      : null,
                 ),
               );
             }).toList(),

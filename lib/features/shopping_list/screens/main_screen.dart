@@ -143,17 +143,23 @@ class PlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
       appBar: AppBar(title: Text(title), backgroundColor: Colors.transparent),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 80, color: Colors.grey[300]),
+            Icon(icon, size: 80, color: colorScheme.onSurface.withOpacity(0.1)),
             const SizedBox(height: 16),
             Text(
               '$title Screen',
-              style: TextStyle(fontSize: 20, color: Colors.grey[600]),
+              style: textTheme.titleLarge?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.5),
+              ),
             ),
           ],
         ),

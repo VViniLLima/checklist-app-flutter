@@ -14,11 +14,15 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Minhas Listas'),
+        elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: Colors.black,
       ),
       body: Consumer<ShoppingListController>(
         builder: (context, controller, _) {
@@ -34,9 +38,9 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
                   'Olá! Aqui estão suas listas de compras 🛒',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium?.copyWith(color: Colors.grey[700]),
+                  style: textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
 
@@ -50,22 +54,20 @@ class HomeScreen extends StatelessWidget {
                             Icon(
                               Icons.shopping_cart_outlined,
                               size: 80,
-                              color: Colors.grey[300],
+                              color: colorScheme.onSurface.withOpacity(0.1),
                             ),
                             const SizedBox(height: 16),
                             Text(
                               'Nenhuma lista ativa',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.grey[600],
+                              style: textTheme.titleLarge?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.5),
                               ),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'Toque no botão + para criar sua próxima lista',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[500],
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.4),
                               ),
                             ),
                           ],
@@ -83,56 +85,55 @@ class HomeScreen extends StatelessWidget {
                           final isActive = list.id == controller.activeListId;
 
                           return Card(
-                            elevation: isActive ? 4 : 1,
+                            elevation: isActive ? 4 : 0,
                             margin: const EdgeInsets.only(bottom: 12),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: isActive
-                                  ? const BorderSide(
-                                      color: Colors.blue,
-                                      width: 2,
-                                    )
-                                  : BorderSide.none,
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(
+                                color: isActive
+                                    ? colorScheme.primary
+                                    : colorScheme.outline.withOpacity(0.1),
+                                width: isActive ? 2 : 1,
+                              ),
                             ),
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
+                                horizontal: 16,
+                                vertical: 8,
                               ),
                               leading: Container(
-                                width: 48,
-                                height: 48,
+                                width: 56,
+                                height: 56,
                                 decoration: BoxDecoration(
                                   color: isActive
-                                      ? Colors.blue.shade50
-                                      : Colors.grey.shade100,
+                                      ? colorScheme.primaryContainer
+                                      : colorScheme.surfaceVariant,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Icon(
-                                  Icons.shopping_basket,
-                                  color: isActive ? Colors.blue : Colors.grey,
+                                  Icons.shopping_basket_rounded,
+                                  color: isActive
+                                      ? colorScheme.primary
+                                      : colorScheme.onSurfaceVariant,
                                 ),
                               ),
                               title: Text(
                                 list.name,
-                                style: TextStyle(
-                                  fontSize: 18,
+                                style: textTheme.titleMedium?.copyWith(
                                   fontWeight: isActive
                                       ? FontWeight.bold
-                                      : FontWeight.normal,
+                                      : FontWeight.w600,
                                 ),
                               ),
                               subtitle: Text(
                                 'Criada ${_formatDate(list.createdAt)}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurface.withOpacity(0.6),
                                 ),
                               ),
                               trailing: Icon(
-                                Icons.arrow_forward_ios,
-                                size: 16,
-                                color: Colors.grey[400],
+                                Icons.chevron_right_rounded,
+                                color: colorScheme.onSurface.withOpacity(0.3),
                               ),
                               onTap: () =>
                                   _openList(context, controller, list.id),

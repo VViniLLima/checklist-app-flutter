@@ -5,7 +5,7 @@ import 'category_header.dart';
 import 'shopping_item_tile.dart';
 
 /// Widget que representa uma seção completa de categoria
-/// 
+///
 /// Inclui:
 /// - Header com nome da categoria e botão de colapso
 /// - Lista de itens (ordenados automaticamente pelo controller)
@@ -56,14 +56,16 @@ class CategorySection extends StatelessWidget {
       onEditCategory: onEditCategory,
       showDragHandle: showDragHandle,
     );
-    final wrappedHeader = headerWrapper != null ? headerWrapper!(header) : header;
+    final wrappedHeader = headerWrapper != null
+        ? headerWrapper!(header)
+        : header;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Header da categoria
         wrappedHeader,
-        
+
         // Lista de itens (com animação de colapso)
         AnimatedSize(
           duration: const Duration(milliseconds: 300),
@@ -78,26 +80,28 @@ class CategorySection extends StatelessWidget {
                             child: Text(
                               'Nenhum item nesta categoria',
                               style: TextStyle(
-                                color: Colors.grey.shade600,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.4),
                                 fontStyle: FontStyle.italic,
                               ),
                               textAlign: TextAlign.center,
                             ),
                           ),
                         ]
-                        : items.map((item) {
-                       return ShoppingItemTile(
-                          key: ValueKey(item.id),
-                          item: item,
-                          onToggleCheck: () => onToggleItemCheck(item.id),
-                          onDelete: () => onDeleteItem(item.id),
-                          onEdit: () => onEditItem(item.id),
-                          onMove: () => onMoveItem?.call(item.id),
-                          onCopy: () => onCopyItem?.call(item.id),
-                          onSwipeComplete: () => onSwipeComplete(item),
-                          onSwipeDelete: () => onSwipeDelete(item),
-                        );
-                      }).toList(),
+                      : items.map((item) {
+                          return ShoppingItemTile(
+                            key: ValueKey(item.id),
+                            item: item,
+                            onToggleCheck: () => onToggleItemCheck(item.id),
+                            onDelete: () => onDeleteItem(item.id),
+                            onEdit: () => onEditItem(item.id),
+                            onMove: () => onMoveItem?.call(item.id),
+                            onCopy: () => onCopyItem?.call(item.id),
+                            onSwipeComplete: () => onSwipeComplete(item),
+                            onSwipeDelete: () => onSwipeDelete(item),
+                          );
+                        }).toList(),
                 ),
         ),
       ],

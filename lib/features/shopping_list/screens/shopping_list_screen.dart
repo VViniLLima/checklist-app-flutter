@@ -19,6 +19,9 @@ class ShoppingListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Consumer<ShoppingListController>(
       builder: (context, controller, _) {
         final activeList = controller.activeList;
@@ -233,12 +236,18 @@ class ShoppingListScreen extends StatelessWidget {
                                         }
                                       : null,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF6342E8),
-                                    foregroundColor: Colors.white,
-                                    disabledBackgroundColor:
-                                        Colors.grey.shade200,
-                                    disabledForegroundColor:
-                                        Colors.grey.shade500,
+                                    backgroundColor: colorScheme
+                                        .secondary, // Accent Turquoise for CTA
+                                    foregroundColor:
+                                        theme.brightness == Brightness.light
+                                        ? Colors.white
+                                        : colorScheme.onSecondary,
+                                    disabledBackgroundColor: colorScheme
+                                        .onSurface
+                                        .withOpacity(0.05),
+                                    disabledForegroundColor: colorScheme
+                                        .onSurface
+                                        .withOpacity(0.38),
                                     minimumSize: const Size(
                                       double.infinity,
                                       56,
@@ -246,7 +255,7 @@ class ShoppingListScreen extends StatelessWidget {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30),
                                     ),
-                                    elevation: 0,
+                                    elevation: 4,
                                   ),
                                   label: const Text(
                                     'Finalizar lista',
@@ -270,8 +279,11 @@ class ShoppingListScreen extends StatelessWidget {
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => _showAddCategoryDialog(context),
-            backgroundColor: const Color(0xFF6342E8),
-            foregroundColor: Colors.white,
+            backgroundColor:
+                colorScheme.primary, // Dark Blue/Turquoise for primary button
+            foregroundColor: theme.brightness == Brightness.light
+                ? Colors.white
+                : colorScheme.onPrimary,
             elevation: 8,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30),
@@ -307,7 +319,6 @@ class ShoppingListScreen extends StatelessWidget {
           decoration: const InputDecoration(
             labelText: 'Nome da lista',
             hintText: 'Ex: Compras do mês, Feira...',
-            border: OutlineInputBorder(),
           ),
           textCapitalization: TextCapitalization.words,
           onSubmitted: (value) {
@@ -389,7 +400,6 @@ class ShoppingListScreen extends StatelessWidget {
           decoration: const InputDecoration(
             labelText: 'Nome da categoria',
             hintText: 'Ex: Mercearia, Hortifruti...',
-            border: OutlineInputBorder(),
           ),
           textCapitalization: TextCapitalization.words,
           onSubmitted: (value) {
@@ -474,7 +484,6 @@ class ShoppingListScreen extends StatelessWidget {
           decoration: const InputDecoration(
             labelText: 'Nome da categoria',
             hintText: 'Ex: Mercearia, Hortifruti...',
-            border: OutlineInputBorder(),
           ),
           textCapitalization: TextCapitalization.words,
           onSubmitted: (value) {
@@ -550,6 +559,8 @@ class ShoppingListScreen extends StatelessWidget {
     String? itemId,
     String? categoryId,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final controller = context.read<ShoppingListController>();
     final isEditing = itemId != null;
 
@@ -613,8 +624,7 @@ class ShoppingListScreen extends StatelessWidget {
                   children: [
                     Text(
                       isEditing ? 'Editar Item' : 'Novo Item',
-                      style: const TextStyle(
-                        fontSize: 22,
+                      style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -630,12 +640,11 @@ class ShoppingListScreen extends StatelessWidget {
                   autofocus: true,
                   decoration: const InputDecoration(
                     labelText: 'Nome do item',
-                    border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.shopping_basket_outlined),
                   ),
                   textCapitalization: TextCapitalization.sentences,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
 
                 // Quantity Group
                 Row(
@@ -650,7 +659,6 @@ class ShoppingListScreen extends StatelessWidget {
                         onChanged: (_) => setState(() {}),
                         decoration: const InputDecoration(
                           labelText: 'Quantidade',
-                          border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.scale_outlined),
                         ),
                       ),
@@ -660,10 +668,7 @@ class ShoppingListScreen extends StatelessWidget {
                       flex: 2,
                       child: DropdownButtonFormField<String>(
                         value: qUnit,
-                        decoration: const InputDecoration(
-                          labelText: 'Und',
-                          border: OutlineInputBorder(),
-                        ),
+                        decoration: const InputDecoration(labelText: 'Und'),
                         items: ShoppingItem.units
                             .map(
                               (u) => DropdownMenuItem(value: u, child: Text(u)),
@@ -697,7 +702,6 @@ class ShoppingListScreen extends StatelessWidget {
                         inputFormatters: [_CurrencyInputFormatter()],
                         decoration: const InputDecoration(
                           labelText: 'Preço',
-                          border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.attach_money),
                         ),
                       ),
@@ -707,10 +711,7 @@ class ShoppingListScreen extends StatelessWidget {
                       flex: 2,
                       child: DropdownButtonFormField<String>(
                         value: pUnit,
-                        decoration: const InputDecoration(
-                          labelText: 'por',
-                          border: OutlineInputBorder(),
-                        ),
+                        decoration: const InputDecoration(labelText: 'por'),
                         items: ShoppingItem.units
                             .map(
                               (u) => DropdownMenuItem(value: u, child: Text(u)),
@@ -723,30 +724,31 @@ class ShoppingListScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
                 // Preview total
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(12),
+                    color: colorScheme.surfaceVariant.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Total do Item:',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       Text(
                         'R\$ ${previewTotal.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 18,
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: previewTotal > 0
-                              ? const Color(0xFF6342E8)
-                              : Colors.grey,
+                              ? colorScheme.secondary
+                              : colorScheme.onSurface.withOpacity(0.3),
                         ),
                       ),
                     ],
@@ -756,11 +758,11 @@ class ShoppingListScreen extends StatelessWidget {
                     qtyController.text.isNotEmpty &&
                     priceController.text.isNotEmpty &&
                     qUnit != pUnit)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       'Unidades incompatíveis para cálculo',
-                      style: TextStyle(color: Colors.red, fontSize: 12),
+                      style: TextStyle(color: colorScheme.error, fontSize: 12),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -820,8 +822,10 @@ class ShoppingListScreen extends StatelessWidget {
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6342E8),
-                    foregroundColor: Colors.white,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: theme.brightness == Brightness.light
+                        ? Colors.white
+                        : colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -893,6 +897,7 @@ class ShoppingListScreen extends StatelessWidget {
     String message,
     VoidCallback onConfirm,
   ) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -909,8 +914,8 @@ class ShoppingListScreen extends StatelessWidget {
               Navigator.of(context).pop();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
             ),
             child: const Text('Remover'),
           ),

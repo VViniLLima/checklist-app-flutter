@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 
 class NavBarPainter extends CustomPainter {
+  final Color color;
+
+  NavBarPainter({required this.color});
+
   @override
   void paint(Canvas canvas, Size size) {
     Paint paint = Paint()
-      ..color = Colors.white
+      ..color = color
       ..style = PaintingStyle.fill;
 
     Paint shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.05)
+      ..color = Colors.black.withOpacity(0.08)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
 
     const double borderRadius = 25.0;

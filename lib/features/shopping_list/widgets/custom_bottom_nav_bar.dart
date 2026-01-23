@@ -15,9 +15,16 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const activeColor = Color(0xFF4A68FF);
-    const inactiveColor = Color(0xFF9EA6BE);
-    const centerButtonColor = Color(0xFF6342E8);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    // According to 60-30-10 rule:
+    // 30% Primary (Dark Blue) for selected navigation items
+    // 10% Accent (Turquoise) for CTAs (Center Button)
+
+    final activeColor = colorScheme.primary;
+    final inactiveColor = colorScheme.onSurface.withOpacity(0.4);
+    final centerButtonColor = colorScheme.secondary; // Accent color
 
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final navBarHeight = 85.0 + bottomPadding;
@@ -27,7 +34,11 @@ class CustomBottomNavBar extends StatelessWidget {
       child: Stack(
         children: [
           // Background with painter
-          Positioned.fill(child: CustomPaint(painter: NavBarPainter())),
+          Positioned.fill(
+            child: CustomPaint(
+              painter: NavBarPainter(color: colorScheme.surface),
+            ),
+          ),
 
           // Navigation Items
           Align(
@@ -106,7 +117,13 @@ class CustomBottomNavBar extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.add, color: Colors.white, size: 30),
+                  child: Icon(
+                    Icons.add,
+                    color: theme.brightness == Brightness.light
+                        ? Colors.white
+                        : colorScheme.onPrimary,
+                    size: 30,
+                  ),
                 ),
               ),
             ),

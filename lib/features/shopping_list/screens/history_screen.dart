@@ -14,11 +14,14 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Consumer<ShoppingListController>(
       builder: (context, controller, child) {
         if (controller.isLoading) {
           return const Scaffold(
-            backgroundColor: Color(0xFFF6F7FB),
             body: Center(child: CircularProgressIndicator()),
           );
         }
@@ -27,17 +30,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
         if (completedLists.isEmpty) {
           return Scaffold(
-            backgroundColor: const Color(0xFFF6F7FB),
             appBar: AppBar(
-              title: const Text(
-                'Histórico de Compras',
-                style: TextStyle(
-                  color: Color(0xFF1E293B),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              backgroundColor: Colors.transparent,
+              title: const Text('Histórico de Compras'),
               elevation: 0,
+              backgroundColor: Colors.transparent,
             ),
             body: Center(
               child: Column(
@@ -46,15 +42,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   Icon(
                     Icons.history_rounded,
                     size: 80,
-                    color: Colors.grey[300],
+                    color: colorScheme.onSurface.withOpacity(0.1),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Nenhuma compra finalizada',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[600],
+                    style: textTheme.titleLarge?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.5),
                     ),
                   ),
                 ],
@@ -64,23 +58,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF6F7FB),
           appBar: AppBar(
-            title: const Text(
-              'Histórico de Compras',
-              style: TextStyle(
-                color: Color(0xFF1E293B),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: Colors.transparent,
+            title: const Text('Histórico de Compras'),
             elevation: 0,
+            backgroundColor: Colors.transparent,
             centerTitle: false,
           ),
           body: ListView.builder(
             padding: const EdgeInsets.only(
-              left: 20,
-              right: 20,
+              left: 16,
+              right: 16,
               bottom: 100,
               top: 10,
             ),
@@ -97,29 +84,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ).format(list.totalSpent ?? 0.0);
 
               return Card(
-                margin: const EdgeInsets.only(bottom: 16),
+                margin: const EdgeInsets.only(bottom: 12),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: colorScheme.outline.withOpacity(0.1)),
                 ),
                 child: InkWell(
                   onTap: () => _openHistoryDetail(context, list.id),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   child: Padding(
-                    padding: const EdgeInsets.all(18),
+                    padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 52,
+                          height: 52,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
+                            color: colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.receipt_long_rounded,
-                            color: Color(0xFF0F3D81),
+                            color: colorScheme.primary,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -129,35 +116,38 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             children: [
                               Text(
                                 list.name,
-                                style: const TextStyle(
-                                  fontSize: 17,
+                                style: textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1E293B),
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.calendar_today_outlined,
                                     size: 13,
-                                    color: Color(0xFF94A3B8),
+                                    color: colorScheme.onSurface.withOpacity(
+                                      0.5,
+                                    ),
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     dateStr,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF94A3B8),
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.onSurface.withOpacity(
+                                        0.5,
+                                      ),
                                     ),
                                   ),
                                   if (list.purchaseLocation != null &&
                                       list.purchaseLocation!.isNotEmpty) ...[
                                     const SizedBox(width: 8),
-                                    const Text(
+                                    Text(
                                       '•',
                                       style: TextStyle(
-                                        color: Color(0xFFCBD5E1),
+                                        color: colorScheme.outline.withOpacity(
+                                          0.3,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -165,9 +155,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                       child: Text(
                                         list.purchaseLocation!,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: Color(0xFF94A3B8),
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: colorScheme.onSurface
+                                              .withOpacity(0.5),
                                         ),
                                       ),
                                     ),
@@ -180,17 +170,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         const SizedBox(width: 8),
                         Text(
                           totalSpentFormatted,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F3D81),
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 14,
-                          color: Color(0xFFCBD5E1),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 20,
+                          color: colorScheme.onSurface.withOpacity(0.2),
                         ),
                       ],
                     ),

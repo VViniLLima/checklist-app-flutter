@@ -32,6 +32,13 @@ class ShoppingItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    // Functional colors from design system (Success Green: #10B981, Error Coral: #E05252)
+    const successColor = Color(0xFF10B981);
+    const errorColor = Color(0xFFE05252);
+
     return Dismissible(
       key: ValueKey(item.id),
       direction: DismissDirection.horizontal,
@@ -52,8 +59,8 @@ class ShoppingItemTile extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
-          color: Colors.green.shade400,
-          borderRadius: BorderRadius.circular(8),
+          color: successColor,
+          borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.centerLeft,
         child: Row(
@@ -74,8 +81,8 @@ class ShoppingItemTile extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
-          color: Colors.red.shade400,
-          borderRadius: BorderRadius.circular(8),
+          color: errorColor,
+          borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.centerRight,
         child: Row(
@@ -95,35 +102,41 @@ class ShoppingItemTile extends StatelessWidget {
       ),
       child: InkWell(
         onLongPress: () => _showLongPressMenu(context),
+        borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
           decoration: BoxDecoration(
-            color: item.isChecked ? Colors.grey.shade50 : Colors.white,
+            color: item.isChecked
+                ? colorScheme.surfaceVariant.withOpacity(0.3)
+                : colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: item.isChecked
-                  ? Colors.grey.shade200
-                  : Colors.grey.shade100,
+                  ? colorScheme.outline.withOpacity(0.05)
+                  : colorScheme.outline.withOpacity(0.1),
               width: 1,
             ),
             boxShadow: [
               if (!item.isChecked)
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
+                  color: Colors.black.withOpacity(
+                    theme.brightness == Brightness.light ? 0.02 : 0.1,
+                  ),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
             child: Row(
               children: [
                 Checkbox(
                   value: item.isChecked,
                   onChanged: (_) => onToggleCheck(),
-                  activeColor: Colors.green,
+                  activeColor: successColor,
+                  checkColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -134,23 +147,21 @@ class ShoppingItemTile extends StatelessWidget {
                     children: [
                       Text(
                         item.name,
-                        style: TextStyle(
-                          fontSize: 16,
+                        style: theme.textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w500,
                           decoration: item.isChecked
                               ? TextDecoration.lineThrough
                               : null,
                           color: item.isChecked
-                              ? Colors.grey.shade500
-                              : Colors.black87,
+                              ? colorScheme.onSurface.withOpacity(0.4)
+                              : colorScheme.onSurface,
                         ),
                       ),
                       if (item.quantityValue > 0)
                         Text(
                           '${item.quantityValue % 1 == 0 ? item.quantityValue.toInt() : item.quantityValue} ${item.quantityUnit}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade600,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface.withOpacity(0.6),
                           ),
                         ),
                     ],
@@ -161,12 +172,11 @@ class ShoppingItemTile extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
                       'R\$ ${item.totalValue.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                         color: item.isChecked
-                            ? Colors.grey.shade500
-                            : Colors.blueGrey.shade700,
+                            ? colorScheme.onSurface.withOpacity(0.4)
+                            : colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -174,7 +184,7 @@ class ShoppingItemTile extends StatelessWidget {
                   icon: Icon(
                     Icons.edit_outlined,
                     size: 20,
-                    color: Colors.grey.shade400,
+                    color: colorScheme.onSurface.withOpacity(0.2),
                   ),
                   onPressed: onEdit,
                   tooltip: 'Editar item',
@@ -188,6 +198,9 @@ class ShoppingItemTile extends StatelessWidget {
   }
 
   void _showLongPressMenu(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -203,7 +216,7 @@ class ShoppingItemTile extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: colorScheme.outline.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -233,8 +246,8 @@ class ShoppingItemTile extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('Delete', style: TextStyle(color: Colors.red)),
+              leading: Icon(Icons.delete_outline, color: colorScheme.error),
+              title: Text('Delete', style: TextStyle(color: colorScheme.error)),
               onTap: () {
                 Navigator.pop(context);
                 onDelete();

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'features/shopping_list/data/shopping_repository.dart';
 import 'features/shopping_list/state/shopping_list_controller.dart';
 import 'features/shopping_list/screens/main_screen.dart';
+import 'core/theme/app_theme.dart';
 //import 'package:google_fonts/google_fonts.dart';
 
 // Global scaffold messenger key to centralize SnackBar presentation
@@ -34,12 +35,9 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Lista de Compras',
         scaffoldMessengerKey: scaffoldMessengerKey,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          scaffoldBackgroundColor: Color(0xfff8f3ed),
-          fontFamily: 'BwHelderW1',
-          useMaterial3: true,
-        ),
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: ThemeMode.system,
         debugShowCheckedModeBanner: false,
         home: const MainScreen(),
       ),

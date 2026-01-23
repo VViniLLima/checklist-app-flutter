@@ -12,24 +12,22 @@ class ShoppingListSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final controller = context.watch<ShoppingListController>();
     final listName = controller.activeList?.name ?? 'Lista de Compras';
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF6342E8), Color(0xFF4A68FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
+        color: colorScheme.primary,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6342E8).withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: colorScheme.primary.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -68,16 +66,16 @@ class ShoppingListSummaryCard extends StatelessWidget {
                 IconButton(
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.edit_rounded,
-                    color: Colors.white70,
+                    color: Colors.white.withOpacity(0.7),
                     size: 18,
                   ),
                   onPressed: onRename,
                 ),
             ],
           ),
-          const SizedBox(height: 0),
+          const SizedBox(height: 12),
           // Row 1: Ratio and Progress
           Row(
             children: [
@@ -96,8 +94,8 @@ class ShoppingListSummaryCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: controller.progressRatio,
                     backgroundColor: Colors.white.withOpacity(0.15),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Colors.white,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      colorScheme.secondary, // Accent Turquoise for progress
                     ),
                     minHeight: 6,
                   ),
@@ -105,7 +103,7 @@ class ShoppingListSummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           // Row 2: Budget Metrics
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
