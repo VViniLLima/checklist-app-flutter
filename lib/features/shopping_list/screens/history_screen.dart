@@ -85,17 +85,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Pinned Summary Card with Safe Area
-              Container(
-                color: theme.colorScheme.primary,
-                child: SafeArea(
-                  bottom: false,
-                  child: _buildSummaryCard(
-                    context,
-                    totalSpent,
-                    filteredLists.length,
-                    avgSpent,
-                  ),
+              // Summary Card with Safe Area
+              SafeArea(
+                bottom: false,
+                child: _buildSummaryCard(
+                  context,
+                  totalSpent,
+                  filteredLists.length,
+                  avgSpent,
                 ),
               ),
 
@@ -163,18 +160,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
     ).format(average);
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: colorScheme.primary,
         image: const DecorationImage(
           image: AssetImage('assets/Images/Asset 1.png'),
           fit: BoxFit.cover,
         ),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,11 +203,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
             formattedTotal,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 32,
+              fontSize: 28,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 4),
           Row(
             children: [
               _buildChip('$count compras'),
@@ -221,7 +222,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildChip(String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
@@ -239,17 +240,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildFilterRow(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.surfaceVariant,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
             _buildFilterButton('Todos', HistoryFilter.all),
+            const SizedBox(width: 4),
             _buildFilterButton('Este mês', HistoryFilter.thisMonth),
+            const SizedBox(width: 4),
             _buildFilterButton('Últimos 3 meses', HistoryFilter.last3Months),
           ],
         ),
@@ -268,7 +271,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? theme.colorScheme.surface : Colors.transparent,
+            color: isSelected ? theme.colorScheme.primary : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             boxShadow: [
               if (isSelected)
@@ -286,7 +289,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               color: isSelected
-                  ? theme.colorScheme.primary
+                  ? theme.colorScheme.onPrimary
                   : theme.colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
