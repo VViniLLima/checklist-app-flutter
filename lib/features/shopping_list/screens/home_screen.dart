@@ -35,13 +35,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadAllMetadata();
   }
 
-  Future<void> _loadAllMetadata() async {
+  Future<void> _loadAllMetadata({bool forceRefresh = false}) async {
     if (!mounted) return;
     setState(() => _isMetadataLoading = true);
 
     final controller = context.read<ShoppingListController>();
     for (final list in controller.activeLists) {
-      if (!_listMetadata.containsKey(list.id)) {
+      if (forceRefresh || !_listMetadata.containsKey(list.id)) {
         await _loadMetadataForList(list.id);
       }
     }
@@ -66,7 +66,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (mounted) {
       setState(() {
+        final existing = _listMetadata[listId] ?? {};
         _listMetadata[listId] = {
+          ...existing,
           'totalItems': totalItems,
           'checkedItems': checkedItems,
           'progress': progress,
@@ -124,14 +126,30 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemCount: activeLists.length,
                         itemBuilder: (context, index) {
                           final list = activeLists[index];
-                          final metadata =
-                              _listMetadata[list.id] ??
-                              {
-                                'totalItems': 0,
-                                'checkedItems': 0,
-                                'progress': 0.0,
-                                'estimatedTotal': 0.0,
-                              };
+
+                          // Use live data from controller if this is the active list
+                          final Map<String, dynamic> metadata;
+                          if (list.id == controller.activeListId) {
+                            metadata = {
+                              'totalItems': controller.totalItemsCount,
+                              'checkedItems': controller.checkedItemsCount,
+                              'progress': controller.progressRatio,
+                              'estimatedTotal': controller.estimatedTotal,
+                              'isFavorite':
+                                  _listMetadata[list.id]?['isFavorite'] ??
+                                  false,
+                            };
+                          } else {
+                            metadata =
+                                _listMetadata[list.id] ??
+                                {
+                                  'totalItems': 0,
+                                  'checkedItems': 0,
+                                  'progress': 0.0,
+                                  'estimatedTotal': 0.0,
+                                  'isFavorite': false,
+                                };
+                          }
 
                           return _buildListCard(context, list, metadata);
                         },
@@ -300,12 +318,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '$checkedItems/$totalItems',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.4),
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          '$checkedItems/$totalItems',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface.withOpacity(0.4),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                            value: progress,
+                            strokeWidth: 2,
+                            backgroundColor: colorScheme.primaryContainer
+                                .withOpacity(0.3),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Color(0xFF00BFA5),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
                       formattedTotal,
@@ -315,22 +351,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 8),
-
-                // Progress Bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 6,
-                    backgroundColor: colorScheme.primaryContainer.withOpacity(
-                      0.3,
-                    ),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFF00BFA5),
-                    ),
-                  ),
                 ),
               ],
             ),
@@ -403,11 +423,25 @@ class _HomeScreenState extends State<HomeScreen> {
     ShoppingListController controller,
     String listId,
   ) async {
+    // Save current active list's live metadata to _listMetadata before switching
+    if (controller.activeListId != null) {
+      final currentId = controller.activeListId!;
+      _listMetadata[currentId] = {
+        ...(_listMetadata[currentId] ?? {}),
+        'totalItems': controller.totalItemsCount,
+        'checkedItems': controller.checkedItemsCount,
+        'progress': controller.progressRatio,
+        'estimatedTotal': controller.estimatedTotal,
+      };
+    }
+
     await controller.setActiveList(listId);
     if (mounted) {
-      Navigator.of(context).push(
+      await Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => const ShoppingListScreen()),
       );
+      // Refresh all metadata when coming back from the list
+      _loadAllMetadata(forceRefresh: true);
     }
   }
 }
