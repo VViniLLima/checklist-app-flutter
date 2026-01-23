@@ -116,14 +116,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           ),
                         ),
                       ),
+
                       if (filteredLists.isEmpty)
                         _buildEmptyState(context)
                       else
-                        ListView.builder(
+                        ListView.separated(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: filteredLists.length,
+                          separatorBuilder: (context, index) => Divider(
+                            endIndent: 20,
+                            indent: 20,
+                            height: 12,
+                            thickness: 0.7,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.outline.withOpacity(0.1),
+                          ),
                           itemBuilder: (context, index) {
                             final list = filteredLists[index];
                             return _buildHistoryCard(context, list);
@@ -314,125 +324,137 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     final itemCount = _listItemsCount[list.id] ?? 0;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
+    return Container(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colorScheme.outline.withOpacity(0.1)),
+        color: colorScheme.background,
+
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: theme.shadowColor.withValues(alpha: 0.1),
+        //     // withOpacity(
+        //     //   theme.brightness == Brightness.light ? 0.06 : 0.12,
+        //     // ),
+        //     blurRadius: 1,
+        //     offset: const Offset(0, 4),
+        //   ),
+        // ],
       ),
-      child: InkWell(
-        onTap: () => _openHistoryDetail(context, list.id),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _openHistoryDetail(context, list.id),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.receipt_long_rounded,
+                    color: colorScheme.primary,
+                    size: 24,
+                  ),
                 ),
-                child: Icon(
-                  Icons.receipt_long_rounded,
-                  color: colorScheme.primary,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      list.name,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        list.name,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 11,
-                          color: colorScheme.onSurface.withOpacity(0.4),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          dateStr,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.4),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.shopping_bag_outlined,
-                          size: 11,
-                          color: colorScheme.onSurface.withOpacity(0.4),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$itemCount itens',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.4),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (list.purchaseLocation?.isNotEmpty ?? false) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
                           Icon(
-                            Icons.location_on_outlined,
+                            Icons.calendar_today_outlined,
                             size: 11,
                             color: colorScheme.onSurface.withOpacity(0.4),
                           ),
                           const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              list.purchaseLocation!,
-                              overflow: TextOverflow.ellipsis,
-                              style: textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface.withOpacity(0.4),
-                              ),
+                          Text(
+                            dateStr,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurface.withOpacity(0.4),
                             ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.shopping_bag_outlined,
+                            size: 11,
+                            color: colorScheme.onSurface.withOpacity(0.4),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$itemCount itens',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurface.withOpacity(0.4),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (list.purchaseLocation?.isNotEmpty ?? false) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 11,
+                              color: colorScheme.onSurface.withOpacity(0.4),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                list.purchaseLocation!,
+                                overflow: TextOverflow.ellipsis,
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurface.withOpacity(0.4),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('Total', style: textTheme.bodySmall),
+                    Text(
+                      totalSpentFormatted,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: colorScheme.onSurface.withOpacity(0.2),
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('Total', style: textTheme.bodySmall),
-                  Text(
-                    totalSpentFormatted,
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 18,
-                    color: colorScheme.onSurface.withOpacity(0.2),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
