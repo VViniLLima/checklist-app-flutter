@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 import '../state/shopping_list_controller.dart';
 import '../../../core/theme/theme_controller.dart';
@@ -318,11 +319,98 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ],
+
+                  // 6. Upload Section
+                  _buildUploadSection(context),
                 ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _onUploadTap(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Recurso de upload em breve 📁'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    // Placeholder for future file picker integration:
+    // final result = await FilePicker.platform.pickFiles();
+  }
+
+  Widget _buildUploadSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      child: InkWell(
+        onTap: () => _onUploadTap(context),
+        borderRadius: BorderRadius.circular(20),
+        child: CustomPaint(
+          painter: DashedBorderPainter(
+            color: colorScheme.primary.withOpacity(0.3),
+            strokeWidth: 2,
+            gap: 6,
+            dash: 6,
+            radius: 20,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                // Icon Badge
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    Icons.upload_file_rounded,
+                    color: colorScheme.primary,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Text content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Faça upload das suas listas',
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'PDF, DOC, DOCX, Excel',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: colorScheme.onSurface.withOpacity(0.3),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -689,4 +777,57 @@ class _HomeScreenState extends State<HomeScreen> {
       _loadAllMetadata(forceRefresh: true);
     }
   }
+}
+
+class DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double gap;
+  final double dash;
+  final double radius;
+
+  DashedBorderPainter({
+    required this.color,
+    this.strokeWidth = 1.0,
+    this.gap = 5.0,
+    this.dash = 5.0,
+    this.radius = 0.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final Path path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Radius.circular(radius),
+        ),
+      );
+
+    final Path dashedPath = Path();
+    for (final PathMetric metric in path.computeMetrics()) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        dashedPath.addPath(
+          metric.extractPath(distance, distance + dash),
+          Offset.zero,
+        );
+        distance += dash + gap;
+      }
+    }
+    canvas.drawPath(dashedPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(DashedBorderPainter oldDelegate) =>
+      oldDelegate.color != color ||
+      oldDelegate.strokeWidth != strokeWidth ||
+      oldDelegate.gap != gap ||
+      oldDelegate.dash != dash ||
+      oldDelegate.radius != radius;
 }
