@@ -1,3 +1,4 @@
+import 'package:checklist_app/features/shopping_list/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
@@ -163,53 +164,71 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         const Spacer(),
-                        // Theme Toggle Button
-                        Consumer<ThemeController>(
-                          builder: (context, themeController, _) {
-                            final isDark =
-                                themeController.themeMode == ThemeMode.dark;
-                            return InkWell(
-                              onTap: () => themeController.toggleTheme(),
-                              borderRadius: BorderRadius.circular(50),
-                              child: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: colorScheme.surface,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
+                        Row(
+                          children: [
+                            Consumer<ThemeController>(
+                              builder: (context, themeController, _) {
+                                final isDark =
+                                    themeController.themeMode == ThemeMode.dark;
+                                return InkWell(
+                                  onTap: () => themeController.toggleTheme(),
+                                  borderRadius: BorderRadius.circular(50),
+                                  child: Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: colorScheme.surface,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 300),
-                                  transitionBuilder: (child, animation) {
-                                    return ScaleTransition(
-                                      scale: animation,
-                                      child: RotationTransition(
-                                        turns: animation,
-                                        child: child,
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(
+                                        milliseconds: 300,
                                       ),
-                                    );
-                                  },
-                                  child: Icon(
-                                    isDark
-                                        ? Icons.nightlight_round_rounded
-                                        : Icons.wb_sunny_rounded,
-                                    key: ValueKey(isDark),
-                                    color: isDark
-                                        ? const Color(0xFFFFD700)
-                                        : const Color(0xFFFF8C00),
-                                    size: 24,
+                                      transitionBuilder: (child, animation) {
+                                        return ScaleTransition(
+                                          scale: animation,
+                                          child: RotationTransition(
+                                            turns: animation,
+                                            child: child,
+                                          ),
+                                        );
+                                      },
+                                      child: Icon(
+                                        isDark
+                                            ? Icons.nightlight_round_rounded
+                                            : Icons.wb_sunny_rounded,
+                                        key: ValueKey(isDark),
+                                        color: isDark
+                                            ? const Color(0xFFFFD700)
+                                            : const Color(0xFFFF8C00),
+                                        size: 24,
+                                      ),
+                                    ),
                                   ),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 12),
+                            IconButton(
+                              onPressed: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const SettingsScreen(),
                                 ),
                               ),
-                            );
-                          },
+                              icon: Icon(
+                                Icons.settings_outlined,
+                                color: colorScheme.onBackground,
+                              ),
+                              tooltip: 'Configurações',
+                            ),
+                          ],
                         ),
                       ],
                     ),
