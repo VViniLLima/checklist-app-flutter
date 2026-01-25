@@ -75,8 +75,8 @@ class CustomBottomNavBar extends StatelessWidget {
                     _NavBarItem(
                       index: 3,
                       currentIndex: currentIndex,
-                      icon: Icons.history,
-                      label: 'Histórico',
+                      icon: Icons.search,
+                      label: 'Buscar',
                       onTap: onTap,
                       activeColor: activeColor,
                       inactiveColor: inactiveColor,
@@ -84,8 +84,8 @@ class CustomBottomNavBar extends StatelessWidget {
                     _NavBarItem(
                       index: 4,
                       currentIndex: currentIndex,
-                      icon: Icons.person_outline_rounded,
-                      label: 'Profile',
+                      icon: Icons.history,
+                      label: 'Histórico',
                       onTap: onTap,
                       activeColor: activeColor,
                       inactiveColor: inactiveColor,

@@ -21,11 +21,8 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const ListsScreen(),
     const Center(child: Text('Add Item Proxy')),
+    const PlaceholderScreen(title: 'Buscar', icon: Icons.search),
     const HistoryScreen(),
-    const PlaceholderScreen(
-      title: 'Profile',
-      icon: Icons.person_outline_rounded,
-    ),
   ];
 
   void _onTabTapped(int index) {
