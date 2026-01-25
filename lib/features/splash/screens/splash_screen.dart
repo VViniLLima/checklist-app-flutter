@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/widgets/login_bottom_sheet.dart';
 import '../../shopping_list/screens/main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -266,7 +267,7 @@ class _SplashScreenState extends State<SplashScreen>
         child: Column(
           children: [
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () => showLoginBottomSheet(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: AppColors.primary,
