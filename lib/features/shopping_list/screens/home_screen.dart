@@ -453,144 +453,152 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final dateStr = DateFormat('d MMM', 'pt_BR').format(list.createdAt);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return Stack(
+      children: [
+        Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: GestureDetector(
-        onTapDown: _getTapPosition,
-        child: InkWell(
-          onTap: () => _openList(
-            context,
-            context.read<ShoppingListController>(),
-            list.id,
-          ),
-          onLongPress: () => _showContextMenu(context, list),
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header: Icon, Name, Date, Status
-                Row(
+          child: GestureDetector(
+            onTapDown: _getTapPosition,
+            child: InkWell(
+              onTap: () => _openList(
+                context,
+                context.read<ShoppingListController>(),
+                list.id,
+              ),
+              onLongPress: () => _showContextMenu(context, list),
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0F2F1), // Light green-ish
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.shopping_basket_rounded,
-                        color: Color(0xFF00897B),
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            list.name,
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF263238),
-                            ),
-                          ),
-                          Text(
-                            dateStr,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.4),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    // Header: Icon, Name, Date, Status
                     Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (progress == 1.0 && totalItems > 0)
-                          const Icon(
-                            Icons.check_circle_rounded,
-                            color: Color(0xFF26A69A),
-                            size: 22,
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0F2F1), // Light green-ish
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        if (progress == 1.0 && totalItems > 0)
-                          const SizedBox(width: 8),
-                        InkWell(
-                          onTap: () {
-                            context
-                                .read<ShoppingListController>()
-                                .toggleFavorite(list.id);
-                          },
-                          child: Icon(
-                            Icons.favorite_rounded,
-                            color: list.isFavorite
-                                ? Colors.red
-                                : Colors.grey.withOpacity(0.5),
-                            size: 22,
+                          child: const Icon(
+                            Icons.shopping_basket_rounded,
+                            color: Color(0xFF00897B),
+                            size: 24,
                           ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                list.name,
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF263238),
+                                ),
+                              ),
+                              Text(
+                                dateStr,
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurface.withOpacity(0.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (progress == 1.0 && totalItems > 0)
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: Color(0xFF26A69A),
+                                size: 22,
+                              ),
+                            if (progress == 1.0 && totalItems > 0)
+                              const SizedBox(width: 8),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-                // Info Row: Items count and Price
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                    // Info Row: Items count and Price
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '$checkedItems/$totalItems',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.4),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                            value: progress,
-                            strokeWidth: 2,
-                            backgroundColor: colorScheme.primaryContainer
-                                .withOpacity(0.3),
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFF00BFA5),
+                        Row(
+                          children: [
+                            Text(
+                              '$checkedItems/$totalItems',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.4),
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                value: progress,
+                                strokeWidth: 2,
+                                backgroundColor: colorScheme.primaryContainer
+                                    .withOpacity(0.3),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF00BFA5),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          formattedTotal,
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF263238),
                           ),
                         ),
                       ],
                     ),
-                    Text(
-                      formattedTotal,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF263238),
-                      ),
-                    ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
+        // Favorite icon positioned in top-right corner
+        Positioned(
+          top: 8,
+          right: 8,
+          child: InkWell(
+            onTap: () {
+              context.read<ShoppingListController>().toggleFavorite(list.id);
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: Icon(
+              Icons.favorite_rounded,
+              color: list.isFavorite
+                  ? Colors.red
+                  : Colors.grey.withOpacity(0.5),
+              size: 22,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
