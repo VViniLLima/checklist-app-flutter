@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/widgets/login_bottom_sheet.dart';
+import '../../auth/widgets/signup_bottom_sheet.dart';
 import '../../shopping_list/screens/main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -268,10 +269,10 @@ class _SplashScreenState extends State<SplashScreen>
           children: [
             ElevatedButton(
               onPressed: () => showLoginBottomSheet(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: AppColors.primary,
-                minimumSize: const Size(double.infinity, 56),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.primary,
+              minimumSize: const Size(double.infinity, 56),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -284,7 +285,7 @@ class _SplashScreenState extends State<SplashScreen>
             ),
             const SizedBox(height: 12),
             OutlinedButton(
-              onPressed: () {},
+              onPressed: () => showSignupBottomSheet(context),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
                 side: const BorderSide(color: Colors.white, width: 2),
