@@ -279,26 +279,42 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text('Nenhuma lista incompleta'),
                     )
                   else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        children: incompleteLists.map((list) {
+                    SizedBox(
+                      height: 130,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: incompleteLists.length,
+                        itemBuilder: (context, index) {
+                          final list = incompleteLists[index];
                           final metadata = _getMetadataFor(list, controller);
-                          return _buildListCard(context, list, metadata);
-                        }).toList(),
+                          return Container(
+                            width: 200,
+                            margin: const EdgeInsets.only(right: 16),
+                            child: _buildListCard(context, list, metadata),
+                          );
+                        },
                       ),
                     ),
 
                   // 5. Completas
                   if (completeLists.isNotEmpty) ...[
                     _buildSectionHeader(context, 'Listas completas'),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        children: completeLists.map((list) {
+                    SizedBox(
+                      height: 130,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: completeLists.length,
+                        itemBuilder: (context, index) {
+                          final list = completeLists[index];
                           final metadata = _getMetadataFor(list, controller);
-                          return _buildListCard(context, list, metadata);
-                        }).toList(),
+                          return Container(
+                            width: 200,
+                            margin: const EdgeInsets.only(right: 16),
+                            child: _buildListCard(context, list, metadata),
+                          );
+                        },
                       ),
                     ),
                   ],
