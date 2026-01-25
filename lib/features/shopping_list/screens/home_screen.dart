@@ -519,19 +519,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (progress == 1.0 && totalItems > 0)
-                              const Icon(
-                                Icons.check_circle_rounded,
-                                color: Color(0xFF26A69A),
-                                size: 22,
-                              ),
-                            if (progress == 1.0 && totalItems > 0)
-                              const SizedBox(width: 8),
-                          ],
-                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
