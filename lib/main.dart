@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'features/shopping_list/data/shopping_repository.dart';
 import 'features/shopping_list/state/shopping_list_controller.dart';
-import 'features/shopping_list/screens/main_screen.dart';
+import 'features/splash/screens/splash_screen.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 //import 'package:google_fonts/google_fonts.dart';
@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
                 child: child!,
               );
             },
-            home: const MainScreen(),
+            home: const SplashScreen(),
           );
         },
       ),
