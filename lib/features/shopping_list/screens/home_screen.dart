@@ -253,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (favoriteLists.isNotEmpty) ...[
                     _buildSectionHeader(context, 'Favoritas'),
                     SizedBox(
-                      height: 180,
+                      height: 130,
                       child: ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         scrollDirection: Axis.horizontal,
@@ -262,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           final list = favoriteLists[index];
                           final metadata = _getMetadataFor(list, controller);
                           return Container(
-                            width: 300,
+                            width: 200,
                             margin: const EdgeInsets.only(right: 16),
                             child: _buildListCard(context, list, metadata),
                           );
