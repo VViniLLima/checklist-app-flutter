@@ -5,6 +5,7 @@ import 'features/shopping_list/data/shopping_repository.dart';
 import 'features/shopping_list/state/shopping_list_controller.dart';
 import 'features/shopping_list/screens/main_screen.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_controller.dart';
 //import 'package:google_fonts/google_fonts.dart';
 
 // Global scaffold messenger key to centralize SnackBar presentation
@@ -30,20 +31,39 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) {
-        final controller = ShoppingListController(repository);
-        controller.initialize(); // Carrega dados salvos
-        return controller;
-      },
-      child: MaterialApp(
-        title: 'Lista de Compras',
-        scaffoldMessengerKey: scaffoldMessengerKey,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.system,
-        debugShowCheckedModeBanner: false,
-        home: const MainScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) {
+            final controller = ShoppingListController(repository);
+            controller.initialize(); // Carrega dados salvos
+            return controller;
+          },
+        ),
+        ChangeNotifierProvider(create: (_) => ThemeController()),
+      ],
+      child: Consumer<ThemeController>(
+        builder: (context, themeController, child) {
+          return MaterialApp(
+            title: 'Lista de Compras',
+            scaffoldMessengerKey: scaffoldMessengerKey,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: themeController.themeMode,
+            debugShowCheckedModeBanner: false,
+            builder: (context, child) {
+              return AnimatedTheme(
+                data: themeController.themeMode == ThemeMode.dark
+                    ? AppTheme.dark
+                    : AppTheme.light,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: child!,
+              );
+            },
+            home: const MainScreen(),
+          );
+        },
       ),
     );
   }
