@@ -377,9 +377,13 @@ class ShoppingListScreen extends StatelessWidget {
       SnackBar(
         content: const Text('Item removido'),
         duration: const Duration(seconds: 5),
+        persist: false,
         action: SnackBarAction(
           label: 'Desfazer',
-          onPressed: () => controller.restoreItem(item),
+          onPressed: () {
+            controller.restoreItem(item);
+          },
+          //onPressed: () => controller.restoreItem(item),
         ),
       ),
     );
