@@ -362,7 +362,7 @@ class _StepperButtonState extends State<_StepperButton> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             curve: Curves.easeInOut,
-            width: 48,
+            width: 32,
             height: 48,
             decoration: BoxDecoration(
               color: _getBackgroundColor(),
@@ -387,8 +387,8 @@ class _StepperButtonState extends State<_StepperButton> {
 
     if (isIncrement) {
       return _isPressed
-          ? widget.colorScheme.primary.withOpacity(0.9)
-          : widget.colorScheme.primary;
+          ? widget.colorScheme.secondary.withOpacity(0.9)
+          : widget.colorScheme.secondary;
     }
 
     return _isPressed

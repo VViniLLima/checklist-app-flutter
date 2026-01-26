@@ -608,6 +608,64 @@ class ShoppingListScreen extends StatelessWidget {
 
           final previewTotal = calculatePreviewTotal();
 
+          // Helper para criar o container estilizado (mesmo estilo do QuantityStepper)
+          Widget buildStyledInput({
+            required Widget child,
+            String? label,
+            IconData? prefixIcon,
+          }) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (label != null) ...[
+                  Text(
+                    label,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: colorScheme.outline.withOpacity(0.2),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: prefixIcon != null ? 0 : 16,
+                  ),
+                  child: Row(
+                    children: [
+                      if (prefixIcon != null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 12, right: 8),
+                          child: Icon(
+                            prefixIcon,
+                            size: 20,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      Expanded(child: child),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }
+
           return Padding(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -624,8 +682,9 @@ class ShoppingListScreen extends StatelessWidget {
                   children: [
                     Text(
                       isEditing ? 'Editar Item' : 'Novo Item',
-                      style: theme.textTheme.headlineSmall?.copyWith(
+                      style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     IconButton(
@@ -635,19 +694,29 @@ class ShoppingListScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                TextField(
-                  controller: nameController,
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Nome do item',
-                    prefixIcon: Icon(Icons.shopping_basket_outlined),
+
+                buildStyledInput(
+                  label: 'Nome do item',
+                  prefixIcon: Icons.shopping_basket_outlined,
+                  child: TextField(
+                    controller: nameController,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      hintText: 'Ex: Arroz, Feijão...',
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    textCapitalization: TextCapitalization.sentences,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  textCapitalization: TextCapitalization.sentences,
                 ),
                 const SizedBox(height: 16),
 
                 // Quantity Group
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       flex: 3,
@@ -658,6 +727,7 @@ class ShoppingListScreen extends StatelessWidget {
                             'Quantidade',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -674,25 +744,38 @@ class ShoppingListScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     Expanded(
                       flex: 2,
-                      child: DropdownButtonFormField<String>(
-                        value: qUnit,
-                        decoration: const InputDecoration(labelText: 'Und'),
-                        items: ShoppingItem.units
-                            .map(
-                              (u) => DropdownMenuItem(value: u, child: Text(u)),
-                            )
-                            .toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() {
-                              qUnit = val;
-                              pUnit = val;
-                            });
-                          }
-                        },
+                      child: buildStyledInput(
+                        label: 'Unid.',
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: qUnit,
+                            isExpanded: true,
+                            icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                            items: ShoppingItem.units
+                                .map(
+                                  (u) => DropdownMenuItem(
+                                    value: u,
+                                    child: Text(u),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() {
+                                  qUnit = val;
+                                  pUnit = val;
+                                });
+                              }
+                            },
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -701,36 +784,57 @@ class ShoppingListScreen extends StatelessWidget {
 
                 // Price Group
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       flex: 3,
-                      child: TextField(
-                        controller: priceController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        onChanged: (_) => setState(() {}),
-                        inputFormatters: [_CurrencyInputFormatter()],
-                        decoration: const InputDecoration(
-                          labelText: 'Preço',
-                          prefixIcon: Icon(Icons.attach_money),
+                      child: buildStyledInput(
+                        label: 'Preço',
+                        prefixIcon: Icons.attach_money_rounded,
+                        child: TextField(
+                          controller: priceController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: (_) => setState(() {}),
+                          inputFormatters: [_CurrencyInputFormatter()],
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     Expanded(
                       flex: 2,
-                      child: DropdownButtonFormField<String>(
-                        value: pUnit,
-                        decoration: const InputDecoration(labelText: 'por'),
-                        items: ShoppingItem.units
-                            .map(
-                              (u) => DropdownMenuItem(value: u, child: Text(u)),
-                            )
-                            .toList(),
-                        onChanged: (val) {
-                          if (val != null) setState(() => pUnit = val);
-                        },
+                      child: buildStyledInput(
+                        label: 'por',
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: pUnit,
+                            isExpanded: true,
+                            icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                            items: ShoppingItem.units
+                                .map(
+                                  (u) => DropdownMenuItem(
+                                    value: u,
+                                    child: Text(u),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (val) {
+                              if (val != null) setState(() => pUnit = val);
+                            },
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -741,8 +845,11 @@ class ShoppingListScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withOpacity(0.5),
+                    color: colorScheme.primary.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: colorScheme.primary.withOpacity(0.1),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -750,16 +857,17 @@ class ShoppingListScreen extends StatelessWidget {
                       Text(
                         'Total do Item:',
                         style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                       Text(
                         'R\$ ${previewTotal.toStringAsFixed(2)}',
-                        style: theme.textTheme.titleLarge?.copyWith(
+                        style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: previewTotal > 0
-                              ? colorScheme.secondary
-                              : colorScheme.onSurface.withOpacity(0.3),
+                              ? colorScheme.primary
+                              : colorScheme.onSurface.withOpacity(0.2),
                         ),
                       ),
                     ],
@@ -837,6 +945,7 @@ class ShoppingListScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
+                    elevation: 0,
                   ),
                   child: Text(
                     isEditing ? 'Salvar Alterações' : 'Adicionar Item',
