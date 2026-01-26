@@ -54,6 +54,11 @@ class _QuantityStepperState extends State<QuantityStepper>
   DateTime? _lastTapTime;
   static const _tapDebounceMs = 50;
 
+  // Direct edit state
+  bool _isEditing = false;
+  late TextEditingController _textController;
+  late FocusNode _focusNode;
+
   @override
   void initState() {
     super.initState();
@@ -64,12 +69,35 @@ class _QuantityStepperState extends State<QuantityStepper>
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+
+    // Initialize text controller and focus node for direct editing
+    _textController = TextEditingController(text: widget.value.toString());
+    _focusNode = FocusNode();
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(QuantityStepper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sync text controller when value changes externally (not during editing)
+    if (!_isEditing && widget.value != oldWidget.value) {
+      _textController.text = widget.value.toString();
+    }
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    _textController.dispose();
     super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (!_focusNode.hasFocus && _isEditing) {
+      _finishEditing();
+    }
   }
 
   bool get _canDecrement => widget.enabled && widget.value > widget.min;
@@ -117,6 +145,48 @@ class _QuantityStepperState extends State<QuantityStepper>
     });
   }
 
+  /// Start direct editing mode
+  void _startEditing() {
+    if (!widget.enabled) return;
+    setState(() {
+      _isEditing = true;
+      _textController.text = widget.value.toString();
+      _textController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _textController.text.length,
+      );
+    });
+    // Request focus after the frame to ensure TextField is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
+  }
+
+  /// Finish editing and validate the input
+  void _finishEditing() {
+    if (!_isEditing) return;
+
+    final text = _textController.text.trim();
+    int? newValue = int.tryParse(text);
+
+    // Validate and clamp the value
+    if (newValue == null || newValue < widget.min) {
+      newValue = widget.min;
+    } else if (newValue > widget.max) {
+      newValue = widget.max;
+    }
+
+    setState(() {
+      _isEditing = false;
+    });
+
+    // Only trigger callback if value actually changed
+    if (newValue != widget.value) {
+      _triggerHapticFeedback();
+      widget.onChanged(newValue);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -142,9 +212,9 @@ class _QuantityStepperState extends State<QuantityStepper>
         ],
       ),
       child: Semantics(
-        label: 'Quantidade: ${widget.value}',
+        label: 'Quantidade: ${widget.value}. Toque para editar.',
         value: widget.value.toString(),
-        hint: 'Use os botões para ajustar a quantidade',
+        hint: 'Use os botões para ajustar ou toque para digitar',
         child: Row(
           children: [
             // Decrement Button
@@ -164,27 +234,53 @@ class _QuantityStepperState extends State<QuantityStepper>
               color: colorScheme.outline.withOpacity(0.1),
             ),
 
-            // Center Display
+            // Center Display - Tappable for direct edit
             Expanded(
-              child: AnimatedBuilder(
-                animation: _scaleAnimation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _scaleAnimation.value,
-                    child: child,
-                  );
-                },
-                child: Container(
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    widget.value.toString(),
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: widget.enabled
-                          ? colorScheme.onSurface
-                          : colorScheme.onSurface.withOpacity(0.38),
-                    ),
+              child: GestureDetector(
+                onTap: widget.enabled && !_isEditing ? _startEditing : null,
+                behavior: HitTestBehavior.opaque,
+                child: AnimatedBuilder(
+                  animation: _scaleAnimation,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _scaleAnimation.value,
+                      child: child,
+                    );
+                  },
+                  child: Container(
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: _isEditing
+                        ? TextField(
+                            controller: _textController,
+                            focusNode: _focusNode,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(3), // Max 999
+                            ],
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              isDense: true,
+                            ),
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface,
+                            ),
+                            onSubmitted: (_) => _finishEditing(),
+                            onEditingComplete: _finishEditing,
+                          )
+                        : Text(
+                            widget.value.toString(),
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: widget.enabled
+                                  ? colorScheme.onSurface
+                                  : colorScheme.onSurface.withOpacity(0.38),
+                            ),
+                          ),
                   ),
                 ),
               ),
