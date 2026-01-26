@@ -612,16 +612,41 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Header: Icon, Name, Date, Status
                     Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE0F2F1), // Light green-ish
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.shopping_basket_rounded,
-                            color: Color(0xFF00897B),
-                            size: 24,
+                        SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Outer ring - CircularProgressIndicator
+                              SizedBox(
+                                width: 44,
+                                height: 44,
+                                child: CircularProgressIndicator(
+                                  value: progress,
+                                  strokeWidth: 3,
+                                  backgroundColor: colorScheme.primaryContainer
+                                      .withOpacity(0.3),
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                        Color(0xFF00BFA5),
+                                      ),
+                                ),
+                              ),
+                              // Center icon
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE0F2F1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.shopping_basket_rounded,
+                                  color: Color(0xFF00897B),
+                                  size: 20,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -654,30 +679,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              '$checkedItems/$totalItems',
-                              style: textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface.withOpacity(0.4),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(
-                                value: progress,
-                                strokeWidth: 2,
-                                backgroundColor: colorScheme.primaryContainer
-                                    .withOpacity(0.3),
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Color(0xFF00BFA5),
-                                ),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          '$checkedItems/$totalItems',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface.withOpacity(0.4),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
