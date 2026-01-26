@@ -937,7 +937,7 @@ class ShoppingListScreen extends StatelessWidget {
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
+                    backgroundColor: colorScheme.secondary,
                     foregroundColor: theme.brightness == Brightness.light
                         ? Colors.white
                         : colorScheme.onPrimary,
