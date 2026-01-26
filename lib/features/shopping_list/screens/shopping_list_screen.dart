@@ -6,6 +6,7 @@ import '../state/shopping_list_controller.dart';
 import 'finalize_list_screen.dart';
 import '../widgets/category_section.dart';
 import '../widgets/shopping_list_summary_card.dart';
+import '../widgets/quantity_stepper.dart';
 import '../models/shopping_item.dart';
 
 /// Tela principal da lista de compras
@@ -573,13 +574,9 @@ class ShoppingListScreen extends StatelessWidget {
         : null;
 
     final nameController = TextEditingController(text: item?.name ?? '');
-    final qtyController = TextEditingController(
-      text: (item?.quantityValue ?? 0) > 0
-          ? (item!.quantityValue % 1 == 0
-                ? item.quantityValue.toInt().toString()
-                : item.quantityValue.toString().replaceAll('.', ','))
-          : '',
-    );
+    int quantity = (item?.quantityValue ?? 0) > 0
+        ? item!.quantityValue.toInt()
+        : 1;
     final priceController = TextEditingController(
       text: (item?.priceValue ?? 0) > 0
           ? (item!.priceValue.toStringAsFixed(2).replaceAll('.', ','))
@@ -598,13 +595,12 @@ class ShoppingListScreen extends StatelessWidget {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           double calculatePreviewTotal() {
-            final qText = qtyController.text.trim().replaceAll(',', '.');
+            final q = quantity.toDouble();
             final pText = priceController.text.trim().replaceAll(
               RegExp(r'\D'),
               '',
             );
 
-            final q = double.tryParse(qText) ?? 0.0;
             final p = (double.tryParse(pText) ?? 0.0) / 100;
 
             return ShoppingItem.calculateTotal(q, qUnit, p, pUnit);
@@ -655,16 +651,27 @@ class ShoppingListScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: 3,
-                      child: TextField(
-                        controller: qtyController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        onChanged: (_) => setState(() {}),
-                        decoration: const InputDecoration(
-                          labelText: 'Quantidade',
-                          prefixIcon: Icon(Icons.scale_outlined),
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Quantidade',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          QuantityStepper(
+                            value: quantity,
+                            onChanged: (newValue) {
+                              setState(() {
+                                quantity = newValue;
+                              });
+                            },
+                            min: 1,
+                            max: 999,
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -759,7 +766,7 @@ class ShoppingListScreen extends StatelessWidget {
                   ),
                 ),
                 if (previewTotal == 0 &&
-                    qtyController.text.isNotEmpty &&
+                    quantity > 0 &&
                     priceController.text.isNotEmpty &&
                     qUnit != pUnit)
                   Padding(
@@ -775,16 +782,12 @@ class ShoppingListScreen extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     final name = nameController.text.trim();
-                    final qtyText = qtyController.text.trim().replaceAll(
-                      ',',
-                      '.',
-                    );
+                    final qVal = quantity.toDouble();
                     final prcText = priceController.text.trim().replaceAll(
                       RegExp(r'\D'),
                       '',
                     );
 
-                    final qVal = double.tryParse(qtyText) ?? 0.0;
                     final pVal = (double.tryParse(prcText) ?? 0.0) / 100;
                     final total = ShoppingItem.calculateTotal(
                       qVal,
