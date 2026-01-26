@@ -264,7 +264,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             controller: _senhaController,
             obscureText: _obscurePassword,
             decoration: InputDecoration(
-              labelText: 'Nova senha (opcional)',
+              hintText: 'Nova senha (opcional)',
+              hintStyle: TextStyle(
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
               prefixIcon: Icon(Icons.lock_outline, color: colorScheme.primary),
               suffixIcon: IconButton(
                 icon: Icon(
@@ -429,6 +432,9 @@ class _LabeledTextField extends StatelessWidget {
         inputFormatters: inputFormatters,
         decoration: InputDecoration(
           hintText: label,
+          hintStyle: TextStyle(
+            color: colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
           // labelText: label,
           prefixIcon: Icon(icon, color: colorScheme.primary),
           border: OutlineInputBorder(
