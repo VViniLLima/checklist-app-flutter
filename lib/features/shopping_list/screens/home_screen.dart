@@ -273,9 +273,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (favoriteLists.isNotEmpty) ...[
                     _buildSectionHeader(context, 'Favoritas'),
                     SizedBox(
-                      height: 130,
+                      height: 155,
                       child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
                         scrollDirection: Axis.horizontal,
                         itemCount: favoriteLists.length,
                         itemBuilder: (context, index) {
@@ -627,16 +630,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                list.name,
-                                style: textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF263238),
-                                ),
-                              ),
-                              Text(
                                 dateStr,
                                 style: textTheme.bodySmall?.copyWith(
                                   color: colorScheme.onSurface.withOpacity(0.4),
+                                ),
+                              ),
+                              Text(
+                                list.name,
+                                overflow: TextOverflow.ellipsis,
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF263238),
                                 ),
                               ),
                             ],
@@ -644,7 +648,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 6),
 
                     // Info Row: Items count and Price
                     Row(
@@ -675,11 +679,22 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
-                        Text(
-                          formattedTotal,
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFF263238),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF00BFA5).withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            formattedTotal,
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onPrimary,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ],
