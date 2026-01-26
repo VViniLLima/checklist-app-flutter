@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/theme_controller.dart';
+import '../../profile/screens/edit_profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -61,7 +62,13 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfileScreen(),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white.withOpacity(0.25),
                         foregroundColor: Colors.white,
@@ -80,11 +87,11 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 8),
               _SettingsCard(
                 children: [
-                  _SettingsTile(
-                    icon: Icons.person_outline,
-                    label: 'Perfil',
-                    onTap: () {},
-                  ),
+                  // _SettingsTile(
+                  //   icon: Icons.person_outline,
+                  //   label: 'Perfil',
+                  //   onTap: () {},
+                  // ),
                   _SettingsTile(
                     icon: Icons.credit_card_outlined,
                     label: 'Pagamento',
