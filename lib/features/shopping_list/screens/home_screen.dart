@@ -633,17 +633,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                 ),
                               ),
+
                               // Center icon
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE0F2F1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Icon(
-                                  Icons.shopping_basket_rounded,
-                                  color: Color(0xFF00897B),
-                                  size: 20,
+                              CircleAvatar(
+                                backgroundColor: colorScheme.secondary
+                                    .withValues(alpha: 0.15),
+                                backgroundImage: AssetImage(
+                                  'assets/Icons/Default_list.png',
                                 ),
                               ),
                             ],
