@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
 import '../state/shopping_list_controller.dart';
-import '../../../core/theme/theme_controller.dart';
 import 'shopping_list_screen.dart';
 
 /// Tela inicial que exibe todas as listas de compras
@@ -132,141 +131,12 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Profile Header
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: colorScheme.primaryContainer,
-                          backgroundImage: const AssetImage(
-                            'assets/Images/profilePicture.webp',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Olá, Vinícius',
-                              style: textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onBackground,
-                              ),
-                            ),
-                            Text(
-                              'Vamos às compras? 🛒',
-                              style: textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface.withOpacity(0.5),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        Row(
-                          children: [
-                            Consumer<ThemeController>(
-                              builder: (context, themeController, _) {
-                                final isDark =
-                                    themeController.themeMode == ThemeMode.dark;
-                                return InkWell(
-                                  onTap: () => themeController.toggleTheme(),
-                                  borderRadius: BorderRadius.circular(50),
-                                  child: Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: colorScheme.surface,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: AnimatedSwitcher(
-                                      duration: const Duration(
-                                        milliseconds: 300,
-                                      ),
-                                      transitionBuilder: (child, animation) {
-                                        return ScaleTransition(
-                                          scale: animation,
-                                          child: RotationTransition(
-                                            turns: animation,
-                                            child: child,
-                                          ),
-                                        );
-                                      },
-                                      child: Icon(
-                                        isDark
-                                            ? Icons.nightlight_round_rounded
-                                            : Icons.wb_sunny_rounded,
-                                        key: ValueKey(isDark),
-                                        color: isDark
-                                            ? const Color(0xFFFFD700)
-                                            : const Color(0xFFFF8C00),
-                                        size: 24,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            const SizedBox(width: 12),
-                            IconButton(
-                              onPressed: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const SettingsScreen(),
-                                ),
-                              ),
-                              icon: Icon(
-                                Icons.settings_outlined,
-                                color: colorScheme.onBackground,
-                              ),
-                              tooltip: 'Configurações',
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // 2. Summary Boxes (Placeholder items)
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        _buildSummaryBox(
-                          context,
-                          'Listas Ativas',
-                          '${activeLists.length}',
-                          Icons.list_alt_rounded,
-                          colorScheme.primary,
-                        ),
-                        const SizedBox(width: 16),
-                        _buildSummaryBox(
-                          context,
-                          'Total Estimado',
-                          NumberFormat.currency(
-                            locale: 'pt_BR',
-                            symbol: r'R$',
-                          ).format(
-                            activeLists.fold(
-                              0.0,
-                              (sum, l) =>
-                                  sum +
-                                  (_listMetadata[l.id]?['estimatedTotal'] ??
-                                      0.0),
-                            ),
-                          ),
-                          Icons.account_balance_wallet_rounded,
-                          const Color(0xFF00BFA5),
-                        ),
-                      ],
-                    ),
+                  // 1. Dashboard Card
+                  _buildDashboardCard(
+                    context,
+                    controller,
+                    colorScheme,
+                    textTheme,
                   ),
 
                   // 3. Favoritas
@@ -349,6 +219,284 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildDashboardCard(
+    BuildContext context,
+    ShoppingListController controller,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
+    final now = DateTime.now();
+    final currentMonth = DateTime(now.year, now.month);
+    final prevMonth = now.month == 1
+        ? DateTime(now.year - 1, 12)
+        : DateTime(now.year, now.month - 1);
+
+    final completedLists = controller.completedLists;
+
+    double getSpending(DateTime month) {
+      return completedLists
+          .where((l) {
+            final date = l.purchaseDate ?? l.createdAt;
+            return date.year == month.year && date.month == month.month;
+          })
+          .fold(0.0, (sum, l) => sum + (l.totalSpent ?? 0.0));
+    }
+
+    int getPurchases(DateTime month) {
+      return completedLists.where((l) {
+        final date = l.purchaseDate ?? l.createdAt;
+        return date.year == month.year && date.month == month.month;
+      }).length;
+    }
+
+    final currentSpending = getSpending(currentMonth);
+    final prevSpending = getSpending(prevMonth);
+    final currentPurchases = getPurchases(currentMonth);
+    final prevPurchases = getPurchases(prevMonth);
+    final spendingDelta = (currentSpending - prevSpending).abs();
+    final isSpendingUp = currentSpending > prevSpending;
+    final isSpendingDown = currentSpending < prevSpending;
+
+    final isPurchasesUp = currentPurchases > prevPurchases;
+    final isPurchasesDown = currentPurchases < prevPurchases;
+
+    // "Últimas acessadas" logic: Fallout to most recently updated or created
+    final activeLists = controller.activeLists;
+    final recentLists = activeLists.toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final displayRecent = recentLists.take(2).toList();
+
+    final currencyFormat = NumberFormat.currency(
+      locale: 'pt_BR',
+      symbol: r'R$',
+    );
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: colorScheme.primary, // Dark blue from theme
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. User header row
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.white.withOpacity(0.2),
+                backgroundImage: const AssetImage(
+                  'assets/Images/profilePicture.webp',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Olá, Vinícius',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                ),
+                icon: const Icon(Icons.settings, color: Colors.white),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // 2. Two-column content area
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Column A: Monthly summary
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      DateFormat('MMM d, y', 'pt_BR').format(now),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'RESUMO DO MÊS',
+                      style: textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      currencyFormat.format(currentSpending),
+                      style: textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Indicator: Purchases
+                    Row(
+                      children: [
+                        Icon(
+                          isPurchasesUp
+                              ? Icons.arrow_upward
+                              : isPurchasesDown
+                              ? Icons.arrow_downward
+                              : Icons.remove,
+                          size: 14,
+                          color: Colors.white.withOpacity(0.7),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$currentPurchases compras',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    // Indicator: Spending delta
+                    Row(
+                      children: [
+                        Icon(
+                          isSpendingUp
+                              ? Icons.arrow_upward
+                              : isSpendingDown
+                              ? Icons.arrow_downward
+                              : Icons.remove,
+                          size: 14,
+                          color: Colors.white.withOpacity(0.7),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${isSpendingUp
+                              ? '↑'
+                              : isSpendingDown
+                              ? '↓'
+                              : ''} ${currencyFormat.format(spendingDelta)}',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Column B: Últimas acessadas
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ÚLTIMAS ACESSADAS',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withOpacity(0.6),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (displayRecent.isEmpty)
+                      Text(
+                        'Nenhuma lista ativa',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withOpacity(0.4),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      )
+                    else
+                      ...displayRecent.map((list) {
+                        final metadata = _getMetadataFor(list, controller);
+                        final progress = metadata['progress'] as double;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          value: progress,
+                                          strokeWidth: 2,
+                                          backgroundColor: Colors.white
+                                              .withOpacity(0.1),
+                                          valueColor:
+                                              const AlwaysStoppedAnimation<
+                                                Color
+                                              >(Color(0xFF00BFA5)),
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.shopping_cart_outlined,
+                                        size: 12,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    list.name,
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -459,61 +607,6 @@ class _HomeScreenState extends State<HomeScreen> {
             'isFavorite': list.isFavorite,
           };
     }
-  }
-
-  Widget _buildSummaryBox(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    final theme = Theme.of(context);
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildSectionHeader(BuildContext context, String title) {
