@@ -123,6 +123,7 @@ class ShoppingListController extends ChangeNotifier {
           id: 'list-1',
           name: 'Lista de compras 1',
           createdAt: DateTime.now(),
+          lastModifiedAt: DateTime.now(),
         );
         _shoppingLists = [defaultList];
         _activeListId = defaultList.id;
@@ -219,6 +220,7 @@ class ShoppingListController extends ChangeNotifier {
       id: 'list-${DateTime.now().millisecondsSinceEpoch}',
       name: name,
       createdAt: DateTime.now(),
+      lastModifiedAt: DateTime.now(),
     );
 
     _shoppingLists.add(newList);
@@ -241,7 +243,10 @@ class ShoppingListController extends ChangeNotifier {
     final index = _shoppingLists.indexWhere((list) => list.id == listId);
     if (index == -1) return;
 
-    _shoppingLists[index] = _shoppingLists[index].copyWith(name: newName);
+    _shoppingLists[index] = _shoppingLists[index].copyWith(
+      name: newName,
+      lastModifiedAt: DateTime.now(),
+    );
     await _repository.saveShoppingLists(_shoppingLists);
     notifyListeners();
   }
@@ -274,6 +279,7 @@ class ShoppingListController extends ChangeNotifier {
       purchaseLocation: location,
       purchaseDate: date,
       totalSpent: totalSpent,
+      lastModifiedAt: DateTime.now(),
     );
 
     await _repository.saveShoppingLists(_shoppingLists);
@@ -306,6 +312,7 @@ class ShoppingListController extends ChangeNotifier {
     );
 
     _categories.add(newCategory);
+    await _updateActiveListTimestamp();
     await _repository.saveCategories(_activeListId!, _categories);
     notifyListeners();
   }
@@ -324,6 +331,7 @@ class ShoppingListController extends ChangeNotifier {
       return item;
     }).toList();
 
+    await _updateActiveListTimestamp();
     await _repository.saveCategories(_activeListId!, _categories);
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
@@ -340,6 +348,7 @@ class ShoppingListController extends ChangeNotifier {
       return cat;
     }).toList();
 
+    await _updateActiveListTimestamp();
     await _repository.saveCategories(_activeListId!, _categories);
     notifyListeners();
   }
@@ -355,6 +364,7 @@ class ShoppingListController extends ChangeNotifier {
       return cat;
     }).toList();
 
+    await _updateActiveListTimestamp();
     await _repository.saveCategories(_activeListId!, _categories);
     notifyListeners();
   }
@@ -370,6 +380,7 @@ class ShoppingListController extends ChangeNotifier {
       return cat;
     }).toList();
 
+    await _updateActiveListTimestamp();
     await _repository.saveCategories(_activeListId!, _categories);
     notifyListeners();
   }
@@ -432,6 +443,7 @@ class ShoppingListController extends ChangeNotifier {
       _categories[i] = _categories[i].copyWith(sortOrder: i);
     }
 
+    await _updateActiveListTimestamp();
     await _repository.saveCategories(_activeListId!, _categories);
     notifyListeners();
   }
@@ -463,6 +475,7 @@ class ShoppingListController extends ChangeNotifier {
     );
 
     _items.add(newItem);
+    await _updateActiveListTimestamp();
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
 
@@ -475,6 +488,7 @@ class ShoppingListController extends ChangeNotifier {
     if (_activeListId == null) return;
 
     _items.removeWhere((item) => item.id == itemId);
+    await _updateActiveListTimestamp();
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
 
@@ -508,6 +522,7 @@ class ShoppingListController extends ChangeNotifier {
       return item;
     }).toList();
 
+    await _updateActiveListTimestamp();
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
 
@@ -537,6 +552,7 @@ class ShoppingListController extends ChangeNotifier {
       return item;
     }).toList();
 
+    await _updateActiveListTimestamp();
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
 
@@ -559,6 +575,7 @@ class ShoppingListController extends ChangeNotifier {
     }).toList();
 
     if (!didUpdate) return;
+    await _updateActiveListTimestamp();
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
 
@@ -572,6 +589,7 @@ class ShoppingListController extends ChangeNotifier {
 
     _items.removeWhere((existing) => existing.id == item.id);
     _items.add(item);
+    await _updateActiveListTimestamp();
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
 
@@ -596,6 +614,7 @@ class ShoppingListController extends ChangeNotifier {
       return item;
     }).toList();
 
+    await _updateActiveListTimestamp();
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
 
@@ -630,6 +649,7 @@ class ShoppingListController extends ChangeNotifier {
     );
 
     _items.add(newItem);
+    await _updateActiveListTimestamp();
     await _repository.saveItems(_activeListId!, _items);
     notifyListeners();
 
@@ -711,6 +731,7 @@ class ShoppingListController extends ChangeNotifier {
       _categories[i] = _categories[i].copyWith(sortOrder: i);
     }
 
+    await _updateActiveListTimestamp();
     await _repository.saveCategories(_activeListId!, _categories);
     notifyListeners();
   }
@@ -723,5 +744,17 @@ class ShoppingListController extends ChangeNotifier {
     _activeListId = null;
     await _repository.clearAll();
     notifyListeners();
+  }
+
+  /// Updates the lastModifiedAt timestamp for the current active list
+  Future<void> _updateActiveListTimestamp() async {
+    if (_activeListId == null) return;
+    final index = _shoppingLists.indexWhere((list) => list.id == _activeListId);
+    if (index == -1) return;
+
+    _shoppingLists[index] = _shoppingLists[index].copyWith(
+      lastModifiedAt: DateTime.now(),
+    );
+    await _repository.saveShoppingLists(_shoppingLists);
   }
 }

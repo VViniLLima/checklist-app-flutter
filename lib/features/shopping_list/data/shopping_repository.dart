@@ -123,7 +123,7 @@ class ShoppingRepository {
     final hasOldCategories = _prefs.containsKey(_categoriesKey);
     final hasOldItems = _prefs.containsKey(_itemsKey);
     final hasNewLists = _prefs.containsKey(_listsKey);
-    
+
     return (hasOldCategories || hasOldItems) && !hasNewLists;
   }
 
@@ -142,6 +142,7 @@ class ShoppingRepository {
       id: 'list-1',
       name: 'Lista de compras 1',
       createdAt: DateTime.now(),
+      lastModifiedAt: DateTime.now(),
     );
 
     // Salva a lista

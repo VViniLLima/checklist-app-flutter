@@ -264,10 +264,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final isPurchasesUp = currentPurchases > prevPurchases;
     final isPurchasesDown = currentPurchases < prevPurchases;
 
-    // "Últimas acessadas" logic: Fallout to most recently updated or created
+    // "Últimas acessadas" logic: Most recently modified
     final activeLists = controller.activeLists;
     final recentLists = activeLists.toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      ..sort((a, b) => b.lastModifiedAt.compareTo(a.lastModifiedAt));
     final displayRecent = recentLists.take(2).toList();
 
     final currencyFormat = NumberFormat.currency(
@@ -299,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 radius: 20,
                 backgroundColor: Colors.white.withOpacity(0.2),
                 backgroundImage: const AssetImage(
-                  'assets/Images/profilePicture.webp',
+                  'assets/Images/ProfilePicture.png',
                 ),
               ),
               const SizedBox(width: 12),
@@ -438,55 +438,60 @@ class _HomeScreenState extends State<HomeScreen> {
                         final progress = metadata['progress'] as double;
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          value: progress,
-                                          strokeWidth: 2,
-                                          backgroundColor: Colors.white
-                                              .withOpacity(0.1),
-                                          valueColor:
-                                              const AlwaysStoppedAnimation<
-                                                Color
-                                              >(Color(0xFF00BFA5)),
+                          child: InkWell(
+                            onTap: () =>
+                                _openList(context, controller, list.id),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            value: progress,
+                                            strokeWidth: 2,
+                                            backgroundColor: Colors.white
+                                                .withOpacity(0.1),
+                                            valueColor:
+                                                const AlwaysStoppedAnimation<
+                                                  Color
+                                                >(Color(0xFF00BFA5)),
+                                          ),
                                         ),
-                                      ),
-                                      const Icon(
-                                        Icons.shopping_cart_outlined,
-                                        size: 12,
-                                        color: Colors.white,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    list.name,
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
+                                        const Icon(
+                                          Icons.shopping_cart_outlined,
+                                          size: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ],
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      list.name,
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
