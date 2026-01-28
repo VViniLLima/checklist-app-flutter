@@ -627,34 +627,34 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme, TextTheme textTheme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.shopping_cart_outlined,
-            size: 80,
-            color: colorScheme.onSurface.withOpacity(0.1),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Nenhuma lista ativa',
-            style: textTheme.titleLarge?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.5),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Toque no botão + para criar sua próxima lista',
-            style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.4),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildEmptyState(ColorScheme colorScheme, TextTheme textTheme) {
+  //   return Center(
+  //     child: Column(
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       children: [
+  //         Icon(
+  //           Icons.shopping_cart_outlined,
+  //           size: 80,
+  //           color: colorScheme.onSurface.withOpacity(0.1),
+  //         ),
+  //         const SizedBox(height: 16),
+  //         Text(
+  //           'Nenhuma lista ativa',
+  //           style: textTheme.titleLarge?.copyWith(
+  //             color: colorScheme.onSurface.withOpacity(0.5),
+  //           ),
+  //         ),
+  //         const SizedBox(height: 8),
+  //         Text(
+  //           'Toque no botão + para criar sua próxima lista',
+  //           style: textTheme.bodyMedium?.copyWith(
+  //             color: colorScheme.onSurface.withOpacity(0.4),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildListCard(
     BuildContext context,

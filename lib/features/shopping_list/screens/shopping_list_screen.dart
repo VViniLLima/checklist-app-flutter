@@ -586,6 +586,8 @@ class ShoppingListScreen extends StatelessWidget {
     String qUnit = item?.quantityUnit ?? 'und';
     String pUnit = item?.priceUnit ?? 'und';
 
+    final formKey = GlobalKey<FormState>();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -628,7 +630,7 @@ class ShoppingListScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                 ],
                 Container(
-                  height: 52,
+                  constraints: const BoxConstraints(minHeight: 52),
                   decoration: BoxDecoration(
                     color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
@@ -673,290 +675,300 @@ class ShoppingListScreen extends StatelessWidget {
               right: 24,
               top: 24,
             ),
-            child: ListView(
-              shrinkWrap: true,
-              physics: const ClampingScrollPhysics(),
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      isEditing ? 'Editar Item' : 'Novo Item',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                buildStyledInput(
-                  label: 'Nome do item',
-                  prefixIcon: Icons.shopping_basket_outlined,
-                  child: TextField(
-                    controller: nameController,
-                    autofocus: true,
-                    decoration: const InputDecoration(
-                      hintText: 'Ex: Arroz, Feijão...',
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    textCapitalization: TextCapitalization.sentences,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Quantity Group
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Quantidade',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          QuantityStepper(
-                            value: quantity,
-                            onChanged: (newValue) {
-                              setState(() {
-                                quantity = newValue;
-                              });
-                            },
-                            min: 1,
-                            max: 999,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: buildStyledInput(
-                        label: 'Unid.',
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: qUnit,
-                            isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                            items: ShoppingItem.units
-                                .map(
-                                  (u) => DropdownMenuItem(
-                                    value: u,
-                                    child: Text(u),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() {
-                                  qUnit = val;
-                                  pUnit = val;
-                                });
-                              }
-                            },
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w500,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Price Group
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: buildStyledInput(
-                        label: 'Preço',
-                        prefixIcon: Icons.attach_money_rounded,
-                        child: TextField(
-                          controller: priceController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          onChanged: (_) => setState(() {}),
-                          inputFormatters: [_CurrencyInputFormatter()],
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: buildStyledInput(
-                        label: 'por',
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: pUnit,
-                            isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                            items: ShoppingItem.units
-                                .map(
-                                  (u) => DropdownMenuItem(
-                                    value: u,
-                                    child: Text(u),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (val) {
-                              if (val != null) setState(() => pUnit = val);
-                            },
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w500,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Preview total
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: colorScheme.primary.withOpacity(0.1),
-                    ),
-                  ),
-                  child: Row(
+            child: Form(
+              key: formKey,
+              child: ListView(
+                shrinkWrap: true,
+                physics: const ClampingScrollPhysics(),
+                children: [
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Total do Item:',
-                        style: theme.textTheme.titleMedium?.copyWith(
+                        isEditing ? 'Editar Item' : 'Novo Item',
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurfaceVariant,
+                          color: colorScheme.onSurface,
                         ),
                       ),
-                      Text(
-                        'R\$ ${previewTotal.toStringAsFixed(2)}',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: previewTotal > 0
-                              ? colorScheme.primary
-                              : colorScheme.onSurface.withOpacity(0.2),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  buildStyledInput(
+                    label: 'Nome do item',
+                    prefixIcon: Icons.shopping_basket_outlined,
+                    child: TextFormField(
+                      controller: nameController,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        hintText: 'Ex: Arroz, Feijão...',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      textCapitalization: TextCapitalization.sentences,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'O nome do item não pode ser vazio.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+
+                  // Quantity Group
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Quantidade',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            QuantityStepper(
+                              value: quantity,
+                              onChanged: (newValue) {
+                                setState(() {
+                                  quantity = newValue;
+                                });
+                              },
+                              min: 1,
+                              max: 999,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: buildStyledInput(
+                          label: 'Unid.',
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: qUnit,
+                              isExpanded: true,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                              ),
+                              items: ShoppingItem.units
+                                  .map(
+                                    (u) => DropdownMenuItem(
+                                      value: u,
+                                      child: Text(u),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() {
+                                    qUnit = val;
+                                    pUnit = val;
+                                  });
+                                }
+                              },
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                if (previewTotal == 0 &&
-                    quantity > 0 &&
-                    priceController.text.isNotEmpty &&
-                    qUnit != pUnit)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      'Unidades incompatíveis para cálculo',
-                      style: TextStyle(color: colorScheme.error, fontSize: 12),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
+                  const SizedBox(height: 16),
 
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: () {
-                    final name = nameController.text.trim();
-                    final qVal = quantity.toDouble();
-                    final prcText = priceController.text.trim().replaceAll(
-                      RegExp(r'\D'),
-                      '',
-                    );
-
-                    final pVal = (double.tryParse(prcText) ?? 0.0) / 100;
-                    final total = ShoppingItem.calculateTotal(
-                      qVal,
-                      qUnit,
-                      pVal,
-                      pUnit,
-                    );
-
-                    if (name.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('O nome do item não pode estar vazio'),
+                  // Price Group
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: buildStyledInput(
+                          label: 'Preço',
+                          prefixIcon: Icons.attach_money_rounded,
+                          child: TextField(
+                            controller: priceController,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            onChanged: (_) => setState(() {}),
+                            inputFormatters: [_CurrencyInputFormatter()],
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 12,
+                              ),
+                            ),
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
-                      );
-                      return;
-                    }
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: buildStyledInput(
+                          label: 'por',
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: pUnit,
+                              isExpanded: true,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                              ),
+                              items: ShoppingItem.units
+                                  .map(
+                                    (u) => DropdownMenuItem(
+                                      value: u,
+                                      child: Text(u),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (val) {
+                                if (val != null) setState(() => pUnit = val);
+                              },
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
 
-                    if (isEditing) {
-                      controller.editItem(
-                        itemId,
-                        name: name,
-                        quantityValue: qVal,
-                        quantityUnit: qUnit,
-                        priceValue: pVal,
-                        priceUnit: pUnit,
-                        totalValue: total,
-                      );
-                    } else {
-                      controller.addItem(
-                        name,
-                        categoryId,
-                        quantityValue: qVal,
-                        quantityUnit: qUnit,
-                        priceValue: pVal,
-                        priceUnit: pUnit,
-                        totalValue: total,
-                      );
-                    }
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.secondary,
-                    foregroundColor: theme.brightness == Brightness.light
-                        ? Colors.white
-                        : colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
+                  // Preview total
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: colorScheme.primary.withOpacity(0.1),
+                      ),
                     ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    isEditing ? 'Salvar Alterações' : 'Adicionar Item',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Total do Item:',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        Text(
+                          'R\$ ${previewTotal.toStringAsFixed(2)}',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: previewTotal > 0
+                                ? colorScheme.primary
+                                : colorScheme.onSurface.withOpacity(0.2),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-              ],
+                  if (previewTotal == 0 &&
+                      quantity > 0 &&
+                      priceController.text.isNotEmpty &&
+                      qUnit != pUnit)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Unidades incompatíveis para cálculo',
+                        style: TextStyle(
+                          color: colorScheme.error,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: () {
+                      final name = nameController.text.trim();
+                      final qVal = quantity.toDouble();
+                      final prcText = priceController.text.trim().replaceAll(
+                        RegExp(r'\D'),
+                        '',
+                      );
+
+                      final pVal = (double.tryParse(prcText) ?? 0.0) / 100;
+                      final total = ShoppingItem.calculateTotal(
+                        qVal,
+                        qUnit,
+                        pVal,
+                        pUnit,
+                      );
+
+                      if (!formKey.currentState!.validate()) return;
+
+                      if (isEditing) {
+                        controller.editItem(
+                          itemId,
+                          name: name,
+                          quantityValue: qVal,
+                          quantityUnit: qUnit,
+                          priceValue: pVal,
+                          priceUnit: pUnit,
+                          totalValue: total,
+                        );
+                      } else {
+                        controller.addItem(
+                          name,
+                          categoryId,
+                          quantityValue: qVal,
+                          quantityUnit: qUnit,
+                          priceValue: pVal,
+                          priceUnit: pUnit,
+                          totalValue: total,
+                        );
+                      }
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.secondary,
+                      foregroundColor: theme.brightness == Brightness.light
+                          ? Colors.white
+                          : colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      isEditing ? 'Salvar Alterações' : 'Adicionar Item',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           );
         },
