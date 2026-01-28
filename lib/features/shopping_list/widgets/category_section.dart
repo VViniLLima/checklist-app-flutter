@@ -26,6 +26,7 @@ class CategorySection extends StatelessWidget {
   final Function(ShoppingItem item) onSwipeDelete;
   final bool showDragHandle;
   final Widget Function(Widget header)? headerWrapper;
+  final Map<String, GlobalKey>? itemKeys;
 
   const CategorySection({
     super.key,
@@ -44,6 +45,7 @@ class CategorySection extends StatelessWidget {
     required this.onSwipeDelete,
     this.showDragHandle = false,
     this.headerWrapper,
+    this.itemKeys,
   });
 
   @override
@@ -91,7 +93,12 @@ class CategorySection extends StatelessWidget {
                         ]
                       : items.map((item) {
                           return ShoppingItemTile(
-                            key: ValueKey(item.id),
+                            key:
+                                itemKeys?.putIfAbsent(
+                                  item.id,
+                                  () => GlobalKey(),
+                                ) ??
+                                ValueKey(item.id),
                             item: item,
                             onToggleCheck: () => onToggleItemCheck(item.id),
                             onDelete: () => onDeleteItem(item.id),

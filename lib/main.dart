@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'features/shopping_list/data/shopping_repository.dart';
 import 'features/shopping_list/state/shopping_list_controller.dart';
+import 'features/shopping_list/state/search_controller.dart' as search;
 import 'features/splash/screens/splash_screen.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
@@ -41,6 +42,16 @@ class MyApp extends StatelessWidget {
           },
         ),
         ChangeNotifierProvider(create: (_) => ThemeController()),
+        ChangeNotifierProxyProvider<
+          ShoppingListController,
+          search.SearchController
+        >(
+          create: (context) => search.SearchController(
+            context.read<ShoppingListController>(),
+            repository.prefs,
+          ),
+          update: (context, shopping, search) => search!,
+        ),
       ],
       child: Consumer<ThemeController>(
         builder: (context, themeController, child) {

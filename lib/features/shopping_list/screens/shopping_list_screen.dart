@@ -15,8 +15,75 @@ import '../models/shopping_item.dart';
 /// - Seção "Sem categoria" (sempre visível)
 /// - Todas as categorias criadas pelo usuário
 /// - FAB para adicionar nova categoria
-class ShoppingListScreen extends StatelessWidget {
-  const ShoppingListScreen({super.key});
+class ShoppingListScreen extends StatefulWidget {
+  final String? focusCategoryId;
+  final String? focusItemId;
+
+  const ShoppingListScreen({super.key, this.focusCategoryId, this.focusItemId});
+
+  @override
+  State<ShoppingListScreen> createState() => _ShoppingListScreenState();
+}
+
+class _ShoppingListScreenState extends State<ShoppingListScreen> {
+  final Map<String, GlobalKey> _categoryKeys = {};
+  final Map<String, GlobalKey> _itemKeys = {};
+  bool _hasScrolledToFocus = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.focusCategoryId != null || widget.focusItemId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToFocus());
+    }
+  }
+
+  void _scrollToFocus() {
+    if (!mounted || _hasScrolledToFocus) return;
+
+    final controller = context.read<ShoppingListController>();
+    String? targetCategoryId = widget.focusCategoryId;
+    String? targetItemId = widget.focusItemId;
+
+    if (targetItemId != null) {
+      final item = controller.allItems.firstWhere(
+        (i) => i.id == targetItemId,
+        orElse: () => ShoppingItem(id: '', name: '', createdAt: DateTime.now()),
+      );
+      if (item.id.isNotEmpty) {
+        targetCategoryId = item.categoryId;
+        // Ensure category is expanded
+        if (targetCategoryId != null &&
+            controller.isCategoryCollapsed(targetCategoryId)) {
+          controller.toggleCategoryCollapse(targetCategoryId);
+        }
+      }
+    } else if (targetCategoryId != null) {
+      // Ensure category is expanded
+      if (controller.isCategoryCollapsed(targetCategoryId)) {
+        controller.toggleCategoryCollapse(targetCategoryId);
+      }
+    }
+
+    // Wait for expansion animation/layout
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+
+      final targetKey = targetItemId != null
+          ? _itemKeys[targetItemId]
+          : _categoryKeys[targetCategoryId];
+
+      if (targetKey != null && targetKey.currentContext != null) {
+        Scrollable.ensureVisible(
+          targetKey.currentContext!,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          alignment: 0.1,
+        );
+        setState(() => _hasScrolledToFocus = true);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +120,10 @@ class ShoppingListScreen extends StatelessWidget {
                               sliver: SliverList(
                                 delegate: SliverChildListDelegate([
                                   CategorySection(
+                                    key: _categoryKeys.putIfAbsent(
+                                      'sem-categoria',
+                                      () => GlobalKey(),
+                                    ),
                                     category: controller.semCategoria,
                                     items: controller.getItemsByCategory(
                                       'sem-categoria',
@@ -109,6 +180,7 @@ class ShoppingListScreen extends StatelessWidget {
                                         );
                                       },
                                     ),
+                                    itemKeys: _itemKeys,
                                   ),
                                 ]),
                               ),
@@ -140,6 +212,10 @@ class ShoppingListScreen extends StatelessWidget {
                                     key: ValueKey(category.id),
                                     color: Colors.transparent,
                                     child: CategorySection(
+                                      key: _categoryKeys.putIfAbsent(
+                                        category.id,
+                                        () => GlobalKey(),
+                                      ),
                                       category: category,
                                       items: items,
                                       isCollapsed: isCollapsed,
@@ -212,6 +288,7 @@ class ShoppingListScreen extends StatelessWidget {
                                                   child: header,
                                                 )
                                           : null,
+                                      itemKeys: _itemKeys,
                                     ),
                                   );
                                 },

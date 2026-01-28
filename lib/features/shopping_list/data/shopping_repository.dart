@@ -16,6 +16,8 @@ class ShoppingRepository {
 
   final SharedPreferences _prefs;
 
+  SharedPreferences get prefs => _prefs;
+
   ShoppingRepository(this._prefs);
 
   /// Factory para criar instância do repositório de forma assíncrona

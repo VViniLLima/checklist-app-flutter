@@ -5,6 +5,7 @@ import 'shopping_list_screen.dart';
 import 'home_screen.dart';
 import 'lists_screen.dart';
 import 'history_screen.dart';
+import 'search_screen.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 
 class MainScreen extends StatefulWidget {
@@ -21,7 +22,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const ListsScreen(),
     const Center(child: Text('Add Item Proxy')),
-    const PlaceholderScreen(title: 'Buscar', icon: Icons.search),
+    const SearchScreen(),
     const HistoryScreen(),
   ];
 
