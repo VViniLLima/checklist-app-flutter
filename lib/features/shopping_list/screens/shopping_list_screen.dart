@@ -147,8 +147,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                                     items: controller.getItemsByCategory(
                                       'sem-categoria',
                                     ),
-                                    isCollapsed: false,
-                                    onToggleCollapse: () {},
+                                    isCollapsed: controller.isCategoryCollapsed(
+                                      'sem-categoria',
+                                    ),
+                                    onToggleCollapse: () =>
+                                        controller.toggleCategoryCollapse(
+                                          'sem-categoria',
+                                        ),
                                     onAddItem: () => _showItemEditorBottomSheet(
                                       context,
                                       categoryId: 'sem-categoria',

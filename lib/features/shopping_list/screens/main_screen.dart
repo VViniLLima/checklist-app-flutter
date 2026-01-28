@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../state/shopping_list_controller.dart';
 import 'shopping_list_screen.dart';
@@ -17,6 +18,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  DateTime? _lastBackPressedAt;
 
   final List<Widget> _screens = [
     const HomeScreen(),
@@ -120,15 +122,46 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-        onCenterTap: () => _showCreateListDialog(context),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        // 1. If not on Home tab, go to Home tab
+        if (_currentIndex != 0) {
+          setState(() {
+            _currentIndex = 0;
+          });
+          return;
+        }
+
+        // 2. If on Home tab, check for double-back-to-exit
+        final now = DateTime.now();
+        if (_lastBackPressedAt == null ||
+            now.difference(_lastBackPressedAt!) > const Duration(seconds: 2)) {
+          _lastBackPressedAt = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pressione novamente para sair'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+
+        // 3. Exit the app
+        await SystemNavigator.pop();
+      },
+      child: Scaffold(
+        body: IndexedStack(index: _currentIndex, children: _screens),
+        bottomNavigationBar: CustomBottomNavBar(
+          currentIndex: _currentIndex,
+          onTap: _onTabTapped,
+          onCenterTap: () => _showCreateListDialog(context),
+        ),
+        extendBody:
+            true, // Allows the body to go behind the transparent/floating nav bar
       ),
-      extendBody:
-          true, // Allows the body to go behind the transparent/floating nav bar
     );
   }
 }

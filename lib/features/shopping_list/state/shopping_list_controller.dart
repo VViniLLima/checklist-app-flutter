@@ -67,8 +67,9 @@ class ShoppingListController extends ChangeNotifier {
   /// - Itens NÃO marcados primeiro (ordenados por createdAt)
   /// - Itens marcados no final (ordenados por checkedAt)
   List<ShoppingItem> getItemsByCategory(String? categoryId) {
+    final searchId = categoryId ?? 'sem-categoria';
     final categoryItems = _items
-        .where((item) => item.categoryId == categoryId)
+        .where((item) => (item.categoryId ?? 'sem-categoria') == searchId)
         .toList();
 
     return _sortItems(categoryItems);
@@ -465,7 +466,7 @@ class ShoppingListController extends ChangeNotifier {
     final newItem = ShoppingItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
-      categoryId: categoryId,
+      categoryId: categoryId ?? 'sem-categoria',
       quantityValue: quantityValue ?? 0.0,
       quantityUnit: quantityUnit ?? 'und',
       priceValue: priceValue ?? 0.0,
@@ -661,9 +662,9 @@ class ShoppingListController extends ChangeNotifier {
 
   /// Verifica se uma categoria está colapsada
   bool isCategoryCollapsed(String? categoryId) {
-    if (categoryId == null) return false;
+    final searchId = categoryId ?? 'sem-categoria';
     final category = _categories.firstWhere(
-      (cat) => cat.id == categoryId,
+      (cat) => cat.id == searchId,
       orElse: () => const models.Category(id: '', name: '', isCollapsed: false),
     );
     return category.isCollapsed;
