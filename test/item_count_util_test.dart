@@ -53,14 +53,14 @@ void main() {
         name: 'Zero',
         createdAt: DateTime.now(),
         quantityValue: 0,
-        quantityUnit: 'un',
+        quantityUnit: 'und',
       );
       final itemNeg = ShoppingItem(
         id: '6',
         name: 'Neg',
         createdAt: DateTime.now(),
         quantityValue: -5,
-        quantityUnit: 'un',
+        quantityUnit: 'und',
       );
       expect(ShoppingItem.getCountContribution(item0), 1);
       expect(ShoppingItem.getCountContribution(itemNeg), 1);
@@ -87,7 +87,7 @@ void main() {
           name: 'C',
           createdAt: DateTime.now(),
           quantityValue: 1,
-          quantityUnit: 'un',
+          quantityUnit: 'und',
         ), // 1
       ];
       expect(ShoppingItem.getTotalCount(items), 5);
@@ -116,11 +116,30 @@ void main() {
           name: 'C',
           createdAt: DateTime.now(),
           quantityValue: 2,
-          quantityUnit: 'un',
+          quantityUnit: 'und',
           isChecked: true,
         ), // 2
       ];
       expect(ShoppingItem.getCompletedCount(items), 5);
+    });
+
+    test('Migration un -> und in fromJson', () {
+      final json = {
+        'id': 'migrate-1',
+        'name': 'Legacy Item',
+        'isChecked': false,
+        'categoryId': null,
+        'createdAt': DateTime.now().toIso8601String(),
+        'quantityValue': 2.0,
+        'quantityUnit': 'un',
+        'priceValue': 10.0,
+        'priceUnit': 'un',
+        'totalValue': 20.0,
+      };
+
+      final item = ShoppingItem.fromJson(json);
+      expect(item.quantityUnit, 'und');
+      expect(item.priceUnit, 'und');
     });
   });
 }

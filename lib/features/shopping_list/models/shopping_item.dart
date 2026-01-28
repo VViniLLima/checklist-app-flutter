@@ -28,14 +28,13 @@ class ShoppingItem {
     required this.createdAt,
     this.checkedAt,
     this.quantityValue = 0.0,
-    this.quantityUnit = 'un',
+    this.quantityUnit = 'und',
     this.priceValue = 0.0,
-    this.priceUnit = 'un',
+    this.priceUnit = 'und',
     this.totalValue = 0.0,
   });
 
   static const List<String> units = [
-    'un',
     'ml',
     'g',
     'mg',
@@ -99,9 +98,12 @@ class ShoppingItem {
   factory ShoppingItem.fromJson(Map<String, dynamic> json) {
     // Migration logic for old fields
     final double qValue = (json['quantityValue'] as num?)?.toDouble() ?? 0.0;
-    final String qUnit = json['quantityUnit'] as String? ?? 'un';
+    String qUnit = json['quantityUnit'] as String? ?? 'und';
+    if (qUnit == 'un') qUnit = 'und';
+
     final double pValue = (json['priceValue'] as num?)?.toDouble() ?? 0.0;
-    final String pUnit = json['priceUnit'] as String? ?? 'un';
+    String pUnit = json['priceUnit'] as String? ?? 'und';
+    if (pUnit == 'un') pUnit = 'und';
 
     double tValue = (json['totalValue'] as num?)?.toDouble() ?? 0.0;
 
@@ -170,7 +172,7 @@ class ShoppingItem {
   /// Fallback is always 1.
   static int getCountContribution(ShoppingItem item) {
     // Countable units: quantity affects count
-    const countableUnits = {'un', 'und', 'caixa', 'garrafa', 'lata', 'pacote'};
+    const countableUnits = {'und', 'caixa', 'garrafa', 'lata', 'pacote'};
 
     if (countableUnits.contains(item.quantityUnit)) {
       return item.quantityValue > 0

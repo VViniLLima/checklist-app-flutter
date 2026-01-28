@@ -583,8 +583,8 @@ class ShoppingListScreen extends StatelessWidget {
           : '0,00',
     );
 
-    String qUnit = item?.quantityUnit ?? 'un';
-    String pUnit = item?.priceUnit ?? 'un';
+    String qUnit = item?.quantityUnit ?? 'und';
+    String pUnit = item?.priceUnit ?? 'und';
 
     showModalBottomSheet(
       context: context,

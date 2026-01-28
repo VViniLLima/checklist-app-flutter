@@ -467,9 +467,9 @@ class ShoppingListController extends ChangeNotifier {
       name: name,
       categoryId: categoryId,
       quantityValue: quantityValue ?? 0.0,
-      quantityUnit: quantityUnit ?? 'un',
+      quantityUnit: quantityUnit ?? 'und',
       priceValue: priceValue ?? 0.0,
-      priceUnit: priceUnit ?? 'un',
+      priceUnit: priceUnit ?? 'und',
       totalValue: totalValue ?? 0.0,
       createdAt: DateTime.now(),
     );
