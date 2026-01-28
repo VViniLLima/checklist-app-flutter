@@ -29,6 +29,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   final Map<String, GlobalKey> _categoryKeys = {};
   final Map<String, GlobalKey> _itemKeys = {};
   bool _hasScrolledToFocus = false;
+  String? _highlightedItemId;
+  String? _highlightedCategoryId;
 
   @override
   void initState() {
@@ -80,7 +82,24 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           curve: Curves.easeInOut,
           alignment: 0.1,
         );
-        setState(() => _hasScrolledToFocus = true);
+
+        setState(() {
+          _hasScrolledToFocus = true;
+          _highlightedItemId = targetItemId;
+          _highlightedCategoryId = targetItemId == null
+              ? targetCategoryId
+              : null;
+        });
+
+        // Clear highlight after a delay
+        Future.delayed(const Duration(milliseconds: 700), () {
+          if (mounted) {
+            setState(() {
+              _highlightedItemId = null;
+              _highlightedCategoryId = null;
+            });
+          }
+        });
       }
     });
   }
@@ -181,6 +200,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                                       },
                                     ),
                                     itemKeys: _itemKeys,
+                                    highlightedItemId: _highlightedItemId,
+                                    highlightedCategoryId:
+                                        _highlightedCategoryId,
                                   ),
                                 ]),
                               ),
@@ -289,6 +311,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                                                 )
                                           : null,
                                       itemKeys: _itemKeys,
+                                      highlightedItemId: _highlightedItemId,
+                                      highlightedCategoryId:
+                                          _highlightedCategoryId,
                                     ),
                                   );
                                 },

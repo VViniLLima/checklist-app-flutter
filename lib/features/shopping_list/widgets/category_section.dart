@@ -27,6 +27,8 @@ class CategorySection extends StatelessWidget {
   final bool showDragHandle;
   final Widget Function(Widget header)? headerWrapper;
   final Map<String, GlobalKey>? itemKeys;
+  final String? highlightedItemId;
+  final String? highlightedCategoryId;
 
   const CategorySection({
     super.key,
@@ -46,6 +48,8 @@ class CategorySection extends StatelessWidget {
     this.showDragHandle = false,
     this.headerWrapper,
     this.itemKeys,
+    this.highlightedItemId,
+    this.highlightedCategoryId,
   });
 
   @override
@@ -57,6 +61,9 @@ class CategorySection extends StatelessWidget {
       onAddItem: onAddItem,
       onEditCategory: onEditCategory,
       showDragHandle: showDragHandle,
+      isHighlighted:
+          highlightedCategoryId == category?.id ||
+          (category == null && highlightedCategoryId == 'sem-categoria'),
     );
     final wrappedHeader = headerWrapper != null
         ? headerWrapper!(header)
@@ -107,6 +114,7 @@ class CategorySection extends StatelessWidget {
                             onCopy: () => onCopyItem?.call(item.id),
                             onSwipeComplete: () => onSwipeComplete(item),
                             onSwipeDelete: () => onSwipeDelete(item),
+                            isHighlighted: highlightedItemId == item.id,
                           );
                         }).toList(),
                 ),

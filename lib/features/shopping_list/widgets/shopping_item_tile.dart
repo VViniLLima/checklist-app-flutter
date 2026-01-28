@@ -17,6 +17,7 @@ class ShoppingItemTile extends StatelessWidget {
   final VoidCallback? onCopy;
   final VoidCallback onSwipeComplete;
   final VoidCallback onSwipeDelete;
+  final bool isHighlighted;
 
   const ShoppingItemTile({
     super.key,
@@ -28,6 +29,7 @@ class ShoppingItemTile extends StatelessWidget {
     this.onCopy,
     required this.onSwipeComplete,
     required this.onSwipeDelete,
+    this.isHighlighted = false,
   });
 
   @override
@@ -107,15 +109,19 @@ class ShoppingItemTile extends StatelessWidget {
           duration: const Duration(milliseconds: 300),
           margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
           decoration: BoxDecoration(
-            color: item.isChecked
+            color: isHighlighted
+                ? colorScheme.primary.withOpacity(0.15)
+                : item.isChecked
                 ? colorScheme.surfaceVariant.withOpacity(0.3)
                 : colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: item.isChecked
+              color: isHighlighted
+                  ? colorScheme.primary
+                  : item.isChecked
                   ? colorScheme.outline.withOpacity(0.05)
                   : colorScheme.outline.withOpacity(0.1),
-              width: 1,
+              width: isHighlighted ? 2 : 1,
             ),
             boxShadow: [
               if (!item.isChecked)

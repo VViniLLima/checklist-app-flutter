@@ -18,8 +18,8 @@ void main() async {
 
   // Inicializa o repositório
   final repository = await ShoppingRepository.create();
-
   // Inicializa formatação de data para pt_BR
+
   await initializeDateFormatting('pt_BR', null);
 
   runApp(MyApp(repository: repository));

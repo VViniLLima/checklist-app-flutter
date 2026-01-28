@@ -20,6 +20,7 @@ class CategoryHeader extends StatelessWidget {
   final VoidCallback onAddItem;
   final VoidCallback? onEditCategory; // null para "Sem categoria"
   final bool showDragHandle;
+  final bool isHighlighted;
 
   const CategoryHeader({
     super.key,
@@ -29,6 +30,7 @@ class CategoryHeader extends StatelessWidget {
     required this.onAddItem,
     this.onEditCategory,
     this.showDragHandle = false,
+    this.isHighlighted = false,
   });
 
   Color _getTextColor(Color backgroundColor) {
@@ -51,13 +53,19 @@ class CategoryHeader extends StatelessWidget {
     final backgroundColor = category?.color ?? colorScheme.primary;
     final textColor = _getTextColor(backgroundColor);
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.only(top: 12, bottom: 4),
       decoration: BoxDecoration(
-        color: backgroundColor.withOpacity(
-          theme.brightness == Brightness.light ? 0.08 : 0.15,
-        ),
+        color: isHighlighted
+            ? backgroundColor.withOpacity(0.25)
+            : backgroundColor.withOpacity(
+                theme.brightness == Brightness.light ? 0.08 : 0.15,
+              ),
         borderRadius: BorderRadius.circular(12),
+        border: isHighlighted
+            ? Border.all(color: backgroundColor, width: 2)
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
