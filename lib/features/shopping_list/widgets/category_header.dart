@@ -188,10 +188,65 @@ class CategoryHeader extends StatelessWidget {
                   _showColorPicker(context);
                 },
               ),
+              if (!isSemCategoria)
+                ListTile(
+                  leading: Icon(
+                    Icons.delete_outline_rounded,
+                    color: theme.colorScheme.error,
+                  ),
+                  title: Text(
+                    'Excluir categoria',
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _confirmDeleteCategory(context);
+                  },
+                ),
             ],
           ),
         );
       },
+    );
+  }
+
+  void _confirmDeleteCategory(BuildContext context) {
+    final controller = context.read<ShoppingListController>();
+    final itemsInGroup = controller.getItemsByCategory(category?.id);
+
+    if (itemsInGroup.isEmpty) {
+      if (category?.id != null) {
+        controller.deleteCategory(category!.id);
+      }
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir categoria?'),
+        content: const Text(
+          'Esta categoria possui alguns itens, tem certeza de que deseja excluí-la e todos os seus itens?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (category?.id != null) {
+                controller.deleteCategory(category!.id);
+              }
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
     );
   }
 

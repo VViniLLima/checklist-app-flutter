@@ -321,6 +321,7 @@ class ShoppingListController extends ChangeNotifier {
   /// Remove categoria (itens ficam sem categoria)
   Future<void> removeCategory(String categoryId) async {
     if (_activeListId == null) return;
+    if (categoryId == 'sem-categoria') return;
 
     _categories.removeWhere((cat) => cat.id == categoryId);
 
@@ -331,6 +332,20 @@ class ShoppingListController extends ChangeNotifier {
       }
       return item;
     }).toList();
+
+    await _updateActiveListTimestamp();
+    await _repository.saveCategories(_activeListId!, _categories);
+    await _repository.saveItems(_activeListId!, _items);
+    notifyListeners();
+  }
+
+  /// Exclui uma categoria e todos os seus itens
+  Future<void> deleteCategory(String categoryId) async {
+    if (_activeListId == null) return;
+    if (categoryId == 'sem-categoria') return;
+
+    _categories.removeWhere((cat) => cat.id == categoryId);
+    _items.removeWhere((item) => item.categoryId == categoryId);
 
     await _updateActiveListTimestamp();
     await _repository.saveCategories(_activeListId!, _categories);
