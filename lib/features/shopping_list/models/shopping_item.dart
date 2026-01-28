@@ -157,6 +157,44 @@ class ShoppingItem {
     return 0.0;
   }
 
+  /// Returns 0 for unchecked, and the quantity count for checked items with countable units.
+  static int getCompletedCountContribution(ShoppingItem item) {
+    if (!item.isChecked) return 0;
+    return getCountContribution(item);
+  }
+
+  /// Returns the count contribution for an item based on its unit and quantity.
+  ///
+  /// Countable units (un, und, caixa, garrafa, lata, pacote) contribute their quantity.
+  /// Measurement units (ml, g, mg, kg, L) always contribute 1.
+  /// Fallback is always 1.
+  static int getCountContribution(ShoppingItem item) {
+    // Countable units: quantity affects count
+    const countableUnits = {'un', 'und', 'caixa', 'garrafa', 'lata', 'pacote'};
+
+    if (countableUnits.contains(item.quantityUnit)) {
+      return item.quantityValue > 0
+          ? item.quantityValue.toInt().clamp(1, 999999)
+          : 1;
+    }
+
+    // Measurement units or unknown units always count as 1 entry
+    return 1;
+  }
+
+  /// Sums the count contribution of all items in the list.
+  static int getTotalCount(List<ShoppingItem> items) {
+    return items.fold(0, (sum, item) => sum + getCountContribution(item));
+  }
+
+  /// Sums the count contribution of all checked items in the list.
+  static int getCompletedCount(List<ShoppingItem> items) {
+    return items.fold(
+      0,
+      (sum, item) => sum + getCompletedCountContribution(item),
+    );
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;

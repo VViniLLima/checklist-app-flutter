@@ -52,8 +52,8 @@ class ShoppingListController extends ChangeNotifier {
       List.unmodifiable(_categories.where((cat) => cat.id != 'sem-categoria'));
   List<ShoppingItem> get allItems => List.unmodifiable(_items);
 
-  int get totalItemsCount => _items.length;
-  int get checkedItemsCount => _items.where((item) => item.isChecked).length;
+  int get totalItemsCount => ShoppingItem.getTotalCount(_items);
+  int get checkedItemsCount => ShoppingItem.getCompletedCount(_items);
   double get estimatedTotal => _items
       .where((item) => item.totalValue > 0)
       .fold(0.0, (sum, item) => sum + item.totalValue);

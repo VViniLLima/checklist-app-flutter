@@ -33,7 +33,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         final items = data['items'] as List<ShoppingItem>;
         if (mounted) {
           setState(() {
-            _listItemsCount[list.id] = items.length;
+            _listItemsCount[list.id] = ShoppingItem.getTotalCount(items);
           });
         }
       }
@@ -395,13 +395,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       Row(
                         children: [
                           Icon(
-                            Icons.shopping_bag_outlined,
+                            Icons.shopping_cart_outlined,
                             size: 11,
                             color: colorScheme.onSurface.withOpacity(0.4),
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '$itemCount itens',
+                            'Itens: $itemCount',
                             style: textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurface.withOpacity(0.4),
                             ),

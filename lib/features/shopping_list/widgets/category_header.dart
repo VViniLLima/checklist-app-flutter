@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/category.dart';
+import '../models/shopping_item.dart';
 import '../state/shopping_list_controller.dart';
 
 /// Widget que exibe o cabeçalho de uma categoria
@@ -43,8 +44,8 @@ class CategoryHeader extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final controller = context.watch<ShoppingListController>();
     final items = controller.getItemsByCategory(category?.id);
-    final totalItems = items.length;
-    final completedItems = items.where((i) => i.isChecked).length;
+    final totalItems = ShoppingItem.getTotalCount(items);
+    final completedItems = ShoppingItem.getCompletedCount(items);
 
     final categoryName = category?.name ?? 'Sem categoria';
     final backgroundColor = category?.color ?? colorScheme.primary;

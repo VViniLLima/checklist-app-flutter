@@ -58,8 +58,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final data = await controller.getHistoryListData(listId);
     final items = data['items'] as List<ShoppingItem>;
 
-    final totalItems = items.length;
-    final checkedItems = items.where((i) => i.isChecked).length;
+    final totalItems = ShoppingItem.getTotalCount(items);
+    final checkedItems = ShoppingItem.getCompletedCount(items);
     final progress = totalItems == 0 ? 0.0 : checkedItems / totalItems;
     final estimatedTotal = items.fold(
       0.0,

@@ -175,7 +175,7 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
             context,
             Icons.shopping_cart_outlined,
             'Itens:',
-            '${_items.where((i) => i.isChecked).length} produtos',
+            '${ShoppingItem.getCompletedCount(_items)} produtos',
           ),
 
           Padding(
