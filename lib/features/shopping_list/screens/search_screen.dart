@@ -265,7 +265,7 @@ class _SearchScreenState extends State<SearchScreen> {
         icon = Icons.shopping_bag_outlined;
         typeLabel = 'Item';
         typeColor = colorScheme.tertiary;
-        subtitle = '${result.itemName} • ${result.categoryName}';
+        subtitle = '${result.listName} • ${result.categoryName}';
         break;
     }
 
