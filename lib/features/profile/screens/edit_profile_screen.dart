@@ -119,7 +119,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               radius: 60,
               backgroundColor: colorScheme.primaryContainer,
               backgroundImage: const AssetImage(
-                'assets/Images/profilePicture.webp',
+                'assets/Images/ProfilePicture.png',
               ),
             ),
             // Camera button overlay
