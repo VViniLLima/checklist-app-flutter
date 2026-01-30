@@ -1,4 +1,5 @@
 import 'package:checklist_app/features/shopping_list/screens/settings_screen.dart';
+import 'package:checklist_app/features/shopping_list/screens/send_file_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
@@ -507,14 +508,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onUploadTap(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Recurso de upload em breve 📁'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-    // Placeholder for future file picker integration:
-    // final result = await FilePicker.platform.pickFiles();
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const SendFileScreen()));
   }
 
   Widget _buildUploadSection(BuildContext context) {
