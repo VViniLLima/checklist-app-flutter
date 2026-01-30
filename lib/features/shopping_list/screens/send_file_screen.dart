@@ -1,5 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as path;
+import '../../../core/services/pdfrest_service.dart';
+import '../../../core/utils/json_storage.dart';
 
 class SendFileScreen extends StatefulWidget {
   const SendFileScreen({super.key});
@@ -9,32 +14,87 @@ class SendFileScreen extends StatefulWidget {
 }
 
 class _SendFileScreenState extends State<SendFileScreen> {
-  String? _selectedFileName; // For future readiness
+  File? _selectedPdf;
+  bool _isLoading = false;
+  String? _statusText;
+  final PdfRestService _pdfRestService = PdfRestService();
 
-  void _onPickFileTap(BuildContext context) {
-    // Stub for future file picker integration
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Upload em breve 📂'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-    // Integration point:
-    // final result = await FilePicker.platform.pickFiles(
-    //   type: FileType.custom,
-    //   allowedExtensions: ['pdf', 'docx'],
-    // );
-    // if (result != null) setState(() => _selectedFileName = result.files.single.name);
+  Future<void> _onPickFileTap(BuildContext context) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          _selectedPdf = File(result.files.single.path!);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao selecionar arquivo: $e')),
+        );
+      }
+    }
   }
 
-  void _onProcessDocument(BuildContext context) {
-    // Stub for future document processing integration
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Processamento em breve ⚙️'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+  Future<void> _onProcessDocument(BuildContext context) async {
+    if (_selectedPdf == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _statusText = 'Enviando para OCR...';
+    });
+
+    try {
+      // 1. OCR call
+      final outputId = await _pdfRestService.ocrPdf(_selectedPdf!);
+
+      if (!mounted) return;
+      setState(() {
+        _statusText = 'Extraindo texto...';
+      });
+
+      // 2. Extract Text call
+      final extractedData = await _pdfRestService.extractTextFromPdfId(
+        outputId,
+      );
+
+      // 3. Save JSON locally
+      final savedPath = await JsonStorage.saveJsonToApiRestReturn(
+        extractedData,
+        _selectedPdf!,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('JSON salvo em: ${path.basename(savedPath)}'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(label: 'OK', onPressed: () {}),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro no processamento: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _statusText = null;
+        });
+      }
+    }
   }
 
   @override
@@ -53,7 +113,7 @@ class _SendFileScreenState extends State<SendFileScreen> {
             Icons.arrow_back_ios_new_rounded,
             color: colorScheme.onBackground,
           ),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
         ),
       ),
       body: SafeArea(
@@ -75,11 +135,33 @@ class _SendFileScreenState extends State<SendFileScreen> {
 
               // Upload Area
               _UploadDropzone(
-                onTap: () => _onPickFileTap(context),
-                selectedFileName: _selectedFileName,
+                onTap: _isLoading ? () {} : () => _onPickFileTap(context),
+                selectedFileName: _selectedPdf != null
+                    ? path.basename(_selectedPdf!.path)
+                    : null,
               ),
 
               const SizedBox(height: 32),
+
+              // Status text and loading indicator
+              if (_isLoading) ...[
+                Center(
+                  child: Column(
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        _statusText ?? 'Processando...',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
 
               // Formatos aceitos section
               Text(
@@ -116,7 +198,9 @@ class _SendFileScreenState extends State<SendFileScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => _onProcessDocument(context),
+                  onPressed: (_selectedPdf == null || _isLoading)
+                      ? null
+                      : () => _onProcessDocument(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
@@ -125,10 +209,19 @@ class _SendFileScreenState extends State<SendFileScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 0,
+                    disabledBackgroundColor: colorScheme.onSurface.withOpacity(
+                      0.12,
+                    ),
+                    disabledForegroundColor: colorScheme.onSurface.withOpacity(
+                      0.38,
+                    ),
                   ),
-                  child: const Text(
-                    'Processar documento',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  child: Text(
+                    _isLoading ? 'Processando...' : 'Processar documento',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -158,7 +251,9 @@ class _UploadDropzone extends StatelessWidget {
       borderRadius: BorderRadius.circular(24),
       child: CustomPaint(
         painter: _DashedBorderPainter(
-          color: colorScheme.primary.withOpacity(0.2),
+          color: selectedFileName != null
+              ? Colors.green.withOpacity(0.5)
+              : colorScheme.primary.withOpacity(0.2),
           strokeWidth: 2,
           gap: 6,
           dash: 6,
@@ -168,7 +263,9 @@ class _UploadDropzone extends StatelessWidget {
           width: double.infinity,
           height: 200,
           decoration: BoxDecoration(
-            color: colorScheme.surface.withOpacity(0.5),
+            color: selectedFileName != null
+                ? Colors.green.withOpacity(0.05)
+                : colorScheme.surface.withOpacity(0.5),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
@@ -177,26 +274,36 @@ class _UploadDropzone extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: selectedFileName != null
+                      ? Colors.green.withOpacity(0.1)
+                      : colorScheme.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.file_upload_outlined,
-                  color: colorScheme.primary,
+                  selectedFileName != null
+                      ? Icons.check_circle_outline
+                      : Icons.file_upload_outlined,
+                  color: selectedFileName != null
+                      ? Colors.green
+                      : colorScheme.primary,
                   size: 32,
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                selectedFileName ?? 'Toque para fazer upload',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  selectedFileName ?? 'Toque para fazer upload',
+                  textAlign: TextAlign.center,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                'PDF ou DOCX',
+                'PDF',
                 style: textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurface.withOpacity(0.5),
                 ),
