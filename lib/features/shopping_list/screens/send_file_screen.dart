@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:checklist_app/features/shopping_list/services/n8n_upload_service.dart';
+import 'package:checklist_app/features/shopping_list/screens/create_list_from_n8n_screen.dart';
+import 'dart:convert';
 import 'dart:ui';
 
 class SendFileScreen extends StatefulWidget {
@@ -52,7 +54,26 @@ class _SendFileScreenState extends State<SendFileScreen> {
       );
 
       if (mounted) {
-        _showResponseDialog(context, responseBody);
+        try {
+          // Attempt to parse response as JSON
+          final dynamic decoded = jsonDecode(responseBody);
+          if (decoded is Map<String, dynamic> &&
+              decoded.containsKey('refeicoes')) {
+            // Navigate to the selection screen
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) =>
+                    CreateListFromN8nScreen(responseJson: decoded),
+              ),
+            );
+          } else {
+            // Fallback to showing raw response in a dialog
+            _showResponseDialog(context, responseBody);
+          }
+        } catch (e) {
+          // Response is not JSON, show the existing dialog
+          _showResponseDialog(context, responseBody);
+        }
       }
     } catch (e) {
       if (mounted) {
