@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/n8n_response.dart';
 import '../services/n8n_list_builder_service.dart';
@@ -39,6 +40,49 @@ class _CreateListFromN8nScreenState extends State<CreateListFromN8nScreen> {
   Future<void> _onCreateList() async {
     if (_selectedIndices.isEmpty || _isCreating) return;
 
+    final String timestamp = DateFormat(
+      'dd/MM/yyyy HH:mm',
+    ).format(DateTime.now());
+    final textController = TextEditingController(
+      text: 'Lista importada - $timestamp',
+    );
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Nome da lista'),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Como deseja chamar esta lista?',
+            hintText: 'Ex: Dieta da semana, Compras n8n...',
+            border: OutlineInputBorder(),
+          ),
+          textCapitalization: TextCapitalization.sentences,
+          onSubmitted: (value) {
+            Navigator.of(dialogContext).pop();
+            _performCreation(value.trim());
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _performCreation(textController.text.trim());
+            },
+            child: const Text('Criar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _performCreation(String? name) async {
     setState(() => _isCreating = true);
 
     try {
@@ -52,7 +96,10 @@ class _CreateListFromN8nScreenState extends State<CreateListFromN8nScreen> {
           .map((i) => _n8nResponse.refeicoes[i])
           .toList();
 
-      final newList = await service.buildAndSaveList(selectedMeals);
+      final newList = await service.buildAndSaveList(
+        selectedMeals,
+        customName: name?.isEmpty ?? true ? null : name,
+      );
 
       if (mounted && newList != null) {
         // Navigate to the list detail screen

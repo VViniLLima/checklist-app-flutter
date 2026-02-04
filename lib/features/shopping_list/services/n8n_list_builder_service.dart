@@ -14,13 +14,16 @@ class N8nListBuilderService {
   }
 
   /// Builds and saves a shopping list from a list of selected meals.
-  Future<ShoppingList?> buildAndSaveList(List<N8nMeal> selectedMeals) async {
+  Future<ShoppingList?> buildAndSaveList(
+    List<N8nMeal> selectedMeals, {
+    String? customName,
+  }) async {
     if (selectedMeals.isEmpty) return null;
 
     final String timestamp = DateFormat(
       'dd/MM/yyyy HH:mm',
     ).format(DateTime.now());
-    final String listName = 'Lista importada - $timestamp';
+    final String listName = customName ?? 'Lista importada - $timestamp';
 
     // 1. Create the new list
     await controller.addShoppingList(listName);
