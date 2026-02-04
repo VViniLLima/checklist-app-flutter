@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:checklist_app/features/shopping_list/services/n8n_upload_service.dart';
 import 'dart:ui';
 
 class SendFileScreen extends StatefulWidget {
@@ -9,30 +11,96 @@ class SendFileScreen extends StatefulWidget {
 }
 
 class _SendFileScreenState extends State<SendFileScreen> {
-  String? _selectedFileName; // For future readiness
+  String? _selectedFileName;
+  String? _selectedFilePath;
+  bool _isUploading = false;
+  final N8nUploadService _uploadService = N8nUploadService();
 
-  void _onPickFileTap(BuildContext context) {
-    // Stub for future file picker integration
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Upload em breve 📂'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-    // Integration point:
-    // final result = await FilePicker.platform.pickFiles(
-    //   type: FileType.custom,
-    //   allowedExtensions: ['pdf', 'docx'],
-    // );
-    // if (result != null) setState(() => _selectedFileName = result.files.single.name);
+  Future<void> _onPickFileTap(BuildContext context) async {
+    if (_isUploading) return;
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        withData: false,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          _selectedFileName = result.files.single.name;
+          _selectedFilePath = result.files.single.path;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao selecionar arquivo: $e')),
+        );
+      }
+    }
   }
 
-  void _onProcessDocument(BuildContext context) {
-    // Stub for future document processing integration
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Processamento em breve ⚙️'),
-        duration: Duration(seconds: 2),
+  Future<void> _onProcessDocument(BuildContext context) async {
+    if (_selectedFilePath == null || _isUploading) return;
+
+    setState(() => _isUploading = true);
+
+    try {
+      final responseBody = await _uploadService.uploadPdf(
+        filePath: _selectedFilePath!,
+      );
+
+      if (mounted) {
+        _showResponseDialog(context, responseBody);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog(context, e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  void _showResponseDialog(BuildContext context, String content) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Resposta do processamento'),
+        content: SizedBox(
+          width: 500, // Fixed width for better readability on larger screens
+          child: SingleChildScrollView(
+            child: SelectableText(
+              content,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Erro no processamento'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fechar'),
+          ),
+        ],
       ),
     );
   }
@@ -116,7 +184,9 @@ class _SendFileScreenState extends State<SendFileScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => _onProcessDocument(context),
+                  onPressed: (_selectedFilePath == null || _isUploading)
+                      ? null
+                      : () => _onProcessDocument(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
@@ -126,10 +196,24 @@ class _SendFileScreenState extends State<SendFileScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Processar documento',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  child: _isUploading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text(
+                          'Processar documento',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 24),
