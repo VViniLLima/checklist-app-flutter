@@ -13,7 +13,7 @@
 .swiftpm/
 migrate_working_dir/
 plans/
-
+examples/
 # IntelliJ related
 *.iml
 *.ipr
