@@ -1,7 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:checklist_app/features/shopping_list/services/n8n_upload_service.dart';
 import 'dart:ui';
+import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as path;
+import '../../../core/services/pdfrest_service.dart';
+import '../../../core/utils/json_storage.dart';
 
 class SendFileScreen extends StatefulWidget {
   const SendFileScreen({super.key});
@@ -121,7 +126,7 @@ class _SendFileScreenState extends State<SendFileScreen> {
             Icons.arrow_back_ios_new_rounded,
             color: colorScheme.onBackground,
           ),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
         ),
       ),
       body: SafeArea(
@@ -143,11 +148,33 @@ class _SendFileScreenState extends State<SendFileScreen> {
 
               // Upload Area
               _UploadDropzone(
-                onTap: () => _onPickFileTap(context),
-                selectedFileName: _selectedFileName,
+                onTap: _isLoading ? () {} : () => _onPickFileTap(context),
+                selectedFileName: _selectedPdf != null
+                    ? path.basename(_selectedPdf!.path)
+                    : null,
               ),
 
               const SizedBox(height: 32),
+
+              // Status text and loading indicator
+              if (_isLoading) ...[
+                Center(
+                  child: Column(
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        _statusText ?? 'Processando...',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
 
               // Formatos aceitos section
               Text(
@@ -242,7 +269,9 @@ class _UploadDropzone extends StatelessWidget {
       borderRadius: BorderRadius.circular(24),
       child: CustomPaint(
         painter: _DashedBorderPainter(
-          color: colorScheme.primary.withOpacity(0.2),
+          color: selectedFileName != null
+              ? Colors.green.withOpacity(0.5)
+              : colorScheme.primary.withOpacity(0.2),
           strokeWidth: 2,
           gap: 6,
           dash: 6,
@@ -252,7 +281,9 @@ class _UploadDropzone extends StatelessWidget {
           width: double.infinity,
           height: 200,
           decoration: BoxDecoration(
-            color: colorScheme.surface.withOpacity(0.5),
+            color: selectedFileName != null
+                ? Colors.green.withOpacity(0.05)
+                : colorScheme.surface.withOpacity(0.5),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
@@ -261,26 +292,36 @@ class _UploadDropzone extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: selectedFileName != null
+                      ? Colors.green.withOpacity(0.1)
+                      : colorScheme.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.file_upload_outlined,
-                  color: colorScheme.primary,
+                  selectedFileName != null
+                      ? Icons.check_circle_outline
+                      : Icons.file_upload_outlined,
+                  color: selectedFileName != null
+                      ? Colors.green
+                      : colorScheme.primary,
                   size: 32,
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                selectedFileName ?? 'Toque para fazer upload',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  selectedFileName ?? 'Toque para fazer upload',
+                  textAlign: TextAlign.center,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                'PDF ou DOCX',
+                'PDF',
                 style: textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurface.withOpacity(0.5),
                 ),

@@ -9,12 +9,15 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 //import 'package:google_fonts/google_fonts.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 // Global scaffold messenger key to centralize SnackBar presentation
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
 
   // Inicializa o repositório
   final repository = await ShoppingRepository.create();
