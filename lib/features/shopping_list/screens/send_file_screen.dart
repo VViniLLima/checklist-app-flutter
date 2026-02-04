@@ -1,12 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:checklist_app/features/shopping_list/services/n8n_upload_service.dart';
 import 'dart:ui';
-import 'package:file_picker/file_picker.dart';
-import 'package:path/path.dart' as path;
-import '../../../core/services/pdfrest_service.dart';
-import '../../../core/utils/json_storage.dart';
 
 class SendFileScreen extends StatefulWidget {
   const SendFileScreen({super.key});
@@ -126,7 +121,7 @@ class _SendFileScreenState extends State<SendFileScreen> {
             Icons.arrow_back_ios_new_rounded,
             color: colorScheme.onBackground,
           ),
-          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          onPressed: _isUploading ? null : () => Navigator.of(context).pop(),
         ),
       ),
       body: SafeArea(
@@ -148,24 +143,22 @@ class _SendFileScreenState extends State<SendFileScreen> {
 
               // Upload Area
               _UploadDropzone(
-                onTap: _isLoading ? () {} : () => _onPickFileTap(context),
-                selectedFileName: _selectedPdf != null
-                    ? path.basename(_selectedPdf!.path)
-                    : null,
+                onTap: _isUploading ? () {} : () => _onPickFileTap(context),
+                selectedFileName: _selectedFileName,
               ),
 
               const SizedBox(height: 32),
 
               // Status text and loading indicator
-              if (_isLoading) ...[
+              if (_isUploading) ...[
                 Center(
                   child: Column(
                     children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 16),
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
                       Text(
-                        _statusText ?? 'Processando...',
-                        style: textTheme.bodyMedium?.copyWith(
+                        'Processando...',
+                        style: TextStyle(
                           color: colorScheme.primary,
                           fontWeight: FontWeight.w500,
                         ),
