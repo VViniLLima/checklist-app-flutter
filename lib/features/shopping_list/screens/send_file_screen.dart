@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:checklist_app/features/shopping_list/services/n8n_upload_service.dart';
-import 'package:checklist_app/features/shopping_list/screens/create_list_from_n8n_screen.dart';
+import 'package:checklist_app/features/import_meals/screens/meal_options_screen.dart';
 import 'dart:convert';
 import 'dart:ui';
 
@@ -58,12 +58,12 @@ class _SendFileScreenState extends State<SendFileScreen> {
           // Attempt to parse response as JSON
           final dynamic decoded = jsonDecode(responseBody);
           if (decoded is Map<String, dynamic> &&
-              decoded.containsKey('refeicoes')) {
-            // Navigate to the selection screen
+              (decoded.containsKey('meal_options') ||
+                  decoded.containsKey('refeicoes'))) {
+            // Navigate to the meal options selection screen
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) =>
-                    CreateListFromN8nScreen(responseJson: decoded),
+                builder: (context) => MealOptionsScreen(payload: decoded),
               ),
             );
           } else {

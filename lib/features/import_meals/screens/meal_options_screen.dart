@@ -1,30 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../models/n8n_response.dart';
-import '../services/n8n_list_builder_service.dart';
-import '../state/shopping_list_controller.dart';
-import 'shopping_list_screen.dart';
+import '../../shopping_list/models/n8n_response.dart';
+import '../../shopping_list/services/n8n_list_builder_service.dart';
+import '../../shopping_list/state/shopping_list_controller.dart';
+import '../../shopping_list/screens/shopping_list_screen.dart';
 
-class CreateListFromN8nScreen extends StatefulWidget {
-  final Map<String, dynamic> responseJson;
+/// Screen that displays meal options from the n8n webhook response
+/// and allows the user to select which meals to include in a new shopping list.
+///
+/// Accepts a [payload] map (decoded JSON from the webhook) and renders
+/// each meal option as a selectable card with its items listed.
+class MealOptionsScreen extends StatefulWidget {
+  final Map<String, dynamic> payload;
 
-  const CreateListFromN8nScreen({super.key, required this.responseJson});
+  const MealOptionsScreen({super.key, required this.payload});
 
   @override
-  State<CreateListFromN8nScreen> createState() =>
-      _CreateListFromN8nScreenState();
+  State<MealOptionsScreen> createState() => _MealOptionsScreenState();
 }
 
-class _CreateListFromN8nScreenState extends State<CreateListFromN8nScreen> {
-  late N8nResponse _n8nResponse;
+class _MealOptionsScreenState extends State<MealOptionsScreen> {
+  late N8nResponse _response;
   final Set<int> _selectedIndices = {};
   bool _isCreating = false;
+  String? _parseError;
 
   @override
   void initState() {
     super.initState();
-    _n8nResponse = N8nResponse.fromJson(widget.responseJson);
+    _parseResponse();
+  }
+
+  void _parseResponse() {
+    try {
+      _response = N8nResponse.fromJson(widget.payload);
+      if (_response.mealOptions.isEmpty) {
+        _parseError = null; // Not an error, just empty
+      }
+    } catch (e) {
+      _parseError = 'Resposta inválida do servidor';
+      _response = N8nResponse(mealOptions: []);
+    }
   }
 
   void _onToggleMeal(int index) {
@@ -56,7 +73,7 @@ class _CreateListFromN8nScreenState extends State<CreateListFromN8nScreen> {
           autofocus: true,
           decoration: const InputDecoration(
             labelText: 'Como deseja chamar esta lista?',
-            hintText: 'Ex: Dieta da semana, Compras n8n...',
+            hintText: 'Ex: Dieta da semana, Compras...',
             border: OutlineInputBorder(),
           ),
           textCapitalization: TextCapitalization.sentences,
@@ -93,8 +110,24 @@ class _CreateListFromN8nScreenState extends State<CreateListFromN8nScreen> {
       final service = N8nListBuilderService(controller);
 
       final selectedMeals = _selectedIndices
-          .map((i) => _n8nResponse.refeicoes[i])
+          .map((i) => _response.mealOptions[i])
           .toList();
+
+      // Check if selection yields any items after dedup
+      final uniqueCount = service.countUniqueItems(selectedMeals);
+      if (uniqueCount == 0) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Nenhum item encontrado nas refeições selecionadas.',
+              ),
+            ),
+          );
+        }
+        setState(() => _isCreating = false);
+        return;
+      }
 
       final newList = await service.buildAndSaveList(
         selectedMeals,
@@ -102,13 +135,12 @@ class _CreateListFromN8nScreenState extends State<CreateListFromN8nScreen> {
       );
 
       if (mounted && newList != null) {
-        // Navigate to the list detail screen
         final navigator = Navigator.of(context);
 
-        // Pop back to the main screen (which is the first route)
+        // Pop back to the main screen (first route)
         navigator.popUntil((route) => route.isFirst);
 
-        // Push the shopping list screen to show the newly created (and already active) list
+        // Push the shopping list screen to show the newly created list
         navigator.push(
           MaterialPageRoute(builder: (context) => const ShoppingListScreen()),
         );
@@ -138,21 +170,63 @@ class _CreateListFromN8nScreenState extends State<CreateListFromN8nScreen> {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
+    // Show error state if parsing failed
+    if (_parseError != null) {
+      return Scaffold(
+        backgroundColor: colorScheme.surface,
+        appBar: AppBar(
+          title: const Text('Criar lista'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: colorScheme.onSurface,
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 64,
+                  color: colorScheme.error.withOpacity(0.6),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _parseError!,
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Selecionar refeições'),
+        title: const Text('Criar lista'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: colorScheme.onBackground,
+            color: colorScheme.onSurface,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: _n8nResponse.refeicoes.isEmpty
+      body: _response.mealOptions.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -166,7 +240,7 @@ class _CreateListFromN8nScreenState extends State<CreateListFromN8nScreen> {
                   Text(
                     'Nenhuma refeição encontrada',
                     style: textTheme.titleMedium?.copyWith(
-                      color: colorScheme.onBackground.withOpacity(0.6),
+                      color: colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -174,15 +248,41 @@ class _CreateListFromN8nScreenState extends State<CreateListFromN8nScreen> {
             )
           : Column(
               children: [
+                // Selection summary
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Selecione as refeições',
+                        style: textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                      const Spacer(),
+                      if (_selectedIndices.isNotEmpty)
+                        Text(
+                          '${_selectedIndices.length} selecionada${_selectedIndices.length > 1 ? 's' : ''}',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Meal cards list
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _n8nResponse.refeicoes.length,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    itemCount: _response.mealOptions.length,
                     itemBuilder: (context, index) {
-                      final meal = _n8nResponse.refeicoes[index];
+                      final meal = _response.mealOptions[index];
                       final isSelected = _selectedIndices.contains(index);
 
-                      return _MealCard(
+                      return _MealOptionCard(
                         meal: meal,
                         isSelected: isSelected,
                         onTap: () => _onToggleMeal(index),
@@ -190,6 +290,7 @@ class _CreateListFromN8nScreenState extends State<CreateListFromN8nScreen> {
                     },
                   ),
                 ),
+                // Bottom action bar
                 _BottomActionBar(
                   onAction: _onCreateList,
                   onCancel: () => Navigator.of(context).pop(),
@@ -202,12 +303,16 @@ class _CreateListFromN8nScreenState extends State<CreateListFromN8nScreen> {
   }
 }
 
-class _MealCard extends StatelessWidget {
+/// A card widget that displays a single meal option with its items.
+///
+/// Shows a checkbox for selection, the meal name as title,
+/// and a list of items with their categories as muted subtext.
+class _MealOptionCard extends StatelessWidget {
   final N8nMeal meal;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _MealCard({
+  const _MealOptionCard({
     required this.meal,
     required this.isSelected,
     required this.onTap,
@@ -223,7 +328,7 @@ class _MealCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
@@ -244,16 +349,23 @@ class _MealCard extends StatelessWidget {
                     offset: const Offset(0, 4),
                   ),
                 ]
-              : null,
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header row: meal name + checkbox
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    meal.nome,
+                    meal.mealName,
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: isSelected
@@ -272,10 +384,11 @@ class _MealCard extends StatelessWidget {
                 ),
               ],
             ),
-            const Divider(height: 24),
-            ...meal.itens.map(
+            const Divider(height: 20),
+            // Items list
+            ...meal.items.map(
               (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
+                padding: const EdgeInsets.only(bottom: 6.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -299,12 +412,13 @@ class _MealCard extends StatelessWidget {
                               color: colorScheme.onSurface,
                             ),
                           ),
-                          Text(
-                            item.categoria,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.5),
+                          if (item.category.isNotEmpty)
+                            Text(
+                              item.category,
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.5),
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -319,6 +433,7 @@ class _MealCard extends StatelessWidget {
   }
 }
 
+/// Bottom action bar with Cancel and "Criar lista" buttons.
 class _BottomActionBar extends StatelessWidget {
   final VoidCallback onAction;
   final VoidCallback onCancel;
