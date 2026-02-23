@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth/state/auth_controller.dart';
 import '../../splash/screens/splash_screen.dart';
@@ -80,15 +81,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     try {
       final name = _nomeController.text.trim();
-      final email = _emailController.text.trim();
+      final sanitizedEmail = _emailController.text.trim().toLowerCase();
       final password = _senhaController.text.trim();
       final age = _idadeController.text.trim();
       final location = _localizacaoController.text.trim();
 
+      final currentEmail = auth.userEmail?.trim().toLowerCase();
+
       // 1. Update Supabase
       await auth.updateProfile(
         name: name != auth.userName ? name : null,
-        email: email != auth.userEmail ? email : null,
+        email: sanitizedEmail != currentEmail ? sanitizedEmail : null,
         password: password.isNotEmpty ? password : null,
       );
 
@@ -107,10 +110,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Perfil atualizado com sucesso!')),
-        );
+        String successMessage = 'Perfil atualizado com sucesso!';
+        if (sanitizedEmail != currentEmail) {
+          successMessage =
+              'Perfil atualizado! Verifique seu novo email para confirmar a alteração.';
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(successMessage)));
         Navigator.of(context).pop(true);
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        String errorMessage = e.message;
+        if (e.message.contains('email_address_invalid')) {
+          errorMessage = 'Por favor, informe um email válido.';
+        } else if (e.message.contains('email_exists')) {
+          errorMessage = 'Este email já está em uso.';
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
       }
     } catch (e) {
       if (mounted) {
@@ -281,6 +301,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Text("Email", style: TextStyle(fontWeight: FontWeight.w600)),
         SizedBox(height: 8),
         _LabeledTextField(
+          readOnly: true,
           controller: _emailController,
           label: 'Email',
           icon: Icons.email_outlined,
@@ -290,7 +311,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             if (value == null || value.trim().isEmpty) {
               return 'O email é obrigatório';
             }
-            final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+            final emailRegex = RegExp(r'^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$');
             if (!emailRegex.hasMatch(value.trim())) {
               return 'Informe um email válido';
             }
@@ -536,6 +557,7 @@ class _LabeledTextField extends StatelessWidget {
     this.keyboardType,
     this.inputFormatters,
     this.validator,
+    this.readOnly = false,
   });
 
   final TextEditingController controller;
@@ -545,6 +567,7 @@ class _LabeledTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -561,6 +584,7 @@ class _LabeledTextField extends StatelessWidget {
         ],
       ),
       child: TextFormField(
+        readOnly: readOnly,
         controller: controller,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
