@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/theme_controller.dart';
 import '../../auth/state/auth_controller.dart';
+import '../../splash/screens/splash_screen.dart';
 import '../../profile/screens/edit_profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -13,6 +14,18 @@ class SettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final authController = context.read<AuthController>();
+
+    // Auth Guard: Redirect to Splash if not authenticated
+    if (!authController.isAuthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const SplashScreen()),
+          (route) => false,
+        );
+      });
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       backgroundColor: colorScheme.background,
@@ -175,9 +188,31 @@ class SettingsScreen extends StatelessWidget {
                     label: 'Sair da conta',
                     iconColor: Colors.orangeAccent,
                     textColor: Colors.orangeAccent,
-                    onTap: () {
-                      context.read<AuthController>().signOut();
-                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    onTap: () async {
+                      try {
+                        await authController.signOut();
+                        if (context.mounted) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (context) => const SplashScreen(),
+                            ),
+                            (route) => false,
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Sessão encerrada com sucesso'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Erro ao sair: ${e.toString()}'),
+                            ),
+                          );
+                        }
+                      }
                     },
                   ),
                 ],

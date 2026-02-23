@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../shopping_list/screens/main_screen.dart';
 import '../state/auth_controller.dart';
 import 'login_bottom_sheet.dart';
 
@@ -65,7 +66,11 @@ class _SignupBottomSheetState extends State<SignupBottomSheet> {
         name: _nameController.text.trim(),
       );
       if (mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(); // Close bottom sheet
+        Navigator.of(widget.parentContext).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+          (route) => false,
+        );
         ScaffoldMessenger.of(widget.parentContext).showSnackBar(
           const SnackBar(content: Text('Cadastro realizado com sucesso!')),
         );
