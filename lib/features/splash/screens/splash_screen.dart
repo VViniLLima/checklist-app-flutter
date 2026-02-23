@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/state/auth_controller.dart';
 import '../../auth/widgets/login_bottom_sheet.dart';
@@ -23,6 +24,16 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+    // Listen for auth state changes (crucial for OAuth redirection)
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (mounted && data.event == AuthChangeEvent.signedIn) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+          (route) => false,
+        );
+      }
+    });
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),

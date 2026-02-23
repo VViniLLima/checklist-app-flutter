@@ -51,6 +51,14 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  Future<void> signInWithGoogle() async {
+    // Note: The actual redirect and session handling will be managed by Supabase.
+    // The redirect URL must match the configuration in AndroidManifest/Info.plist
+    await _repository.signInWithGoogle(
+      redirectTo: 'io.checklist.app://login-callback/',
+    );
+  }
+
   Future<void> signOut() async {
     _setLoading(true);
     try {

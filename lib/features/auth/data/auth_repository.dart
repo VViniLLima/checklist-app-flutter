@@ -19,6 +19,14 @@ class AuthRepository {
     );
   }
 
+  Future<void> signInWithGoogle({required String redirectTo}) async {
+    await _supabase.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: redirectTo,
+      authScreenLaunchMode: LaunchMode.externalApplication,
+    );
+  }
+
   Future<AuthResponse> signIn({
     required String email,
     required String password,
@@ -50,7 +58,10 @@ class AuthRepository {
   String? getUserName() {
     final user = currentUser;
     if (user == null) return null;
-    return user.userMetadata?['full_name'] as String?;
+    final metadata = user.userMetadata;
+    return (metadata?['full_name'] as String?) ??
+        (metadata?['name'] as String?) ??
+        user.email?.split('@').first;
   }
 
   String? getUserEmail() {

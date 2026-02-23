@@ -62,6 +62,22 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    final authController = context.read<AuthController>();
+    try {
+      await authController.signInWithGoogle();
+      // After browser returns, persistence should handle navigation.
+      // But we close the bottom sheet to be clean.
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro no Google Login: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   String? _validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Informe seu email';
@@ -278,8 +294,8 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: _showComingSoon,
-                        icon: const Icon(Icons.g_translate),
+                        onPressed: _handleGoogleSignIn,
+                        icon: const Icon(Icons.g_mobiledata_rounded),
                         label: const Text('Google'),
                         style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(
