@@ -56,7 +56,13 @@ class _SendFileScreenState extends State<SendFileScreen> {
       if (mounted) {
         try {
           // Attempt to parse response as JSON
-          final dynamic decoded = jsonDecode(responseBody);
+          dynamic decoded = jsonDecode(responseBody);
+
+          // Handle array-wrapped responses (e.g., [{...}])
+          if (decoded is List && decoded.isNotEmpty) {
+            decoded = decoded.first;
+          }
+
           if (decoded is Map<String, dynamic> &&
               (decoded.containsKey('meal_options') ||
                   decoded.containsKey('refeicoes'))) {
