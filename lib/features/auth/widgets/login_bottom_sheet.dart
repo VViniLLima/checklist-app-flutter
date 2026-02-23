@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../state/auth_controller.dart';
 
 class LoginBottomSheet extends StatefulWidget {
   const LoginBottomSheet({super.key, required this.parentContext});
@@ -29,15 +31,30 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
     ).showSnackBar(const SnackBar(content: Text('Coming soon')));
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(
-      widget.parentContext,
-    ).showSnackBar(const SnackBar(content: Text('Login coming soon')));
+    final authController = context.read<AuthController>();
+    try {
+      await authController.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+          const SnackBar(content: Text('Login realizado com sucesso!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao entrar: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   String? _validateEmail(String? value) {
@@ -196,22 +213,35 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
                 const SizedBox(height: 8),
                 SizedBox(
                   height: 52,
-                  child: ElevatedButton(
-                    onPressed: _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Text(
-                      'Entrar',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  child: Consumer<AuthController>(
+                    builder: (context, auth, child) {
+                      return ElevatedButton(
+                        onPressed: auth.isLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: colorScheme.onPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: auth.isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Entrar',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 24),

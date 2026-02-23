@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/state/auth_controller.dart';
 import '../../auth/widgets/login_bottom_sheet.dart';
 import '../../auth/widgets/signup_bottom_sheet.dart';
 import '../../shopping_list/screens/main_screen.dart';
@@ -51,7 +53,19 @@ class _SplashScreenState extends State<SplashScreen>
       curve: const Interval(0.7, 1.0, curve: Curves.easeIn),
     );
 
-    _controller.forward();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    await _controller.forward();
+    if (!mounted) return;
+
+    final authController = context.read<AuthController>();
+    if (authController.isAuthenticated) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const MainScreen()),
+      );
+    }
   }
 
   @override
@@ -269,10 +283,10 @@ class _SplashScreenState extends State<SplashScreen>
           children: [
             ElevatedButton(
               onPressed: () => showLoginBottomSheet(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.primary,
-              minimumSize: const Size(double.infinity, 56),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.primary,
+                minimumSize: const Size(double.infinity, 56),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),

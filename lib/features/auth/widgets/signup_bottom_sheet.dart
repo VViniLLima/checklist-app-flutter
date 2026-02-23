@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import '../state/auth_controller.dart';
 import 'login_bottom_sheet.dart';
 
 class SignupBottomSheet extends StatefulWidget {
@@ -45,7 +46,7 @@ class _SignupBottomSheetState extends State<SignupBottomSheet> {
     ).showSnackBar(const SnackBar(content: Text('Coming soon')));
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
@@ -55,10 +56,27 @@ class _SignupBottomSheetState extends State<SignupBottomSheet> {
       );
       return;
     }
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(
-      widget.parentContext,
-    ).showSnackBar(const SnackBar(content: Text('Cadastro coming soon')));
+
+    final authController = context.read<AuthController>();
+    try {
+      await authController.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        name: _nameController.text.trim(),
+      );
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+          const SnackBar(content: Text('Cadastro realizado com sucesso!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao cadastrar: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   String? _validateName(String? value) {
@@ -83,6 +101,12 @@ class _SignupBottomSheetState extends State<SignupBottomSheet> {
   String? _validatePassword(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Informe sua senha';
+    }
+    if (value.length < 6) {
+      return 'A senha deve ter pelo menos 6 caracteres';
+    }
+    if (!value.contains(RegExp(r'[A-Z]'))) {
+      return 'A senha deve conter pelo menos uma letra maiúscula';
     }
     return null;
   }
@@ -231,22 +255,34 @@ class _SignupBottomSheetState extends State<SignupBottomSheet> {
                     const SizedBox(height: 12),
                     SizedBox(
                       height: 52,
-                      child: ElevatedButton(
-                        onPressed: _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primaryContainer,
-                          foregroundColor: colorScheme.onPrimaryContainer,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: const Text(
-                          'Criar conta',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      child: Consumer<AuthController>(
+                        builder: (context, auth, child) {
+                          return ElevatedButton(
+                            onPressed: auth.isLoading ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colorScheme.primaryContainer,
+                              foregroundColor: colorScheme.onPrimaryContainer,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: auth.isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Criar conta',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(height: 24),

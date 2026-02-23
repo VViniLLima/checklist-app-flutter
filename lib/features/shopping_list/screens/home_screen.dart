@@ -3,6 +3,7 @@ import 'package:checklist_app/features/shopping_list/screens/send_file_screen.da
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
+import '../../auth/state/auth_controller.dart';
 import '../state/shopping_list_controller.dart';
 import 'shopping_list_screen.dart';
 
@@ -305,14 +306,19 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  'Olá, Vinícius',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Consumer<AuthController>(
+                  builder: (context, auth, child) {
+                    final name = auth.userName ?? 'usuário';
+                    return Text(
+                      'Olá, $name',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    );
+                  },
                 ),
               ),
               IconButton(

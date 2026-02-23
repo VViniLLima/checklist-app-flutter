@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/theme_controller.dart';
+import '../../auth/state/auth_controller.dart';
 import '../../profile/screens/edit_profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -47,18 +48,27 @@ class SettingsScreen extends StatelessWidget {
                       child: Icon(Icons.person_outline, color: Colors.white),
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      'João Silva',
-                      style: textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'joao.silva@email.com',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: Colors.white70,
-                      ),
+                    Consumer<AuthController>(
+                      builder: (context, auth, child) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              auth.userName ?? 'usuário',
+                              style: textTheme.titleLarge?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              auth.userEmail ?? '',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton(
@@ -165,7 +175,10 @@ class SettingsScreen extends StatelessWidget {
                     label: 'Sair da conta',
                     iconColor: Colors.orangeAccent,
                     textColor: Colors.orangeAccent,
-                    onTap: () {},
+                    onTap: () {
+                      context.read<AuthController>().signOut();
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    },
                   ),
                 ],
               ),

@@ -10,6 +10,10 @@ import 'core/theme/theme_controller.dart';
 //import 'package:google_fonts/google_fonts.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'features/auth/data/auth_repository.dart';
+import 'features/auth/state/auth_controller.dart';
 
 // Global scaffold messenger key to centralize SnackBar presentation
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -18,6 +22,11 @@ final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+  );
 
   // Inicializa o repositório
   final repository = await ShoppingRepository.create();
@@ -37,6 +46,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider(create: (_) => AuthRepository()),
+        ChangeNotifierProvider(
+          create: (context) => AuthController(context.read<AuthRepository>()),
+        ),
         ChangeNotifierProvider(
           create: (_) {
             final controller = ShoppingListController(repository);
