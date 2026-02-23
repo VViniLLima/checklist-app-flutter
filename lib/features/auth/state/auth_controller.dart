@@ -59,4 +59,24 @@ class AuthController extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  Future<void> updateProfile({
+    String? email,
+    String? password,
+    String? name,
+  }) async {
+    _setLoading(true);
+    try {
+      final response = await _repository.updateUser(
+        email: email,
+        password: password,
+        name: name,
+      );
+      if (response.user != null) {
+        _user = response.user;
+      }
+    } finally {
+      _setLoading(false);
+    }
+  }
 }

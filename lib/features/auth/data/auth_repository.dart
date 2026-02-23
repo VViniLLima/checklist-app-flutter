@@ -33,6 +33,20 @@ class AuthRepository {
     await _supabase.auth.signOut();
   }
 
+  Future<UserResponse> updateUser({
+    String? email,
+    String? password,
+    String? name,
+  }) async {
+    return await _supabase.auth.updateUser(
+      UserAttributes(
+        email: email,
+        password: password,
+        data: name != null ? {'full_name': name} : null,
+      ),
+    );
+  }
+
   String? getUserName() {
     final user = currentUser;
     if (user == null) return null;

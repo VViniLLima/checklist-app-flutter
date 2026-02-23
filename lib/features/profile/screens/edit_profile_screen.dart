@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../auth/state/auth_controller.dart';
+import '../../splash/screens/splash_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -10,14 +14,50 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   // Text controllers for form fields
-  final _nomeController = TextEditingController(text: 'João Silva');
-  final _emailController = TextEditingController(text: 'joao.silva@email.com');
-  final _idadeController = TextEditingController(text: '28');
-  final _localizacaoController = TextEditingController(text: 'São Paulo, SP');
+  final _nomeController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _idadeController = TextEditingController();
+  final _localizacaoController = TextEditingController();
   final _senhaController = TextEditingController();
 
-  // Password visibility toggle
+  final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final auth = context.read<AuthController>();
+    final user = auth.user;
+
+    if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const SplashScreen()),
+          (route) => false,
+        );
+      });
+      return;
+    }
+
+    // Pre-fill controllers
+    _nomeController.text = auth.userName ?? '';
+    _emailController.text = auth.userEmail ?? '';
+
+    // Load local data
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _idadeController.text = prefs.getString('profile_age_${user.id}') ?? '';
+        _localizacaoController.text =
+            prefs.getString('profile_location_${user.id}') ?? '';
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -29,16 +69,58 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  void _handleSave() {
-    // Show mock save confirmation
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Alterações salvas (mock)'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-    // Pop back to settings
-    Navigator.of(context).pop();
+  Future<void> _handleSave() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final auth = context.read<AuthController>();
+    final user = auth.user;
+    if (user == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final name = _nomeController.text.trim();
+      final email = _emailController.text.trim();
+      final password = _senhaController.text.trim();
+      final age = _idadeController.text.trim();
+      final location = _localizacaoController.text.trim();
+
+      // 1. Update Supabase
+      await auth.updateProfile(
+        name: name != auth.userName ? name : null,
+        email: email != auth.userEmail ? email : null,
+        password: password.isNotEmpty ? password : null,
+      );
+
+      // 2. Save locally
+      final prefs = await SharedPreferences.getInstance();
+      if (age.isNotEmpty) {
+        await prefs.setString('profile_age_${user.id}', age);
+      } else {
+        await prefs.remove('profile_age_${user.id}');
+      }
+
+      if (location.isNotEmpty) {
+        await prefs.setString('profile_location_${user.id}', location);
+      } else {
+        await prefs.remove('profile_location_${user.id}');
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Perfil atualizado com sucesso!')),
+        );
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao atualizar perfil: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _handleCancel() {
@@ -74,29 +156,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Profile Picture Section
-                _buildProfilePictureSection(colorScheme, textTheme),
-                const SizedBox(height: 32),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Profile Picture Section
+                  _buildProfilePictureSection(colorScheme, textTheme),
+                  const SizedBox(height: 32),
 
-                // Informações Pessoais Section
-                _SectionHeader(label: 'Informações Pessoais'),
-                const SizedBox(height: 16),
-                _buildPersonalInfoSection(colorScheme, textTheme),
-                const SizedBox(height: 32),
+                  // Informações Pessoais Section
+                  _SectionHeader(label: 'Informações Pessoais'),
+                  const SizedBox(height: 16),
+                  _buildPersonalInfoSection(colorScheme, textTheme),
+                  const SizedBox(height: 32),
 
-                // Segurança Section
-                _SectionHeader(label: 'Segurança'),
-                const SizedBox(height: 16),
-                _buildSecuritySection(colorScheme, textTheme),
-                const SizedBox(height: 32),
+                  // Segurança Section
+                  _SectionHeader(label: 'Segurança'),
+                  const SizedBox(height: 16),
+                  _buildSecuritySection(colorScheme, textTheme),
+                  const SizedBox(height: 32),
 
-                // Action Buttons
-                _buildActionButtons(colorScheme),
-                const SizedBox(height: 16),
-              ],
+                  // Action Buttons
+                  _buildActionButtons(colorScheme),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         ),
@@ -171,7 +256,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-
       children: [
         // Nome completo
         Text("Nome completo", style: TextStyle(fontWeight: FontWeight.w600)),
@@ -181,6 +265,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           label: 'Nome completo',
           icon: Icons.person_outline,
           colorScheme: colorScheme,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'O nome é obrigatório';
+            }
+            if (value.trim().length < 4) {
+              return 'O nome deve ter pelo menos 4 caracteres';
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 16),
 
@@ -193,6 +286,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           icon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
           colorScheme: colorScheme,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'O email é obrigatório';
+            }
+            final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+            if (!emailRegex.hasMatch(value.trim())) {
+              return 'Informe um email válido';
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 16),
 
@@ -212,6 +315,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     colorScheme: colorScheme,
+                    validator: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        final age = int.tryParse(value);
+                        if (age == null || age < 0) {
+                          return 'Idade inválida';
+                        }
+                      }
+                      return null;
+                    },
                   ),
                 ],
               ),
@@ -260,9 +372,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ],
           ),
-          child: TextField(
+          child: TextFormField(
             controller: _senhaController,
             obscureText: _obscurePassword,
+            validator: (value) {
+              if (value != null && value.isNotEmpty) {
+                if (value.length < 6) {
+                  return 'A senha deve ter pelo menos 6 caracteres';
+                }
+                if (!value.contains(RegExp(r'[A-Z]'))) {
+                  return 'A senha deve conter pelo menos uma letra maiúscula';
+                }
+              }
+              return null;
+            },
             decoration: InputDecoration(
               hintText: 'Nova senha (opcional)',
               hintStyle: TextStyle(
@@ -316,7 +439,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed: _handleSave,
+            onPressed: _isLoading ? null : _handleSave,
             style: ElevatedButton.styleFrom(
               backgroundColor: colorScheme.primary,
               foregroundColor: Colors.white,
@@ -325,10 +448,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               elevation: 2,
             ),
-            child: const Text(
-              'Salvar Alterações',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    'Salvar Alterações',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
           ),
         ),
         const SizedBox(height: 12),
@@ -338,7 +470,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           width: double.infinity,
           height: 52,
           child: OutlinedButton(
-            onPressed: _handleCancel,
+            onPressed: _isLoading ? null : _handleCancel,
             style: OutlinedButton.styleFrom(
               foregroundColor: colorScheme.primary,
               side: BorderSide(color: colorScheme.primary, width: 1.5),
@@ -403,6 +535,7 @@ class _LabeledTextField extends StatelessWidget {
     required this.colorScheme,
     this.keyboardType,
     this.inputFormatters,
+    this.validator,
   });
 
   final TextEditingController controller;
@@ -411,6 +544,7 @@ class _LabeledTextField extends StatelessWidget {
   final ColorScheme colorScheme;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
+  final String? Function(String?)? validator;
 
   @override
   Widget build(BuildContext context) {
@@ -426,16 +560,16 @@ class _LabeledTextField extends StatelessWidget {
           ),
         ],
       ),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
+        validator: validator,
         decoration: InputDecoration(
           hintText: label,
           hintStyle: TextStyle(
             color: colorScheme.onSurface.withValues(alpha: 0.5),
           ),
-          // labelText: label,
           prefixIcon: Icon(icon, color: colorScheme.primary),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),

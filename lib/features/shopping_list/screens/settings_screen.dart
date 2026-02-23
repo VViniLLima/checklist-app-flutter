@@ -85,12 +85,16 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
+                      onPressed: () async {
+                        final changed = await Navigator.of(context).push<bool>(
                           MaterialPageRoute(
                             builder: (_) => const EditProfileScreen(),
                           ),
                         );
+                        if (changed == true) {
+                          // The UI should refresh automatically via Consumer<AuthController>,
+                          // but we could explicitly trigger a refresh if needed.
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white.withOpacity(0.25),
