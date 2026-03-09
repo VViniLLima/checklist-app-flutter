@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../auth/state/auth_controller.dart';
+import '../../auth/widgets/user_avatar_widget.dart';
 import '../../profile/screens/edit_profile_screen.dart';
 import '../../splash/screens/splash_screen.dart';
 
@@ -49,19 +50,9 @@ class SettingsScreen extends StatelessWidget {
                     Stack(
                       alignment: Alignment.center,
                       children: [
-                        Consumer<AuthController>(
-                          builder: (context, auth, child) {
-                            final avatarUrl = auth.userAvatarUrl;
-                            return CircleAvatar(
-                              radius: 22,
-                              backgroundColor: Colors.white.withOpacity(0.2),
-                              backgroundImage: avatarUrl != null
-                                  ? NetworkImage(avatarUrl)
-                                  : const AssetImage(
-                                      'assets/Images/ProfilePicture.png',
-                                    ),
-                            );
-                          },
+                        const UserAvatarWidget(
+                          radius: 22,
+                          backgroundColor: Color.fromRGBO(255, 255, 255, 0.2),
                         ),
                         Positioned(
                           right: 0,

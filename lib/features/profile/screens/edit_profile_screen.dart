@@ -1,9 +1,13 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth/state/auth_controller.dart';
+import '../../auth/widgets/user_avatar_widget.dart';
 import '../../splash/screens/splash_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -147,13 +151,76 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     Navigator.of(context).pop();
   }
 
-  void _handleCameraButtonTap() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Seleção de foto em breve 📷'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+  Future<void> _handleCameraButtonTap() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
+
+      final file = result.files.first;
+      if (file.path == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Não foi possível selecionar a imagem'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+
+      final auth = context.read<AuthController>();
+      final userId = auth.user?.id;
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Usuário não autenticado'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+
+      final appDir = await getApplicationDocumentsDirectory();
+      final profileDir = Directory('${appDir.path}/profile_images');
+      if (!await profileDir.exists()) {
+        await profileDir.create(recursive: true);
+      }
+
+      final fileExtension = file.extension ?? 'jpg';
+      final fileName = 'profile_$userId.$fileExtension';
+      final savedPath = '${profileDir.path}/$fileName';
+
+      await File(file.path!).copy(savedPath);
+
+      await auth.setLocalAvatarPath(savedPath);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Foto de perfil atualizada com sucesso!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao atualizar foto: ${e.toString()}'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -220,17 +287,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           clipBehavior: Clip.none,
           children: [
             // Main avatar
-            Consumer<AuthController>(
-              builder: (context, auth, child) {
-                final avatarUrl = auth.userAvatarUrl;
-                return CircleAvatar(
-                  radius: 60,
-                  backgroundColor: colorScheme.primaryContainer,
-                  backgroundImage: avatarUrl != null
-                      ? NetworkImage(avatarUrl)
-                      : const AssetImage('assets/Images/ProfilePicture.png'),
-                );
-              },
+            UserAvatarWidget(
+              radius: 60,
+              backgroundColor: colorScheme.primaryContainer,
             ),
             // Camera button overlay
             Positioned(

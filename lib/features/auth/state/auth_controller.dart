@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/auth_repository.dart';
 
@@ -7,6 +10,7 @@ class AuthController extends ChangeNotifier {
 
   User? _user;
   bool _isLoading = false;
+  String? _localAvatarPath;
 
   AuthController(this._repository) {
     _user = _repository.currentUser;
@@ -14,6 +18,7 @@ class AuthController extends ChangeNotifier {
       _user = data.session?.user;
       notifyListeners();
     });
+    _loadLocalAvatarPath();
   }
 
   User? get user => _user;
@@ -24,6 +29,35 @@ class AuthController extends ChangeNotifier {
       _repository.getUserName() ?? _user?.userMetadata?['full_name'] as String?;
   String? get userEmail => _user?.email;
   String? get userAvatarUrl => _user?.userMetadata?['avatar_url'] as String?;
+  String? get localAvatarPath => _localAvatarPath;
+
+  Future<void> _loadLocalAvatarPath() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = _user?.id;
+    if (userId != null) {
+      _localAvatarPath = prefs.getString('profile_image_path_$userId');
+    }
+  }
+
+  Future<void> setLocalAvatarPath(String? path) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = _user?.id;
+    if (userId != null) {
+      if (path != null) {
+        await prefs.setString('profile_image_path_$userId', path);
+      } else {
+        await prefs.remove('profile_image_path_$userId');
+      }
+
+      final oldPath = _localAvatarPath;
+      if (oldPath != null && oldPath != path) {
+        await FileImage(File(oldPath)).evict();
+      }
+
+      _localAvatarPath = path;
+      notifyListeners();
+    }
+  }
 
   void _setLoading(bool value) {
     _isLoading = value;

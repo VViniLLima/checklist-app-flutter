@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
 import '../../auth/state/auth_controller.dart';
+import '../../auth/widgets/user_avatar_widget.dart';
 import '../state/shopping_list_controller.dart';
 import 'shopping_list_screen.dart';
 
@@ -297,12 +298,9 @@ class _HomeScreenState extends State<HomeScreen> {
           // 1. User header row
           Row(
             children: [
-              CircleAvatar(
+              const UserAvatarWidget(
                 radius: 20,
-                backgroundColor: Colors.white.withOpacity(0.2),
-                backgroundImage: const AssetImage(
-                  'assets/Images/ProfilePicture.png',
-                ),
+                backgroundColor: Color.fromRGBO(255, 255, 255, 0.2),
               ),
               const SizedBox(width: 12),
               Expanded(
