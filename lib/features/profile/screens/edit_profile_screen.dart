@@ -220,12 +220,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           clipBehavior: Clip.none,
           children: [
             // Main avatar
-            CircleAvatar(
-              radius: 60,
-              backgroundColor: colorScheme.primaryContainer,
-              backgroundImage: const AssetImage(
-                'assets/Images/ProfilePicture.png',
-              ),
+            Consumer<AuthController>(
+              builder: (context, auth, child) {
+                final avatarUrl = auth.userAvatarUrl;
+                return CircleAvatar(
+                  radius: 60,
+                  backgroundColor: colorScheme.primaryContainer,
+                  backgroundImage: avatarUrl != null
+                      ? NetworkImage(avatarUrl)
+                      : const AssetImage('assets/Images/ProfilePicture.png'),
+                );
+              },
             ),
             // Camera button overlay
             Positioned(

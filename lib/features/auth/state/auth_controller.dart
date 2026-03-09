@@ -23,6 +23,7 @@ class AuthController extends ChangeNotifier {
   String? get userName =>
       _repository.getUserName() ?? _user?.userMetadata?['full_name'] as String?;
   String? get userEmail => _user?.email;
+  String? get userAvatarUrl => _user?.userMetadata?['avatar_url'] as String?;
 
   void _setLoading(bool value) {
     _isLoading = value;

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../auth/state/auth_controller.dart';
-import '../../splash/screens/splash_screen.dart';
 import '../../profile/screens/edit_profile_screen.dart';
+import '../../splash/screens/splash_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -14,18 +15,8 @@ class SettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final authController = context.read<AuthController>();
-
-    // Auth Guard: Redirect to Splash if not authenticated
-    if (!authController.isAuthenticated) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const SplashScreen()),
-          (route) => false,
-        );
-      });
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    final authController = context.watch<AuthController>();
+    final isAuthenticated = authController.isAuthenticated;
 
     return Scaffold(
       backgroundColor: colorScheme.background,
@@ -38,16 +29,16 @@ class SettingsScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(28),
                   gradient: LinearGradient(
-                    colors: [colorScheme.primary, colorScheme.primaryContainer],
+                    colors: [AppColors.primary, AppColors.primaryDark],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: colorScheme.primary.withOpacity(0.2),
-                      blurRadius: 20,
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 15,
                       offset: const Offset(0, 10),
                     ),
                   ],
@@ -55,10 +46,40 @@ class SettingsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    CircleAvatar(
-                      radius: 22,
-                      backgroundColor: Colors.white.withOpacity(0.25),
-                      child: Icon(Icons.person_outline, color: Colors.white),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Consumer<AuthController>(
+                          builder: (context, auth, child) {
+                            final avatarUrl = auth.userAvatarUrl;
+                            return CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Colors.white.withOpacity(0.2),
+                              backgroundImage: avatarUrl != null
+                                  ? NetworkImage(avatarUrl)
+                                  : const AssetImage(
+                                      'assets/Images/ProfilePicture.png',
+                                    ),
+                            );
+                          },
+                        ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: AppColors.accent,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.primary,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     Consumer<AuthController>(
@@ -84,27 +105,43 @@ class SettingsScreen extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final changed = await Navigator.of(context).push<bool>(
-                          MaterialPageRoute(
-                            builder: (_) => const EditProfileScreen(),
+                    Opacity(
+                      opacity: isAuthenticated ? 1.0 : 0.4,
+                      child: ElevatedButton(
+                        onPressed: isAuthenticated
+                            ? () async {
+                                final changed = await Navigator.of(context)
+                                    .push<bool>(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const EditProfileScreen(),
+                                      ),
+                                    );
+                                if (changed == true) {
+                                  // The UI should refresh automatically via Consumer<AuthController>,
+                                  // but we could explicitly trigger a refresh if needed.
+                                }
+                              }
+                            : () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Faça login para acessar esta opção',
+                                    ),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.2),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                        );
-                        if (changed == true) {
-                          // The UI should refresh automatically via Consumer<AuthController>,
-                          // but we could explicitly trigger a refresh if needed.
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.25),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          elevation: 0,
                         ),
-                        elevation: 0,
+                        child: const Text('Editar perfil'),
                       ),
-                      child: const Text('Editar perfil'),
                     ),
                   ],
                 ),
@@ -123,6 +160,7 @@ class SettingsScreen extends StatelessWidget {
                     icon: Icons.credit_card_outlined,
                     label: 'Pagamento',
                     onTap: () {},
+                    enabled: isAuthenticated,
                   ),
                   _SettingsTile(
                     icon: Icons.notifications_none_outlined,
@@ -187,38 +225,47 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 24),
               _SettingsCard(
                 children: [
-                  _SettingsTile(
-                    icon: Icons.exit_to_app_outlined,
-                    label: 'Sair da conta',
-                    iconColor: Colors.orangeAccent,
-                    textColor: Colors.orangeAccent,
-                    onTap: () async {
-                      try {
-                        await authController.signOut();
-                        if (context.mounted) {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (context) => const SplashScreen(),
-                            ),
-                            (route) => false,
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Sessão encerrada com sucesso'),
-                            ),
-                          );
+                  if (isAuthenticated)
+                    _SettingsTile(
+                      icon: Icons.exit_to_app_outlined,
+                      label: 'Sair da conta',
+                      iconColor: Colors.orangeAccent,
+                      textColor: Colors.orangeAccent,
+                      onTap: () async {
+                        try {
+                          await authController.signOut();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Sessão encerrada com sucesso'),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Erro ao sair: ${e.toString()}'),
+                              ),
+                            );
+                          }
                         }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Erro ao sair: ${e.toString()}'),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
+                      },
+                    )
+                  else
+                    _SettingsTile(
+                      icon: Icons.login_outlined,
+                      label: 'Fazer login',
+                      iconColor: colorScheme.primary,
+                      textColor: colorScheme.primary,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const SplashScreen(),
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
             ],
@@ -291,6 +338,7 @@ class _SettingsTile extends StatelessWidget {
     this.onTap,
     this.iconColor,
     this.textColor,
+    this.enabled = true,
   });
 
   final IconData icon;
@@ -299,11 +347,13 @@ class _SettingsTile extends StatelessWidget {
   final VoidCallback? onTap;
   final Color? iconColor;
   final Color? textColor;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return ListTile(
+
+    final tile = ListTile(
       leading: CircleAvatar(
         radius: 20,
         backgroundColor:
@@ -320,11 +370,27 @@ class _SettingsTile extends StatelessWidget {
       trailing:
           trailing ??
           Icon(
-            Icons.chevron_right,
+            enabled ? Icons.chevron_right : Icons.lock_outline,
             size: 20,
             color: textColor ?? colorScheme.onSurfaceVariant,
           ),
-      onTap: onTap,
+      onTap: enabled
+          ? onTap
+          : () {
+              // Show message when disabled option is tapped
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Faça login para acessar esta opção'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
     );
+
+    if (!enabled) {
+      return Opacity(opacity: 0.4, child: tile);
+    }
+
+    return tile;
   }
 }
