@@ -19,6 +19,9 @@ class HistoryPdfService {
   ) async {
     final pdf = pw.Document();
 
+    // Load Material Icons font
+    final iconFont = await PdfGoogleFonts.materialIcons();
+
     // Format date
     final dateStr = list.purchaseDate != null
         ? DateFormat('dd/MM/yyyy').format(list.purchaseDate!)
@@ -43,11 +46,11 @@ class HistoryPdfService {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               // Header Section
-              _buildHeader(list, dateStr),
+              _buildHeader(list, dateStr, iconFont),
               pw.SizedBox(height: 24),
 
               // Summary Card
-              _buildSummaryCard(list, dateStr, checkedItems.length),
+              _buildSummaryCard(list, dateStr, checkedItems.length, iconFont),
               pw.SizedBox(height: 24),
 
               // Items Section
@@ -103,27 +106,21 @@ class HistoryPdfService {
     List<ShoppingItem> items,
   ) async {
     try {
-      // Generate PDF to temp file
+      // Generate PDF code logic directly here to get bytes without writing to temp first
+      // Or just reuse the generateHistoryListPdf and then move the file
       final tempFile = await generateHistoryListPdf(list, items);
       final bytes = await tempFile.readAsBytes();
 
       // Try to get Downloads directory first
-      Directory saveDir;
-      try {
-        final downloadsDir = await getDownloadsDirectory();
-        if (downloadsDir != null) {
-          saveDir = downloadsDir;
-        } else {
-          saveDir = await getApplicationDocumentsDirectory();
-        }
-      } catch (e) {
-        // Downloads directory not available, fall back to app documents
-        saveDir = await getApplicationDocumentsDirectory();
+      Directory? saveDir;
+      if (Platform.isAndroid) {
+        saveDir = Directory('/storage/emulated/0/Download');
+      } else {
+        saveDir = await getDownloadsDirectory();
       }
 
-      // Ensure directory exists
-      if (!await saveDir.exists()) {
-        await saveDir.create(recursive: true);
+      if (saveDir == null || !await saveDir.exists()) {
+        saveDir = await getApplicationDocumentsDirectory();
       }
 
       final filename = _sanitizeFilename(list.name);
@@ -135,12 +132,6 @@ class HistoryPdfService {
       // Verify file was actually written
       if (!await savedFile.exists()) {
         throw Exception('Arquivo não foi salvo corretamente');
-      }
-
-      // Get file size to verify it's not empty
-      final fileSize = await savedFile.length();
-      if (fileSize == 0) {
-        throw Exception('Arquivo salvo está vazio');
       }
 
       return savedFile.path;
@@ -163,11 +154,11 @@ class HistoryPdfService {
   }
 
   /// Builds the header section of the PDF
-  pw.Widget _buildHeader(ShoppingList list, String dateStr) {
+  pw.Widget _buildHeader(ShoppingList list, String dateStr, pw.Font iconFont) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        // Shopping cart icon (colored circle with text)
+        // Shopping cart icon
         pw.Container(
           width: 60,
           height: 60,
@@ -176,7 +167,14 @@ class HistoryPdfService {
             shape: pw.BoxShape.circle,
           ),
           child: pw.Center(
-            child: pw.Text('🛒', style: pw.TextStyle(fontSize: 28)),
+            child: pw.Text(
+              String.fromCharCode(0xe8cc), // shopping_cart
+              style: pw.TextStyle(
+                font: iconFont,
+                fontSize: 28,
+                color: PdfColor.fromInt(AppColors.primary.value),
+              ),
+            ),
           ),
         ),
         pw.SizedBox(height: 16),
@@ -211,6 +209,7 @@ class HistoryPdfService {
     ShoppingList list,
     String dateStr,
     int itemCount,
+    pw.Font iconFont,
   ) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(16),
@@ -223,17 +222,24 @@ class HistoryPdfService {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           _buildInfoRow(
-            icon: '📍',
+            icon: 0xe0c8, // location_on
             label: 'Local da compra:',
             value: list.purchaseLocation ?? 'Não informado',
+            iconFont: iconFont,
           ),
           pw.SizedBox(height: 10),
-          _buildInfoRow(icon: '📅', label: 'Data da compra:', value: dateStr),
+          _buildInfoRow(
+            icon: 0xe916, // calendar_today
+            label: 'Data da compra:',
+            value: dateStr,
+            iconFont: iconFont,
+          ),
           pw.SizedBox(height: 10),
           _buildInfoRow(
-            icon: '🛒',
+            icon: 0xe8cc, // shopping_cart
             label: 'Itens:',
             value: '$itemCount produtos',
+            iconFont: iconFont,
           ),
         ],
       ),
@@ -242,13 +248,21 @@ class HistoryPdfService {
 
   /// Builds an info row with icon, label, and value
   pw.Widget _buildInfoRow({
-    required String icon,
+    required int icon,
     required String label,
     required String value,
+    required pw.Font iconFont,
   }) {
     return pw.Row(
       children: [
-        pw.Text(icon, style: pw.TextStyle(fontSize: 14)),
+        pw.Text(
+          String.fromCharCode(icon),
+          style: pw.TextStyle(
+            font: iconFont,
+            fontSize: 14,
+            color: PdfColor.fromInt(AppColors.textSecondary.value),
+          ),
+        ),
         pw.SizedBox(width: 8),
         pw.Text(
           label,
