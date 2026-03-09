@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/shopping_list.dart';
 import '../models/shopping_item.dart';
 import '../state/shopping_list_controller.dart';
+import '../../history/services/history_pdf_service.dart';
 
 class HistoryListDetailScreen extends StatefulWidget {
   final String listId;
@@ -17,6 +18,7 @@ class HistoryListDetailScreen extends StatefulWidget {
 
 class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
   bool _isLoading = true;
+  bool _isGeneratingPdf = false;
   ShoppingList? _list;
   List<ShoppingItem> _items = [];
 
@@ -39,6 +41,75 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
         _items = data['items'] as List<ShoppingItem>;
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _handleShare() async {
+    if (_list == null || _isGeneratingPdf) return;
+
+    setState(() {
+      _isGeneratingPdf = true;
+    });
+
+    try {
+      final pdfService = HistoryPdfService();
+      await pdfService.shareHistoryListPdf(_list!, _items);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível compartilhar o arquivo'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingPdf = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleDownload() async {
+    if (_list == null || _isGeneratingPdf) return;
+
+    setState(() {
+      _isGeneratingPdf = true;
+    });
+
+    try {
+      final pdfService = HistoryPdfService();
+      final savedPath = await pdfService.saveHistoryListPdf(_list!, _items);
+
+      if (mounted) {
+        // Extract filename from path for cleaner display
+        final filename = savedPath.split('/').last;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('PDF salvo: $filename'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao salvar: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingPdf = false;
+        });
+      }
     }
   }
 
@@ -325,7 +396,7 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
               context,
               label: 'Compartilhar',
               icon: Icons.ios_share_rounded,
-              onPressed: () {},
+              onPressed: _isGeneratingPdf ? null : () => _handleShare(),
             ),
           ),
           const SizedBox(width: 12),
@@ -334,7 +405,7 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
               context,
               label: 'Baixar',
               icon: Icons.download_rounded,
-              onPressed: () {},
+              onPressed: _isGeneratingPdf ? null : () => _handleDownload(),
             ),
           ),
         ],
@@ -346,7 +417,7 @@ class _HistoryListDetailScreenState extends State<HistoryListDetailScreen> {
     BuildContext context, {
     required String label,
     required IconData icon,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     return OutlinedButton.icon(
