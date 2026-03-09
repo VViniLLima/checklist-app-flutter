@@ -57,6 +57,9 @@ class _MealOptionsScreenState extends State<MealOptionsScreen> {
   Future<void> _onCreateList() async {
     if (_selectedIndices.isEmpty || _isCreating) return;
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final String timestamp = DateFormat(
       'dd/MM/yyyy HH:mm',
     ).format(DateTime.now());
@@ -67,14 +70,28 @@ class _MealOptionsScreenState extends State<MealOptionsScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Nome da lista'),
         content: TextField(
           controller: textController,
           autofocus: true,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Como deseja chamar esta lista?',
             hintText: 'Ex: Dieta da semana, Compras...',
-            border: OutlineInputBorder(),
+            filled: true,
+            fillColor: colorScheme.surface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
           ),
           textCapitalization: TextCapitalization.sentences,
           onSubmitted: (value) {
@@ -85,13 +102,20 @@ class _MealOptionsScreenState extends State<MealOptionsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
               _performCreation(textController.text.trim());
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+            ),
             child: const Text('Criar'),
           ),
         ],
@@ -173,10 +197,10 @@ class _MealOptionsScreenState extends State<MealOptionsScreen> {
     // Show error state if parsing failed
     if (_parseError != null) {
       return Scaffold(
-        backgroundColor: colorScheme.surface,
+        backgroundColor: colorScheme.background,
         appBar: AppBar(
           title: const Text('Criar lista'),
-          backgroundColor: Colors.transparent,
+          backgroundColor: colorScheme.surface,
           elevation: 0,
           leading: IconButton(
             icon: Icon(
@@ -213,10 +237,10 @@ class _MealOptionsScreenState extends State<MealOptionsScreen> {
     }
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
         title: const Text('Criar lista'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
@@ -232,9 +256,9 @@ class _MealOptionsScreenState extends State<MealOptionsScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.restaurant_menu,
+                    Icons.restaurant_menu_rounded,
                     size: 64,
-                    color: colorScheme.primary.withOpacity(0.5),
+                    color: colorScheme.primary.withOpacity(0.4),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -334,11 +358,11 @@ class _MealOptionCard extends StatelessWidget {
           color: isSelected
               ? colorScheme.primary.withOpacity(0.05)
               : colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
                 ? colorScheme.primary
-                : colorScheme.outline.withOpacity(0.1),
+                : colorScheme.outline.withOpacity(0.2),
             width: 2,
           ),
           boxShadow: isSelected
@@ -352,8 +376,8 @@ class _MealOptionCard extends StatelessWidget {
               : [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.03),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
         ),
@@ -384,7 +408,11 @@ class _MealOptionCard extends StatelessWidget {
                 ),
               ],
             ),
-            const Divider(height: 20),
+            Divider(
+              height: 20,
+              thickness: 0.7,
+              color: colorScheme.outline.withOpacity(0.1),
+            ),
             // Items list
             ...meal.items.map(
               (item) => Padding(
@@ -464,47 +492,49 @@ class _BottomActionBar extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: TextButton(
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: OutlinedButton(
               onPressed: isLoading ? null : onCancel,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
+                foregroundColor: colorScheme.onSurface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: Text(
+              child: const Text(
                 'Cancelar',
-                style: TextStyle(
-                  color: colorScheme.onSurface.withOpacity(0.6),
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 2,
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
             child: ElevatedButton(
               onPressed: isEnabled ? onAction : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorScheme.primary,
                 foregroundColor: colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                elevation: 0,
+                elevation: 4,
               ),
               child: isLoading
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          colorScheme.onPrimary,
+                        ),
                       ),
                     )
                   : const Text(
