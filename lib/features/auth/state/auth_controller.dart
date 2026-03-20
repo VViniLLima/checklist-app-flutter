@@ -11,6 +11,7 @@ class AuthController extends ChangeNotifier {
   User? _user;
   bool _isLoading = false;
   String? _localAvatarPath;
+  int _avatarVersion = 0;
 
   AuthController(this._repository) {
     _user = _repository.currentUser;
@@ -30,6 +31,7 @@ class AuthController extends ChangeNotifier {
   String? get userEmail => _user?.email;
   String? get userAvatarUrl => _user?.userMetadata?['avatar_url'] as String?;
   String? get localAvatarPath => _localAvatarPath;
+  int get avatarVersion => _avatarVersion;
 
   Future<void> _loadLocalAvatarPath() async {
     final prefs = await SharedPreferences.getInstance();
@@ -55,6 +57,7 @@ class AuthController extends ChangeNotifier {
       }
 
       _localAvatarPath = path;
+      _avatarVersion++;
       notifyListeners();
     }
   }

@@ -31,7 +31,9 @@ class UserAvatarWidget extends StatelessWidget {
     }
 
     return CircleAvatar(
-      key: ValueKey('avatar_${localAvatarPath ?? avatarUrl ?? 'default'}'),
+      key: ValueKey(
+        'avatar_${localAvatarPath ?? avatarUrl ?? 'default'}_${auth.avatarVersion}',
+      ),
       radius: radius,
       backgroundColor: backgroundColor ?? Colors.white.withOpacity(0.2),
       backgroundImage: backgroundImage,
