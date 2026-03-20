@@ -155,11 +155,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.background,
-      appBar: AppBar(
-        title: const Text('Editar Perfil'),
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Editar Perfil')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.only(

@@ -83,11 +83,7 @@ class _ListsScreenState extends State<ListsScreen> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Minhas Listas'),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
+      appBar: AppBar(title: const Text('Minhas Listas')),
       body: Consumer<ShoppingListController>(
         builder: (context, controller, _) {
           if (controller.isLoading) {

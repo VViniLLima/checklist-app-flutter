@@ -140,17 +140,7 @@ class _SendFileScreenState extends State<SendFileScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: colorScheme.onBackground,
-          ),
-          onPressed: _isUploading ? null : () => Navigator.of(context).pop(),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Envie sua lista')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -158,15 +148,6 @@ class _SendFileScreenState extends State<SendFileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
-              // Title
-              Text(
-                'Envie sua lista',
-                style: textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onBackground,
-                ),
-              ),
-              const SizedBox(height: 32),
 
               // Upload Area
               _UploadDropzone(
