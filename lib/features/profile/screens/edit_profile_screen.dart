@@ -1,13 +1,9 @@
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth/state/auth_controller.dart';
-import '../../auth/widgets/user_avatar_widget.dart';
 import '../../splash/screens/splash_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -151,78 +147,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     Navigator.of(context).pop();
   }
 
-  Future<void> _handleCameraButtonTap() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-      );
-
-      if (result == null || result.files.isEmpty) {
-        return;
-      }
-
-      final file = result.files.first;
-      if (file.path == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Não foi possível selecionar a imagem'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-        return;
-      }
-
-      final auth = context.read<AuthController>();
-      final userId = auth.user?.id;
-      if (userId == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Usuário não autenticado'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-        return;
-      }
-
-      final appDir = await getApplicationDocumentsDirectory();
-      final profileDir = Directory('${appDir.path}/profile_images');
-      if (!await profileDir.exists()) {
-        await profileDir.create(recursive: true);
-      }
-
-      final fileExtension = file.extension ?? 'jpg';
-      final fileName = 'profile_$userId.$fileExtension';
-      final savedPath = '${profileDir.path}/$fileName';
-
-      await File(file.path!).copy(savedPath);
-
-      await auth.setLocalAvatarPath(savedPath);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Foto de perfil atualizada com sucesso!'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao atualizar foto: ${e.toString()}'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -248,10 +172,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Profile Picture Section
-                  _buildProfilePictureSection(colorScheme, textTheme),
-                  const SizedBox(height: 32),
-
                   // Informações Pessoais Section
                   _SectionHeader(label: 'Informações Pessoais'),
                   const SizedBox(height: 16),
@@ -273,64 +193,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildProfilePictureSection(
-    ColorScheme colorScheme,
-    TextTheme textTheme,
-  ) {
-    return Column(
-      children: [
-        // Avatar with camera button overlay
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Main avatar
-            UserAvatarWidget(
-              radius: 60,
-              backgroundColor: colorScheme.primaryContainer,
-            ),
-            // Camera button overlay
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: GestureDetector(
-                onTap: _handleCameraButtonTap,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: colorScheme.background, width: 3),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.primary.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        // Helper text
-        Text(
-          'Clique no ícone para alterar a foto',
-          style: textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurface.withOpacity(0.6),
-          ),
-        ),
-      ],
     );
   }
 
