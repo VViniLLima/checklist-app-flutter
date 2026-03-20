@@ -226,10 +226,11 @@ class SettingsScreen extends StatelessWidget {
                         try {
                           await authController.signOut();
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Sessão encerrada com sucesso'),
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (_) => const SplashScreen(),
                               ),
+                              (route) => false,
                             );
                           }
                         } catch (e) {
