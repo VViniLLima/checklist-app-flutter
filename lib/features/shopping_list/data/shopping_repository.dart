@@ -28,15 +28,37 @@ class ShoppingRepository {
 
   // ==================== Shopping Lists ====================
 
-  /// Salva lista de listas de compras
-  Future<void> saveShoppingLists(List<ShoppingList> lists) async {
-    final jsonList = lists.map((l) => l.toJson()).toList();
+  /// Salva lista de listas de compras para um owner específico
+  ///
+  /// Carrega todas as listas, substitui as do owner especificado, e salva tudo de volta.
+  /// Isso preserva os dados de outros owners.
+  Future<void> saveShoppingLists(
+    List<ShoppingList> lists,
+    String ownerId,
+  ) async {
+    // Carrega todas as listas existentes
+    final allLists = await loadAllShoppingListsRaw();
+
+    // Remove as listas do owner atual
+    allLists.removeWhere((list) => list.ownerId == ownerId);
+
+    // Adiciona as novas listas do owner
+    allLists.addAll(lists);
+
+    // Salva tudo de volta
+    final jsonList = allLists.map((l) => l.toJson()).toList();
     final jsonString = jsonEncode(jsonList);
     await _prefs.setString(_listsKey, jsonString);
   }
 
-  /// Carrega lista de listas de compras
-  Future<List<ShoppingList>> loadShoppingLists() async {
+  /// Carrega lista de listas de compras filtrada por owner
+  Future<List<ShoppingList>> loadShoppingLists(String ownerId) async {
+    final allLists = await loadAllShoppingListsRaw();
+    return allLists.where((list) => list.ownerId == ownerId).toList();
+  }
+
+  /// Carrega todas as listas sem filtro (usado apenas para migração)
+  Future<List<ShoppingList>> loadAllShoppingListsRaw() async {
     final jsonString = _prefs.getString(_listsKey);
     if (jsonString == null || jsonString.isEmpty) {
       return [];
@@ -50,6 +72,35 @@ class ShoppingRepository {
     } catch (e) {
       return [];
     }
+  }
+
+  /// Migra listas sem owner para o owner especificado
+  ///
+  /// Retorna o número de listas migradas.
+  Future<int> migrateOwnerlessLists(String ownerId) async {
+    final allLists = await loadAllShoppingListsRaw();
+    final ownerlessLists = allLists
+        .where((list) => list.ownerId.isEmpty)
+        .toList();
+
+    if (ownerlessLists.isEmpty) {
+      return 0;
+    }
+
+    // Atualiza as listas sem owner
+    final updatedLists = allLists.map((list) {
+      if (list.ownerId.isEmpty) {
+        return list.copyWith(ownerId: ownerId);
+      }
+      return list;
+    }).toList();
+
+    // Salva tudo de volta
+    final jsonList = updatedLists.map((l) => l.toJson()).toList();
+    final jsonString = jsonEncode(jsonList);
+    await _prefs.setString(_listsKey, jsonString);
+
+    return ownerlessLists.length;
   }
 
   /// Salva o ID da lista ativa
@@ -130,7 +181,7 @@ class ShoppingRepository {
   }
 
   /// Executa a migração dos dados antigos
-  Future<ShoppingList?> migrateOldData() async {
+  Future<ShoppingList?> migrateOldData(String ownerId) async {
     // Carrega dados antigos
     final oldCategoriesJson = _prefs.getString(_categoriesKey);
     final oldItemsJson = _prefs.getString(_itemsKey);
@@ -143,12 +194,13 @@ class ShoppingRepository {
     final firstList = ShoppingList(
       id: 'list-1',
       name: 'Lista de compras 1',
+      ownerId: ownerId,
       createdAt: DateTime.now(),
       lastModifiedAt: DateTime.now(),
     );
 
     // Salva a lista
-    await saveShoppingLists([firstList]);
+    await saveShoppingLists([firstList], ownerId);
     await saveActiveListId(firstList.id);
 
     // Migra categorias

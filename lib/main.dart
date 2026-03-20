@@ -7,6 +7,7 @@ import 'features/shopping_list/state/search_controller.dart' as search;
 import 'features/splash/screens/splash_screen.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
+import 'core/services/user_identity_service.dart';
 //import 'package:google_fonts/google_fonts.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -50,11 +51,38 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => AuthController(context.read<AuthRepository>()),
         ),
-        ChangeNotifierProvider(
-          create: (_) {
-            final controller = ShoppingListController(repository);
+        ChangeNotifierProxyProvider<AuthController, UserIdentityService>(
+          create: (context) => UserIdentityService(),
+          update: (context, auth, userIdentity) {
+            // Update user identity when auth state changes
+            final userId = auth.user?.id;
+            userIdentity?.updateAuthenticatedUserId(userId);
+            return userIdentity!;
+          },
+        ),
+        ChangeNotifierProxyProvider<
+          UserIdentityService,
+          ShoppingListController
+        >(
+          create: (context) {
+            final userIdentityService = context.read<UserIdentityService>();
+            final authController = context.read<AuthController>();
+            final controller = ShoppingListController(
+              repository,
+              userIdentityService,
+            );
+
+            // Initialize user identity service first
+            userIdentityService.initialize(authController);
+
+            // Then initialize shopping list controller
             controller.initialize(); // Carrega dados salvos
             return controller;
+          },
+          update: (context, userIdentity, shopping) {
+            // Reload shopping lists when user identity changes (login/logout)
+            shopping?.reloadForOwner();
+            return shopping!;
           },
         ),
         ChangeNotifierProvider(create: (_) => ThemeController()),

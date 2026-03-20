@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 class ShoppingList {
   final String id;
   final String name;
+  final String ownerId;
   final DateTime createdAt;
   final DateTime lastModifiedAt;
   final bool isCompleted;
@@ -18,6 +19,7 @@ class ShoppingList {
   const ShoppingList({
     required this.id,
     required this.name,
+    required this.ownerId,
     required this.createdAt,
     required this.lastModifiedAt,
     this.isCompleted = false,
@@ -30,6 +32,7 @@ class ShoppingList {
   ShoppingList copyWith({
     String? id,
     String? name,
+    String? ownerId,
     DateTime? createdAt,
     DateTime? lastModifiedAt,
     bool? isCompleted,
@@ -41,6 +44,7 @@ class ShoppingList {
     return ShoppingList(
       id: id ?? this.id,
       name: name ?? this.name,
+      ownerId: ownerId ?? this.ownerId,
       createdAt: createdAt ?? this.createdAt,
       lastModifiedAt: lastModifiedAt ?? this.lastModifiedAt,
       isCompleted: isCompleted ?? this.isCompleted,
@@ -55,6 +59,7 @@ class ShoppingList {
     return {
       'id': id,
       'name': name,
+      'ownerId': ownerId,
       'createdAt': createdAt.toIso8601String(),
       'lastModifiedAt': lastModifiedAt.toIso8601String(),
       'isCompleted': isCompleted,
@@ -70,6 +75,7 @@ class ShoppingList {
     return ShoppingList(
       id: json['id'] as String,
       name: json['name'] as String,
+      ownerId: json['ownerId'] as String? ?? '',
       createdAt: createdAt,
       lastModifiedAt: json['lastModifiedAt'] != null
           ? DateTime.parse(json['lastModifiedAt'] as String)
@@ -92,6 +98,7 @@ class ShoppingList {
     return other is ShoppingList &&
         other.id == id &&
         other.name == name &&
+        other.ownerId == ownerId &&
         other.createdAt == createdAt &&
         other.lastModifiedAt == lastModifiedAt &&
         other.isCompleted == isCompleted &&
@@ -105,6 +112,7 @@ class ShoppingList {
   int get hashCode => Object.hash(
     id,
     name,
+    ownerId,
     createdAt,
     lastModifiedAt,
     isCompleted,
@@ -116,6 +124,6 @@ class ShoppingList {
 
   @override
   String toString() {
-    return 'ShoppingList(id: $id, name: $name, isCompleted: $isCompleted, totalSpent: $totalSpent, lastModifiedAt: $lastModifiedAt)';
+    return 'ShoppingList(id: $id, name: $name, ownerId: $ownerId, isCompleted: $isCompleted, totalSpent: $totalSpent, lastModifiedAt: $lastModifiedAt)';
   }
 }

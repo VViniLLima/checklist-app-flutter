@@ -2,17 +2,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:checklist_app/features/shopping_list/data/shopping_repository.dart';
 import 'package:checklist_app/features/shopping_list/state/shopping_list_controller.dart';
+import 'package:checklist_app/core/services/user_identity_service.dart';
 
 void main() {
   late ShoppingListController controller;
   late ShoppingRepository repository;
+  late UserIdentityService userIdentityService;
 
   setUp(() async {
     // Configura SharedPreferences mock
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     repository = ShoppingRepository(prefs);
-    controller = ShoppingListController(repository);
+    userIdentityService = UserIdentityService();
+    controller = ShoppingListController(repository, userIdentityService);
     await controller.initialize();
   });
 
@@ -257,7 +260,11 @@ void main() {
       await controller.addCategory('Bebidas');
 
       // Cria novo controller com mesmo repositório
-      final newController = ShoppingListController(repository);
+      final newUserIdentityService = UserIdentityService();
+      final newController = ShoppingListController(
+        repository,
+        newUserIdentityService,
+      );
       await newController.initialize();
 
       expect(newController.categories.length, 1);
@@ -270,7 +277,11 @@ void main() {
       await controller.addCategory('C');
       await controller.reorderCategories(2, 0);
 
-      final newController = ShoppingListController(repository);
+      final newUserIdentityService = UserIdentityService();
+      final newController = ShoppingListController(
+        repository,
+        newUserIdentityService,
+      );
       await newController.initialize();
 
       expect(newController.categories[0].name, 'C');
@@ -283,7 +294,11 @@ void main() {
       await controller.addItem('Leite', null);
 
       // Cria novo controller com mesmo repositório
-      final newController = ShoppingListController(repository);
+      final newUserIdentityService = UserIdentityService();
+      final newController = ShoppingListController(
+        repository,
+        newUserIdentityService,
+      );
       await newController.initialize();
 
       expect(newController.allItems.length, 2);
@@ -297,7 +312,11 @@ void main() {
       await controller.toggleItemCheck(itemId);
 
       // Cria novo controller
-      final newController = ShoppingListController(repository);
+      final newUserIdentityService = UserIdentityService();
+      final newController = ShoppingListController(
+        repository,
+        newUserIdentityService,
+      );
       await newController.initialize();
 
       final item = newController.allItems.first;

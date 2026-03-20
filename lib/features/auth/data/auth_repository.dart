@@ -24,6 +24,7 @@ class AuthRepository {
       OAuthProvider.google,
       redirectTo: redirectTo,
       authScreenLaunchMode: LaunchMode.externalApplication,
+      queryParams: {'prompt': 'select_account'},
     );
   }
 

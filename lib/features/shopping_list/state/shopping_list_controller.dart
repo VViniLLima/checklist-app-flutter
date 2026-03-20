@@ -3,6 +3,7 @@ import '../models/category.dart' as models;
 import '../models/shopping_item.dart';
 import '../models/shopping_list.dart';
 import '../data/shopping_repository.dart';
+import '../../../core/services/user_identity_service.dart';
 
 /// Controller principal que gerencia o estado da lista de compras
 ///
@@ -12,8 +13,10 @@ import '../data/shopping_repository.dart';
 /// - Marcar/desmarcar itens (com reordenação automática)
 /// - Colapsar/expandir categorias
 /// - Persistir mudanças automaticamente
+/// - Isolar dados por owner (guest ou autenticado)
 class ShoppingListController extends ChangeNotifier {
   final ShoppingRepository _repository;
+  final UserIdentityService _userIdentityService;
 
   List<ShoppingList> _shoppingLists = [];
   String? _activeListId;
@@ -21,7 +24,7 @@ class ShoppingListController extends ChangeNotifier {
   List<ShoppingItem> _items = [];
   bool _isLoading = true;
 
-  ShoppingListController(this._repository);
+  ShoppingListController(this._repository, this._userIdentityService);
 
   // ==================== Getters ====================
 
@@ -106,15 +109,20 @@ class ShoppingListController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Check if migration is needed
+      final ownerId = _userIdentityService.currentOwnerId;
+
+      // Migrate ownerless lists first
+      await _repository.migrateOwnerlessLists(ownerId);
+
+      // Check if old migration is needed
       if (await _repository.needsMigration()) {
-        final migratedList = await _repository.migrateOldData();
+        final migratedList = await _repository.migrateOldData(ownerId);
         if (migratedList != null) {
           _shoppingLists = [migratedList];
           _activeListId = migratedList.id;
         }
       } else {
-        _shoppingLists = await _repository.loadShoppingLists();
+        _shoppingLists = await _repository.loadShoppingLists(ownerId);
         _activeListId = _repository.loadActiveListId();
       }
 
@@ -123,12 +131,13 @@ class ShoppingListController extends ChangeNotifier {
         final defaultList = ShoppingList(
           id: 'list-1',
           name: 'Lista de compras 1',
+          ownerId: ownerId,
           createdAt: DateTime.now(),
           lastModifiedAt: DateTime.now(),
         );
         _shoppingLists = [defaultList];
         _activeListId = defaultList.id;
-        await _repository.saveShoppingLists(_shoppingLists);
+        await _repository.saveShoppingLists(_shoppingLists, ownerId);
         await _repository.saveActiveListId(_activeListId!);
       }
 
@@ -141,6 +150,54 @@ class ShoppingListController extends ChangeNotifier {
       _shoppingLists = [];
       _categories = [];
       _items = [];
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  /// Recarrega os dados para um novo owner (chamado quando auth state muda)
+  Future<void> reloadForOwner() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final ownerId = _userIdentityService.currentOwnerId;
+
+      // Migrate ownerless lists first
+      await _repository.migrateOwnerlessLists(ownerId);
+
+      // Load lists for the new owner
+      _shoppingLists = await _repository.loadShoppingLists(ownerId);
+
+      // Try to keep the active list if it belongs to the new owner
+      if (_activeListId != null) {
+        final activeListExists = _shoppingLists.any(
+          (list) => list.id == _activeListId,
+        );
+        if (!activeListExists) {
+          _activeListId = null;
+          _categories = [];
+          _items = [];
+        }
+      }
+
+      // If no active list, set the first one
+      if (_activeListId == null && _shoppingLists.isNotEmpty) {
+        _activeListId = _shoppingLists.first.id;
+        await _repository.saveActiveListId(_activeListId!);
+      }
+
+      // Load data for active list
+      if (_activeListId != null) {
+        await _loadListData(_activeListId!);
+      }
+    } catch (e) {
+      debugPrint('Erro ao recarregar dados: $e');
+      _shoppingLists = [];
+      _categories = [];
+      _items = [];
+      _activeListId = null;
     }
 
     _isLoading = false;
@@ -217,15 +274,17 @@ class ShoppingListController extends ChangeNotifier {
 
   /// Adiciona nova lista de compras
   Future<void> addShoppingList(String name) async {
+    final ownerId = _userIdentityService.currentOwnerId;
     final newList = ShoppingList(
       id: 'list-${DateTime.now().millisecondsSinceEpoch}',
       name: name,
+      ownerId: ownerId,
       createdAt: DateTime.now(),
       lastModifiedAt: DateTime.now(),
     );
 
     _shoppingLists.add(newList);
-    await _repository.saveShoppingLists(_shoppingLists);
+    await _repository.saveShoppingLists(_shoppingLists, ownerId);
     notifyListeners();
   }
 
@@ -248,7 +307,10 @@ class ShoppingListController extends ChangeNotifier {
       name: newName,
       lastModifiedAt: DateTime.now(),
     );
-    await _repository.saveShoppingLists(_shoppingLists);
+    await _repository.saveShoppingLists(
+      _shoppingLists,
+      _userIdentityService.currentOwnerId,
+    );
     notifyListeners();
   }
 
@@ -261,7 +323,10 @@ class ShoppingListController extends ChangeNotifier {
     _shoppingLists[index] = _shoppingLists[index].copyWith(
       isFavorite: !current,
     );
-    await _repository.saveShoppingLists(_shoppingLists);
+    await _repository.saveShoppingLists(
+      _shoppingLists,
+      _userIdentityService.currentOwnerId,
+    );
     notifyListeners();
   }
 
@@ -283,7 +348,10 @@ class ShoppingListController extends ChangeNotifier {
       lastModifiedAt: DateTime.now(),
     );
 
-    await _repository.saveShoppingLists(_shoppingLists);
+    await _repository.saveShoppingLists(
+      _shoppingLists,
+      _userIdentityService.currentOwnerId,
+    );
     notifyListeners();
   }
 
@@ -771,6 +839,9 @@ class ShoppingListController extends ChangeNotifier {
     _shoppingLists[index] = _shoppingLists[index].copyWith(
       lastModifiedAt: DateTime.now(),
     );
-    await _repository.saveShoppingLists(_shoppingLists);
+    await _repository.saveShoppingLists(
+      _shoppingLists,
+      _userIdentityService.currentOwnerId,
+    );
   }
 }
