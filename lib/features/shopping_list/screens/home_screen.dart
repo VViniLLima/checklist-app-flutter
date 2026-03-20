@@ -828,11 +828,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showContextMenu(BuildContext context, ShoppingList list) {
+  void _showContextMenu(BuildContext context, ShoppingList list) async {
     final RenderBox overlay =
         Overlay.of(context).context.findRenderObject() as RenderBox;
+    final controller = context.read<ShoppingListController>();
 
-    showMenu(
+    final result = await showMenu<String>(
       context: context,
       position: RelativeRect.fromRect(
         _tapPosition & const Size(40, 40),
@@ -884,6 +885,20 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     );
+
+    if (!mounted) return;
+
+    switch (result) {
+      case 'duplicate':
+        await controller.duplicateShoppingList(list.id);
+        break;
+      case 'edit':
+        _showRenameListDialog(context, controller, list.id, list.name);
+        break;
+      case 'delete':
+        _showDeleteConfirmDialog(context, controller, list);
+        break;
+    }
   }
 
   void _openList(
@@ -911,6 +926,101 @@ class _HomeScreenState extends State<HomeScreen> {
       // Refresh all metadata when coming back from the list
       _loadAllMetadata(forceRefresh: true);
     }
+  }
+
+  void _showRenameListDialog(
+    BuildContext context,
+    ShoppingListController controller,
+    String listId,
+    String currentName,
+  ) {
+    final textController = TextEditingController(text: currentName);
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Renomear lista'),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Nome da lista',
+            border: OutlineInputBorder(),
+          ),
+          textCapitalization: TextCapitalization.words,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = textController.text.trim();
+              if (name.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('O nome da lista não pode estar vazio'),
+                  ),
+                );
+                return;
+              }
+
+              // Check for duplicates
+              final isDuplicate = controller.shoppingLists.any(
+                (list) =>
+                    list.id != listId &&
+                    list.name.toLowerCase() == name.toLowerCase(),
+              );
+
+              if (isDuplicate) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Já existe uma lista com este nome'),
+                  ),
+                );
+                return;
+              }
+
+              controller.renameShoppingList(listId, name);
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmDialog(
+    BuildContext context,
+    ShoppingListController controller,
+    ShoppingList list,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Excluir lista?'),
+        content: Text(
+          'Tem certeza que deseja excluir "${list.name}"? Esta ação não pode ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () {
+              controller.deleteShoppingList(list.id);
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

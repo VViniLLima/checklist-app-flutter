@@ -355,6 +355,68 @@ class ShoppingListController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Exclui uma lista de compras e todos os seus dados
+  Future<void> deleteShoppingList(String listId) async {
+    // Remove a lista da lista de listas
+    _shoppingLists.removeWhere((list) => list.id == listId);
+
+    // Remove os dados associados (categorias e itens)
+    await _repository.deleteListData(listId);
+
+    // Salva a lista atualizada de listas
+    await _repository.saveShoppingLists(
+      _shoppingLists,
+      _userIdentityService.currentOwnerId,
+    );
+
+    // Se a lista excluída era a ativa, muda para outra
+    if (_activeListId == listId) {
+      _activeListId = _shoppingLists.isNotEmpty
+          ? _shoppingLists.first.id
+          : null;
+      if (_activeListId != null) {
+        await _loadListData(_activeListId!);
+      } else {
+        _categories = [];
+        _items = [];
+      }
+    }
+
+    notifyListeners();
+  }
+
+  /// Duplica uma lista de compras com todas as suas categorias e itens
+  Future<void> duplicateShoppingList(String listId) async {
+    final original = _shoppingLists.firstWhere((list) => list.id == listId);
+
+    // Cria nova lista com nome modificado
+    final newId = 'list-${DateTime.now().millisecondsSinceEpoch}';
+    final newList = ShoppingList(
+      id: newId,
+      name: '${original.name} (cópia)',
+      ownerId: _userIdentityService.currentOwnerId,
+      createdAt: DateTime.now(),
+      lastModifiedAt: DateTime.now(),
+    );
+
+    // Copia categorias e itens da lista original
+    final categories = await _repository.loadCategories(listId);
+    final items = await _repository.loadItems(listId);
+
+    // Salva os dados da nova lista
+    await _repository.saveCategories(newId, categories);
+    await _repository.saveItems(newId, items);
+
+    // Adiciona a nova lista à lista de listas
+    _shoppingLists.add(newList);
+    await _repository.saveShoppingLists(
+      _shoppingLists,
+      _userIdentityService.currentOwnerId,
+    );
+
+    notifyListeners();
+  }
+
   /// Recupera dados de uma lista específica (para histórico) sem torná-la ativa
   Future<Map<String, dynamic>> getHistoryListData(String listId) async {
     final categories = await _repository.loadCategories(listId);
