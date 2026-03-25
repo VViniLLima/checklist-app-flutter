@@ -324,4 +324,37 @@ void main() {
       expect(item.checkedAt, isNotNull);
     });
   });
+
+  group('Renomear Lista', () {
+    test('Deve renomear lista localmente (usuário guest)', () async {
+      // Create a list
+      await controller.addShoppingList('Lista Original');
+      final listId = controller.shoppingLists.first.id;
+
+      // Rename without Supabase service (guest path)
+      await controller.renameShoppingList(listId, 'Lista Renomeada');
+
+      expect(controller.shoppingLists.first.name, 'Lista Renomeada');
+    });
+
+    test('Deve persistir nome renomeado', () async {
+      // Create a list
+      await controller.addShoppingList('Lista Original');
+      final listId = controller.shoppingLists.first.id;
+
+      // Rename
+      await controller.renameShoppingList(listId, 'Lista Renomeada');
+
+      // Create new controller with same repository
+      final newUserIdentityService = UserIdentityService();
+      final newController = ShoppingListController(
+        repository,
+        newUserIdentityService,
+      );
+      await newController.initialize();
+
+      // Verify the renamed name persisted
+      expect(newController.shoppingLists.first.name, 'Lista Renomeada');
+    });
+  });
 }

@@ -38,4 +38,14 @@ class SupabaseListService {
 
     return response;
   }
+
+  /// Updates the name of an existing list in `public.listas_do_usuario`.
+  ///
+  /// Throws a [PostgrestException] or [Exception] on failure.
+  Future<void> updateListName(String listId, String newName) async {
+    await _client
+        .from('listas_do_usuario')
+        .update({'nome': newName})
+        .eq('id', listId);
+  }
 }

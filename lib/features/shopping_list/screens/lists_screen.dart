@@ -457,7 +457,7 @@ class _ListsScreenState extends State<ListsScreen> {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final name = textController.text.trim();
               if (name.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -484,7 +484,21 @@ class _ListsScreenState extends State<ListsScreen> {
                 return;
               }
 
-              controller.renameShoppingList(listId, name);
+              try {
+                await controller.renameShoppingList(listId, name);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Nome atualizado localmente. Erro ao salvar na nuvem: $e',
+                      ),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                }
+              }
               Navigator.of(dialogContext).pop();
             },
             child: const Text('Salvar'),

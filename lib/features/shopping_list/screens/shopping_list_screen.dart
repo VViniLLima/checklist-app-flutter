@@ -429,9 +429,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             hintText: 'Ex: Compras do mês, Feira...',
           ),
           textCapitalization: TextCapitalization.words,
-          onSubmitted: (value) {
+          onSubmitted: (value) async {
             if (value.trim().isNotEmpty) {
-              controller.renameShoppingList(listId, value.trim());
+              try {
+                await controller.renameShoppingList(listId, value.trim());
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Nome atualizado localmente. Erro ao salvar na nuvem: $e',
+                      ),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                }
+              }
               Navigator.of(context).pop();
             }
           },
@@ -442,7 +456,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final name = textController.text.trim();
               if (name.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -452,7 +466,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 );
                 return;
               }
-              controller.renameShoppingList(listId, name);
+              try {
+                await controller.renameShoppingList(listId, name);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Nome atualizado localmente. Erro ao salvar na nuvem: $e',
+                      ),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                }
+              }
               Navigator.of(context).pop();
             },
             child: const Text('Salvar'),

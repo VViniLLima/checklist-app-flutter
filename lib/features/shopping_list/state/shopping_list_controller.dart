@@ -353,6 +353,11 @@ class ShoppingListController extends ChangeNotifier {
   }
 
   /// Renomeia uma lista de compras existente
+  ///
+  /// Updates locally first (optimistic), then attempts to persist to Supabase
+  /// when the user is authenticated. On success, the name is synced to the DB.
+  /// On error, the local name is kept (graceful degradation) and the exception
+  /// is rethrown so callers can show an error message.
   Future<void> renameShoppingList(String listId, String newName) async {
     final index = _shoppingLists.indexWhere((list) => list.id == listId);
     if (index == -1) return;
@@ -366,6 +371,18 @@ class ShoppingListController extends ChangeNotifier {
       _userIdentityService.currentOwnerId,
     );
     notifyListeners();
+
+    // Supabase sync (authenticated users only)
+    if (_supabaseListService != null &&
+        _authenticatedUserId != null &&
+        _authenticatedUserId!.isNotEmpty) {
+      try {
+        await _supabaseListService!.updateListName(listId, newName);
+      } catch (e) {
+        debugPrint('Erro ao renomear lista no Supabase: $e');
+        rethrow; // Caller shows SnackBar
+      }
+    }
   }
 
   /// Alterna o estado de favorito de uma lista
