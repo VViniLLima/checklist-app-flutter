@@ -247,4 +247,10 @@ class ShoppingRepository {
       }
     }
   }
+
+  /// Remove todos os dados associados a uma lista específica
+  Future<void> deleteListData(String listId) async {
+    await _prefs.remove('${_categoriesKey}_$listId');
+    await _prefs.remove('${_itemsKey}_$listId');
+  }
 }
