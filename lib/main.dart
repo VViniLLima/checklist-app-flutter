@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'features/shopping_list/data/shopping_repository.dart';
 import 'features/shopping_list/state/shopping_list_controller.dart';
 import 'features/shopping_list/state/search_controller.dart' as search;
+import 'features/shopping_list/services/supabase_list_service.dart';
 import 'features/splash/screens/splash_screen.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
@@ -51,6 +52,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => AuthController(context.read<AuthRepository>()),
         ),
+        // Plain (non-notifying) service — just holds the Supabase client handle
+        Provider(create: (_) => SupabaseListService()),
         ChangeNotifierProxyProvider<AuthController, UserIdentityService>(
           create: (context) => UserIdentityService(),
           update: (context, auth, userIdentity) {
@@ -60,16 +63,24 @@ class MyApp extends StatelessWidget {
             return userIdentity!;
           },
         ),
-        ChangeNotifierProxyProvider<
+        ChangeNotifierProxyProvider2<
           UserIdentityService,
+          AuthController,
           ShoppingListController
         >(
           create: (context) {
             final userIdentityService = context.read<UserIdentityService>();
             final authController = context.read<AuthController>();
+            final supabaseListService = context.read<SupabaseListService>();
             final controller = ShoppingListController(
               repository,
               userIdentityService,
+            );
+
+            // Wire Supabase context for initial auth state
+            controller.setSupabaseContext(
+              supabaseListService,
+              authController.user?.id,
             );
 
             // Initialize user identity service first
@@ -79,7 +90,12 @@ class MyApp extends StatelessWidget {
             controller.initialize(); // Carrega dados salvos
             return controller;
           },
-          update: (context, userIdentity, shopping) {
+          update: (context, userIdentity, auth, shopping) {
+            // Keep Supabase context in sync on every auth/identity change
+            shopping?.setSupabaseContext(
+              context.read<SupabaseListService>(),
+              auth.user?.id,
+            );
             // Reload shopping lists when user identity changes (login/logout)
             shopping?.reloadForOwner();
             return shopping!;

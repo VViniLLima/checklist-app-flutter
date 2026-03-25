@@ -105,13 +105,32 @@ class _MainScreenState extends State<MainScreen> {
     ShoppingListController controller,
     String name,
   ) async {
-    await controller.addShoppingList(name);
+    String finalListId;
 
-    // Get the newly created list
-    final newList = controller.shoppingLists.last;
+    try {
+      // Returns the Supabase UUID for authenticated users, or the local
+      // temporary ID for guest users.
+      finalListId = await controller.addShoppingList(name);
+    } catch (e) {
+      // The list was created locally (optimistic add) but Supabase failed.
+      // Use the last entry in shoppingLists as the fallback.
+      finalListId = controller.shoppingLists.last.id;
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Lista criada localmente. Erro ao salvar na nuvem: $e',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
 
     // Set it as active and navigate to it
-    await controller.setActiveList(newList.id);
+    await controller.setActiveList(finalListId);
 
     if (context.mounted) {
       Navigator.of(context).push(

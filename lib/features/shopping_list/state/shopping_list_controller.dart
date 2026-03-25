@@ -4,6 +4,7 @@ import '../models/shopping_item.dart';
 import '../models/shopping_list.dart';
 import '../data/shopping_repository.dart';
 import '../../../core/services/user_identity_service.dart';
+import '../services/supabase_list_service.dart';
 
 /// Controller principal que gerencia o estado da lista de compras
 ///
@@ -18,6 +19,10 @@ class ShoppingListController extends ChangeNotifier {
   final ShoppingRepository _repository;
   final UserIdentityService _userIdentityService;
 
+  // Optional Supabase integration — only active for authenticated users
+  SupabaseListService? _supabaseListService;
+  String? _authenticatedUserId;
+
   List<ShoppingList> _shoppingLists = [];
   String? _activeListId;
   List<models.Category> _categories = [];
@@ -25,6 +30,17 @@ class ShoppingListController extends ChangeNotifier {
   bool _isLoading = true;
 
   ShoppingListController(this._repository, this._userIdentityService);
+
+  /// Called from [main.dart] whenever auth state changes.
+  ///
+  /// Pass [null] for both arguments when the user signs out.
+  void setSupabaseContext(
+    SupabaseListService? service,
+    String? authenticatedUserId,
+  ) {
+    _supabaseListService = service;
+    _authenticatedUserId = authenticatedUserId;
+  }
 
   // ==================== Getters ====================
 
@@ -272,20 +288,58 @@ class ShoppingListController extends ChangeNotifier {
 
   // ==================== Shopping Lists ====================
 
-  /// Adiciona nova lista de compras
-  Future<void> addShoppingList(String name) async {
+  /// Adiciona nova lista de compras.
+  ///
+  /// Inserts locally first (optimistic), then attempts to persist to Supabase
+  /// when the user is authenticated. On success, the temporary local ID is
+  /// replaced by the DB-generated UUID so local state and the DB stay in sync.
+  ///
+  /// Returns the final list ID (DB UUID if authenticated, local ID otherwise).
+  /// Throws if the Supabase insert fails so callers can show an error.
+  Future<String> addShoppingList(String name) async {
     final ownerId = _userIdentityService.currentOwnerId;
+    final tempId = 'list-${DateTime.now().millisecondsSinceEpoch}';
+    final now = DateTime.now();
+
     final newList = ShoppingList(
-      id: 'list-${DateTime.now().millisecondsSinceEpoch}',
+      id: tempId,
       name: name,
       ownerId: ownerId,
-      createdAt: DateTime.now(),
-      lastModifiedAt: DateTime.now(),
+      createdAt: now,
+      lastModifiedAt: now,
     );
 
+    // --- Optimistic local add ---
     _shoppingLists.add(newList);
     await _repository.saveShoppingLists(_shoppingLists, ownerId);
     notifyListeners();
+
+    // --- Supabase persist (authenticated users only) ---
+    if (_supabaseListService != null &&
+        _authenticatedUserId != null &&
+        _authenticatedUserId!.isNotEmpty) {
+      try {
+        final row = await _supabaseListService!.insertManualList(
+          userId: _authenticatedUserId!,
+          name: name,
+        );
+        final dbId = row['id'] as String;
+
+        // Replace the temporary local ID with the Supabase-generated UUID
+        final idx = _shoppingLists.indexWhere((l) => l.id == tempId);
+        if (idx != -1) {
+          _shoppingLists[idx] = _shoppingLists[idx].copyWith(id: dbId);
+          await _repository.saveShoppingLists(_shoppingLists, ownerId);
+          notifyListeners();
+          return dbId;
+        }
+      } catch (e) {
+        debugPrint('Erro ao salvar lista no Supabase: $e');
+        rethrow; // Caller shows SnackBar
+      }
+    }
+
+    return tempId;
   }
 
   /// Define a lista ativa e carrega seus dados
