@@ -118,12 +118,12 @@ class _MainScreenState extends State<MainScreen> {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
-              'Lista criada localmente. Erro ao salvar na nuvem: $e',
+              'Você está offline. As alterações foram salvas localmente e serão sincronizadas quando você reconectar.',
             ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            duration: const Duration(seconds: 4),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 4),
           ),
         );
       }

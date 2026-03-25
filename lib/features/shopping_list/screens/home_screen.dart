@@ -954,7 +954,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final name = textController.text.trim();
               if (name.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -981,7 +981,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 return;
               }
 
-              controller.renameShoppingList(listId, name);
+              try {
+                await controller.renameShoppingList(listId, name);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Você está offline. As alterações foram salvas localmente e serão sincronizadas quando você reconectar.',
+                      ),
+                      backgroundColor: Colors.orange,
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
+                }
+              }
               Navigator.of(dialogContext).pop();
             },
             child: const Text('Salvar'),
