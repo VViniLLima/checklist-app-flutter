@@ -431,21 +431,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           textCapitalization: TextCapitalization.words,
           onSubmitted: (value) async {
             if (value.trim().isNotEmpty) {
-              try {
-                await controller.renameShoppingList(listId, value.trim());
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Você está offline. As alterações foram salvas localmente e serão sincronizadas quando você reconectar.',
-                      ),
-                      backgroundColor: Colors.orange,
-                      duration: Duration(seconds: 4),
-                    ),
-                  );
-                }
-              }
+              await controller.renameShoppingList(listId, value.trim());
               Navigator.of(context).pop();
             }
           },
@@ -466,21 +452,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 );
                 return;
               }
-              try {
-                await controller.renameShoppingList(listId, name);
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Você está offline. As alterações foram salvas localmente e serão sincronizadas quando você reconectar.',
-                      ),
-                      backgroundColor: Colors.orange,
-                      duration: Duration(seconds: 4),
-                    ),
-                  );
-                }
-              }
+              await controller.renameShoppingList(listId, name);
               Navigator.of(context).pop();
             },
             child: const Text('Salvar'),

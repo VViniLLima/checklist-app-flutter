@@ -3,7 +3,7 @@
 // POST /extract-json endpoint that accepts a multipart PDF upload
 // and returns a JSON object with meal_options.
 
-const String kLocalExtractBaseUrl = 'http://192.168.1.10:8000';
+const String kLocalExtractBaseUrl = 'http://192.168.1.12:8000';
 const String kLocalExtractEndpoint = '$kLocalExtractBaseUrl/extract-json';
 const String kN8nFileFieldName = 'file';
 

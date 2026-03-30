@@ -107,27 +107,9 @@ class _MainScreenState extends State<MainScreen> {
   ) async {
     String finalListId;
 
-    try {
-      // Returns the Supabase UUID for authenticated users, or the local
-      // temporary ID for guest users.
-      finalListId = await controller.addShoppingList(name);
-    } catch (e) {
-      // The list was created locally (optimistic add) but Supabase failed.
-      // Use the last entry in shoppingLists as the fallback.
-      finalListId = controller.shoppingLists.last.id;
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Você está offline. As alterações foram salvas localmente e serão sincronizadas quando você reconectar.',
-            ),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 4),
-          ),
-        );
-      }
-    }
+    // Returns the Supabase UUID for authenticated users, or the local
+    // temporary ID for guest users.
+    finalListId = await controller.addShoppingList(name);
 
     // Set it as active and navigate to it
     await controller.setActiveList(finalListId);

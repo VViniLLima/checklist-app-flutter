@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/category.dart' as models;
 import '../models/shopping_item.dart';
 import '../models/shopping_list.dart';
+import '../models/pending_operation.dart';
 import '../data/shopping_repository.dart';
 import '../../../core/services/user_identity_service.dart';
+import '../../../core/services/sync_service.dart';
 import '../services/supabase_list_service.dart';
 
 /// Controller principal que gerencia o estado da lista de compras
@@ -23,6 +26,10 @@ class ShoppingListController extends ChangeNotifier {
   SupabaseListService? _supabaseListService;
   String? _authenticatedUserId;
 
+  // Optional sync service for offline-to-online sync
+  SyncService? _syncService;
+  StreamSubscription<Map<String, String>>? _createListSyncSubscription;
+
   List<ShoppingList> _shoppingLists = [];
   String? _activeListId;
   List<models.Category> _categories = [];
@@ -40,6 +47,44 @@ class ShoppingListController extends ChangeNotifier {
   ) {
     _supabaseListService = service;
     _authenticatedUserId = authenticatedUserId;
+  }
+
+  /// Called from [main.dart] to inject the sync service.
+  void setSyncService(SyncService? service) {
+    // Cancel previous subscription if any
+    _createListSyncSubscription?.cancel();
+
+    _syncService = service;
+
+    // Subscribe to createList sync events to update local list IDs
+    if (service != null) {
+      _createListSyncSubscription = service.onCreateListSynced.listen((event) {
+        final tempId = event['tempId']!;
+        final dbId = event['dbId']!;
+        _updateListIdAfterSync(tempId, dbId);
+      });
+    }
+  }
+
+  /// Updates a local list's ID from tempId to dbId after successful sync.
+  void _updateListIdAfterSync(String tempId, String dbId) {
+    final index = _shoppingLists.indexWhere((list) => list.id == tempId);
+    if (index != -1) {
+      _shoppingLists[index] = _shoppingLists[index].copyWith(id: dbId);
+      // Update active list ID if it was the tempId
+      if (_activeListId == tempId) {
+        _activeListId = dbId;
+      }
+      // Persist the updated lists
+      _repository.saveShoppingLists(
+        _shoppingLists,
+        _userIdentityService.currentOwnerId,
+      );
+      notifyListeners();
+      debugPrint(
+        'ShoppingListController: Updated list ID from $tempId to $dbId',
+      );
+    }
   }
 
   // ==================== Getters ====================
@@ -295,7 +340,7 @@ class ShoppingListController extends ChangeNotifier {
   /// replaced by the DB-generated UUID so local state and the DB stay in sync.
   ///
   /// Returns the final list ID (DB UUID if authenticated, local ID otherwise).
-  /// Throws if the Supabase insert fails so callers can show an error.
+  /// On Supabase failure, enqueues the operation for later sync.
   Future<String> addShoppingList(String name) async {
     final ownerId = _userIdentityService.currentOwnerId;
     final tempId = 'list-${DateTime.now().millisecondsSinceEpoch}';
@@ -335,7 +380,20 @@ class ShoppingListController extends ChangeNotifier {
         }
       } catch (e) {
         debugPrint('Erro ao salvar lista no Supabase: $e');
-        rethrow; // Caller shows SnackBar
+        // Enqueue for sync instead of rethrowing
+        if (_syncService != null) {
+          final operation = PendingOperation(
+            id: 'op-${DateTime.now().millisecondsSinceEpoch}',
+            type: PendingOperationType.createList,
+            payload: {
+              'userId': _authenticatedUserId!,
+              'name': name,
+              'tempId': tempId,
+            },
+            timestamp: now,
+          );
+          await _syncService!.enqueue(operation);
+        }
       }
     }
 
@@ -356,8 +414,8 @@ class ShoppingListController extends ChangeNotifier {
   ///
   /// Updates locally first (optimistic), then attempts to persist to Supabase
   /// when the user is authenticated. On success, the name is synced to the DB.
-  /// On error, the local name is kept (graceful degradation) and the exception
-  /// is rethrown so callers can show an error message.
+  /// On error, the local name is kept (graceful degradation) and the operation
+  /// is enqueued for later sync.
   Future<void> renameShoppingList(String listId, String newName) async {
     final index = _shoppingLists.indexWhere((list) => list.id == listId);
     if (index == -1) return;
@@ -380,7 +438,16 @@ class ShoppingListController extends ChangeNotifier {
         await _supabaseListService!.updateListName(listId, newName);
       } catch (e) {
         debugPrint('Erro ao renomear lista no Supabase: $e');
-        rethrow; // Caller shows SnackBar
+        // Enqueue for sync instead of rethrowing
+        if (_syncService != null) {
+          final operation = PendingOperation(
+            id: 'op-${DateTime.now().millisecondsSinceEpoch}',
+            type: PendingOperationType.renameList,
+            payload: {'listId': listId, 'newName': newName},
+            timestamp: DateTime.now(),
+          );
+          await _syncService!.enqueue(operation);
+        }
       }
     }
   }
@@ -897,8 +964,9 @@ class ShoppingListController extends ChangeNotifier {
     final categoryItems = _items
         .where((i) => i.categoryId == categoryId)
         .toList();
-    if (categoryItems.isEmpty)
+    if (categoryItems.isEmpty) {
       return false; // Empty categories are NOT completed
+    }
 
     return categoryItems.every((i) => i.isChecked);
   }
@@ -976,5 +1044,11 @@ class ShoppingListController extends ChangeNotifier {
       _shoppingLists,
       _userIdentityService.currentOwnerId,
     );
+  }
+
+  @override
+  void dispose() {
+    _createListSyncSubscription?.cancel();
+    super.dispose();
   }
 }

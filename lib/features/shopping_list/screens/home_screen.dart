@@ -981,21 +981,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 return;
               }
 
-              try {
-                await controller.renameShoppingList(listId, name);
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Você está offline. As alterações foram salvas localmente e serão sincronizadas quando você reconectar.',
-                      ),
-                      backgroundColor: Colors.orange,
-                      duration: Duration(seconds: 4),
-                    ),
-                  );
-                }
-              }
+              await controller.renameShoppingList(listId, name);
               Navigator.of(dialogContext).pop();
             },
             child: const Text('Salvar'),

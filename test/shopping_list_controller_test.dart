@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:checklist_app/features/shopping_list/data/shopping_repository.dart';
 import 'package:checklist_app/features/shopping_list/state/shopping_list_controller.dart';
 import 'package:checklist_app/core/services/user_identity_service.dart';
+import 'package:checklist_app/features/shopping_list/models/pending_operation.dart';
 
 void main() {
   late ShoppingListController controller;
