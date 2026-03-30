@@ -264,7 +264,8 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
                 cleanValue = cleanValue.replaceAll(',', '.');
                 final totalSpent = double.tryParse(cleanValue) ?? 0.0;
 
-                await controller.finalizeList(
+                // Call finalizeList and handle the result
+                final success = await controller.finalizeList(
                   activeList.id,
                   location: location,
                   date: _selectedDate,
@@ -272,7 +273,21 @@ class _FinalizeListScreenState extends State<FinalizeListScreen> {
                 );
 
                 if (mounted) {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  if (success) {
+                    // Navigate back to lists screen on success
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  } else {
+                    // Show error snackbar on failure
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Erro ao salvar no histórico. Verifique sua conexão e tente novamente.',
+                        ),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 3),
+                      ),
+                    );
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(

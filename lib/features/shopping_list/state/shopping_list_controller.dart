@@ -561,15 +561,20 @@ class ShoppingListController extends ChangeNotifier {
   }
 
   /// Finaliza uma lista e salva no histórico
-  Future<void> finalizeList(
+  ///
+  /// Returns true if the operation succeeded, false if it failed.
+  /// For authenticated users, this will attempt to persist to Supabase.
+  /// If Supabase fails, the local state is still updated but the method returns false.
+  Future<bool> finalizeList(
     String listId, {
     required String location,
     required DateTime date,
     required double totalSpent,
   }) async {
     final index = _shoppingLists.indexWhere((list) => list.id == listId);
-    if (index == -1) return;
+    if (index == -1) return false;
 
+    // --- Optimistic local update ---
     _shoppingLists[index] = _shoppingLists[index].copyWith(
       isCompleted: true,
       purchaseLocation: location,
@@ -583,6 +588,34 @@ class ShoppingListController extends ChangeNotifier {
       _userIdentityService.currentOwnerId,
     );
     notifyListeners();
+
+    // --- Supabase persist (authenticated users only) ---
+    if (_supabaseListService != null &&
+        _authenticatedUserId != null &&
+        _authenticatedUserId!.isNotEmpty) {
+      try {
+        // Convert totalSpent from double to cents
+        final valorTotalCentavos = (totalSpent * 100).round();
+
+        await _supabaseListService!.finalizeList(
+          listId: listId,
+          ownerUsuarioId: _authenticatedUserId!,
+          finalizadoPorUsuarioId: _authenticatedUserId!,
+          localCompra: location,
+          dataCompra: date,
+          valorTotalCentavos: valorTotalCentavos,
+        );
+        return true;
+      } catch (e) {
+        debugPrint('Erro ao finalizar lista no Supabase: $e');
+        // Return false to indicate Supabase sync failed
+        // Note: We don't enqueue for sync because finalization is a one-time operation
+        // that should be atomic. If it fails, the user should retry manually.
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /// Exclui uma lista de compras e todos os seus dados

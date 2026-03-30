@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Service responsible for persisting shopping lists in the Supabase database.
@@ -253,5 +255,111 @@ class SupabaseListService {
           'atualizado_em': now.toIso8601String(),
         })
         .eq('id', itemId);
+  }
+
+  /// Finalizes a list by updating `listas_do_usuario.finalizada_em` and inserting into `historico_de_listas`.
+  ///
+  /// This is an atomic operation: both the list update and history insert are performed together.
+  /// If either operation fails, the entire operation fails and no changes are persisted.
+  ///
+  /// Parameters:
+  /// - [listId]: The ID of the list to finalize
+  /// - [ownerUsuarioId]: The owner user ID (from `listas_do_usuario.usuario_id`)
+  /// - [finalizadoPorUsuarioId]: The user ID who finalized the list (may differ from owner)
+  /// - [localCompra]: The purchase location (e.g., "Supermercado Extra")
+  /// - [dataCompra]: The date of purchase
+  /// - [valorTotalCentavos]: The total amount spent in cents (e.g., 2500 = R$25.00)
+  ///
+  /// Throws a [PostgrestException] or [Exception] on failure.
+  Future<void> finalizeList({
+    required String listId,
+    required String ownerUsuarioId,
+    required String finalizadoPorUsuarioId,
+    required String localCompra,
+    required DateTime dataCompra,
+    required int valorTotalCentavos,
+  }) async {
+    final now = DateTime.now().toUtc();
+
+    // ── Step 1: UPDATE listas_do_usuario ──────────────────────────────────────
+    final updatePayload = {'finalizada_em': now.toIso8601String()};
+    debugPrint(
+      '[finalizeList] STEP 1 — UPDATE listas_do_usuario\n'
+      '  table  : listas_do_usuario\n'
+      '  filter : id = "$listId" (${listId.runtimeType})\n'
+      '  payload: {\n'
+      '    "finalizada_em": "${updatePayload['finalizada_em']}" (${updatePayload['finalizada_em'].runtimeType})\n'
+      '  }',
+    );
+
+    try {
+      await _client
+          .from('listas_do_usuario')
+          .update(updatePayload)
+          .eq('id', listId);
+      debugPrint('[finalizeList] STEP 1 — UPDATE succeeded');
+    } on PostgrestException catch (e) {
+      debugPrint(
+        '[finalizeList] STEP 1 — UPDATE FAILED (PostgrestException)\n'
+        '  message : ${e.message}\n'
+        '  code    : ${e.code}\n'
+        '  details : ${e.details}\n'
+        '  hint    : ${e.hint}',
+      );
+      rethrow;
+    } catch (e) {
+      debugPrint(
+        '[finalizeList] STEP 1 — UPDATE FAILED (${e.runtimeType}): $e',
+      );
+      rethrow;
+    }
+
+    // ── Step 2: INSERT historico_de_listas ────────────────────────────────────
+    final dataCompraFormatted = DateFormat('yyyy-MM-dd').format(dataCompra);
+    final insertPayload = {
+      'lista_id': listId,
+      'owner_usuario_id': ownerUsuarioId,
+      'finalizado_por_usuario_id': finalizadoPorUsuarioId,
+      'local_compra': localCompra,
+      'data_compra': dataCompraFormatted,
+      'valor_total_centavos': valorTotalCentavos,
+      'finalizado_em': now.toIso8601String(),
+      'snapshot_itens': [], // NOT NULL column — fallback to empty JSON array
+      'snapshot_lista': {}, // NOT NULL column — fallback to empty JSON object
+    };
+    debugPrint(
+      '[finalizeList] STEP 2 — INSERT historico_de_listas\n'
+      '  table  : historico_de_listas\n'
+      '  payload: {\n'
+      '    "lista_id"                   : "$listId" (${listId.runtimeType})\n'
+      '    "owner_usuario_id"           : "$ownerUsuarioId" (${ownerUsuarioId.runtimeType})\n'
+      '    "finalizado_por_usuario_id"  : "$finalizadoPorUsuarioId" (${finalizadoPorUsuarioId.runtimeType})\n'
+      '    "local_compra"               : "$localCompra" (${localCompra.runtimeType})\n'
+      '    "data_compra"                : "$dataCompraFormatted" (${dataCompraFormatted.runtimeType}) [raw DateTime: $dataCompra]\n'
+      '    "valor_total_centavos"       : $valorTotalCentavos (${valorTotalCentavos.runtimeType})\n'
+      '    "finalizado_em"              : "${now.toIso8601String()}" (${now.toIso8601String().runtimeType})\n'
+      '    "snapshot_itens"             : [] (List)\n'
+      '    "snapshot_lista"             : {} (Map)\n'
+      '  }',
+    );
+
+    try {
+      await _client.from('historico_de_listas').insert(insertPayload);
+      debugPrint('[finalizeList] STEP 2 — INSERT succeeded');
+    } on PostgrestException catch (e) {
+      debugPrint(
+        '[finalizeList] STEP 2 — INSERT FAILED (PostgrestException)\n'
+        '  message : ${e.message}\n'
+        '  code    : ${e.code}\n'
+        '  details : ${e.details}\n'
+        '  hint    : ${e.hint}',
+      );
+      rethrow;
+    } catch (e) {
+      debugPrint(
+        '[finalizeList] STEP 2 — INSERT FAILED (${e.runtimeType}): $e',
+      );
+      rethrow;
+    }
   }
 }
