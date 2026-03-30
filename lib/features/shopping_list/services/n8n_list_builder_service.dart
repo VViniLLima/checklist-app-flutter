@@ -108,7 +108,9 @@ class N8nListBuilderService {
     if (deduplicatedItems.isEmpty) return null;
 
     // 2. Create the new list
-    await controller.addShoppingList(listName);
+    await controller.addShoppingList(
+      listName,
+    ); // Result is ignored; we use shoppingLists.last instead
 
     // Get the newly created list (it should be the last one in the controller)
     final newList = controller.shoppingLists.last;

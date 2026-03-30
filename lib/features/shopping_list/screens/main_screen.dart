@@ -105,14 +105,25 @@ class _MainScreenState extends State<MainScreen> {
     ShoppingListController controller,
     String name,
   ) async {
-    String finalListId;
-
     // Returns the Supabase UUID for authenticated users, or the local
-    // temporary ID for guest users.
-    finalListId = await controller.addShoppingList(name);
+    // temporary ID for guest users. Also indicates if the operation was
+    // queued for offline sync.
+    final result = await controller.addShoppingList(name);
+
+    // Show offline notification if the list was queued for sync
+    if (result.wasQueuedForSync && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Lista salva localmente. Será sincronizada quando a conexão for restaurada.',
+          ),
+          duration: Duration(seconds: 4),
+        ),
+      );
+    }
 
     // Set it as active and navigate to it
-    await controller.setActiveList(finalListId);
+    await controller.setActiveList(result.id);
 
     if (context.mounted) {
       Navigator.of(context).push(

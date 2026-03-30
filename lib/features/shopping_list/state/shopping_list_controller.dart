@@ -9,6 +9,18 @@ import '../../../core/services/user_identity_service.dart';
 import '../../../core/services/sync_service.dart';
 import '../services/supabase_list_service.dart';
 
+/// Result object returned by [addShoppingList].
+///
+/// Contains the list ID and a flag indicating whether the operation
+/// was queued for offline sync (i.e., Supabase failed and the operation
+/// will be retried when connectivity is restored).
+class AddListResult {
+  final String id;
+  final bool wasQueuedForSync;
+
+  const AddListResult({required this.id, required this.wasQueuedForSync});
+}
+
 /// Controller principal que gerencia o estado da lista de compras
 ///
 /// Implementa todas as regras de negócio:
@@ -339,9 +351,9 @@ class ShoppingListController extends ChangeNotifier {
   /// when the user is authenticated. On success, the temporary local ID is
   /// replaced by the DB-generated UUID so local state and the DB stay in sync.
   ///
-  /// Returns the final list ID (DB UUID if authenticated, local ID otherwise).
-  /// On Supabase failure, enqueues the operation for later sync.
-  Future<String> addShoppingList(String name) async {
+  /// Returns an [AddListResult] containing the list ID and a flag indicating
+  /// whether the operation was queued for offline sync (i.e., Supabase failed).
+  Future<AddListResult> addShoppingList(String name) async {
     final ownerId = _userIdentityService.currentOwnerId;
     final tempId = 'list-${DateTime.now().millisecondsSinceEpoch}';
     final now = DateTime.now();
@@ -376,7 +388,7 @@ class ShoppingListController extends ChangeNotifier {
           _shoppingLists[idx] = _shoppingLists[idx].copyWith(id: dbId);
           await _repository.saveShoppingLists(_shoppingLists, ownerId);
           notifyListeners();
-          return dbId;
+          return AddListResult(id: dbId, wasQueuedForSync: false);
         }
       } catch (e) {
         debugPrint('Erro ao salvar lista no Supabase: $e');
@@ -393,11 +405,12 @@ class ShoppingListController extends ChangeNotifier {
             timestamp: now,
           );
           await _syncService!.enqueue(operation);
+          return AddListResult(id: tempId, wasQueuedForSync: true);
         }
       }
     }
 
-    return tempId;
+    return AddListResult(id: tempId, wasQueuedForSync: false);
   }
 
   /// Define a lista ativa e carrega seus dados
