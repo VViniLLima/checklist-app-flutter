@@ -75,7 +75,7 @@ The architecture follows an **optimistic update** pattern: local state is update
 
 ### `lib/features/shopping_list/services/supabase_list_service.dart`
 
-**Purpose:** Service for Supabase CRUD operations on the `public.listas_do_usuario` table.
+**Purpose:** Service for Supabase CRUD operations on the `public.listas_do_usuario` and `public.categorias_da_lista` tables.
 
 **Methods:**
 
@@ -83,6 +83,12 @@ The architecture follows an **optimistic update** pattern: local state is update
 |--------|-------------|
 | `insertManualList({userId, name, descricao?, moeda?})` | Inserts a new list row; returns the full row including DB-generated `id` |
 | `updateListName(String listId, String newName)` | Updates the `nome` column for a given list `id` |
+| `insertCategory({listId, name, corHex, ordem, colapsada?})` | Inserts a new category row; returns the full row including DB-generated `id` |
+| `updateCategoryName(String categoryId, String newName)` | Updates the `nome` column for a given category `id` |
+| `updateCategoryColor(String categoryId, String corHex)` | Updates the `cor_hex` column for a given category `id` |
+| `updateCategoryCollapsed(String categoryId, bool colapsada)` | Updates the `colapsada` column for a given category `id` |
+| `updateCategoryOrder(String categoryId, int ordem)` | Updates the `ordem` column for a given category `id` |
+| `deleteCategory(String categoryId)` | Deletes a category row by `id` |
 
 ---
 
@@ -220,6 +226,68 @@ Triggered when `renameShoppingList()` fails to persist to Supabase.
 
 ---
 
+### `createCategory`
+
+Triggered when `addCategory()` fails to persist to Supabase.
+
+**Payload structure:**
+```json
+{
+  "listId": "uuid-of-list",
+  "name": "Nome da categoria",
+  "corHex": "#E3F2FD",
+  "ordem": 1
+}
+```
+
+**Replay logic:** Calls `supabaseService.insertCategory(listId, name, corHex, ordem)`.
+
+---
+
+### `updateCategory`
+
+Triggered when any category update operation fails to persist to Supabase. This includes:
+- `editCategory()` — updates the `nome` field
+- `editCategoryColor()` — updates the `cor_hex` field
+- `toggleCategoryCollapse()` — updates the `colapsada` field
+- `reorderCategories()` — updates the `ordem` field
+
+**Payload structure:**
+```json
+{
+  "categoryId": "uuid-of-category",
+  "newName": "Novo nome",        // optional
+  "newCorHex": "#FFCCBC",        // optional
+  "newColapsada": true,          // optional
+  "newOrdem": 2                  // optional
+}
+```
+
+**Replay logic:** Calls the appropriate Supabase method based on which fields are present in the payload:
+- `newName` → `supabaseService.updateCategoryName(categoryId, newName)`
+- `newCorHex` → `supabaseService.updateCategoryColor(categoryId, newCorHex)`
+- `newColapsada` → `supabaseService.updateCategoryCollapsed(categoryId, newColapsada)`
+- `newOrdem` → `supabaseService.updateCategoryOrder(categoryId, newOrdem)`
+
+Multiple fields can be updated in a single operation.
+
+---
+
+### `deleteCategory`
+
+Triggered when `removeCategory()` or `deleteCategory()` fails to persist to Supabase.
+
+**Payload structure:**
+```json
+{
+  "categoryId": "uuid-of-category"
+}
+```
+
+**Replay logic:** Calls `supabaseService.deleteCategory(categoryId)`.
+
+---
+
 ## 6. Error Handling & Retry Logic
 
 ### Retry Flow
@@ -255,6 +323,22 @@ These messages are never shown to users.
 | `Deve processar fila quando online` | Verifies that `processQueue()` calls Supabase and removes the operation from the queue on success |
 | `Deve incrementar retryCount em falha do servidor` | Verifies that a failed Supabase call increments `retryCount` and keeps the operation in the queue |
 | `Deve marcar como falha permanente após maxRetries` | Verifies that after `maxRetries` failures, the operation is removed and `status == SyncStatusState.error` |
+| `Deve processar createList operation` | Verifies that `createList` operations are correctly processed and call `insertManualList()` |
+| `Deve processar fila imediatamente quando online` | Verifies that `enqueue()` triggers immediate `processQueue()` when online |
+| `Deve resetar status para idle após falha não-permanente` | Verifies that status is reset to `idle` after a non-permanent failure |
+
+**Category Sync Tests:**
+
+| Test | Description |
+|------|-------------|
+| `Deve processar createCategory operation` | Verifies that `createCategory` operations are correctly processed and call `insertCategory()` |
+| `Deve processar updateCategory operation (nome)` | Verifies that `updateCategory` operations with `newName` are correctly processed |
+| `Deve processar updateCategory operation (cor)` | Verifies that `updateCategory` operations with `newCorHex` are correctly processed |
+| `Deve processar updateCategory operation (colapsada)` | Verifies that `updateCategory` operations with `newColapsada` are correctly processed |
+| `Deve processar updateCategory operation (ordem)` | Verifies that `updateCategory` operations with `newOrdem` are correctly processed |
+| `Deve processar deleteCategory operation` | Verifies that `deleteCategory` operations are correctly processed and call `deleteCategory()` |
+| `Deve pular createCategory com listId inválido` | Verifies that operations with non-UUID `listId` are skipped |
+| `Deve pular updateCategory com categoryId inválido` | Verifies that operations with non-UUID `categoryId` are skipped |
 
 ### Known Limitation: `connectivity_plus` in Unit Tests
 
@@ -285,7 +369,7 @@ The `connectivity_plus` package requires a platform implementation (Android/iOS)
 
 2. **No exponential backoff:** Retries happen immediately on the next connectivity event. This could cause rapid retries if the server is temporarily overloaded.
 
-3. **No item-level sync:** Only `createList` and `renameList` operations are queued. Item additions, removals, and updates are not yet covered by the sync queue.
+3. **No item-level sync:** Only `createList`, `renameList`, and category operations (`createCategory`, `updateCategory`, `deleteCategory`) are queued. Item additions, removals, and updates are not yet covered by the sync queue.
 
 4. **`connectivity_plus` not mockable in unit tests:** The `Connectivity` class is not easily mockable without a custom wrapper, making unit tests for connectivity-dependent paths difficult.
 

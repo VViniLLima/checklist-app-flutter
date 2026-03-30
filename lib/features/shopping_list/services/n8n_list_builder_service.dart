@@ -134,7 +134,9 @@ class N8nListBuilderService {
       final colorValue = _assignCategoryColor(catName, colorIndex);
       colorIndex++;
 
-      await controller.addCategory(catName);
+      await controller.addCategory(
+        catName,
+      ); // Result is ignored; we use categories.last.id instead
       // After adding, the last category in the list should be the one we just added
       final newCatId = controller.categories.last.id;
       categoryNameToId[catName] = newCatId;

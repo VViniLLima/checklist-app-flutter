@@ -514,7 +514,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             hintText: 'Ex: Mercearia, Hortifruti...',
           ),
           textCapitalization: TextCapitalization.words,
-          onSubmitted: (value) {
+          onSubmitted: (value) async {
             if (value.trim().isNotEmpty) {
               final trimmedName = value.trim();
               // Verifica se o nome já existe
@@ -531,8 +531,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 return;
               }
 
-              controller.addCategory(trimmedName);
-              Navigator.of(context).pop();
+              final result = await controller.addCategory(trimmedName);
+
+              // Show offline notification if category was queued for sync
+              if (result.wasQueuedForSync && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Você está offline. A categoria será sincronizada quando a conexão for restaurada.',
+                    ),
+                    duration: Duration(seconds: 4),
+                  ),
+                );
+              }
+
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
             }
           },
         ),
@@ -542,7 +557,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final name = textController.text.trim();
               if (name.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -567,8 +582,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 return;
               }
 
-              controller.addCategory(name);
-              Navigator.of(context).pop();
+              final result = await controller.addCategory(name);
+
+              // Show offline notification if category was queued for sync
+              if (result.wasQueuedForSync && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Você está offline. A categoria será sincronizada quando a conexão for restaurada.',
+                    ),
+                    duration: Duration(seconds: 4),
+                  ),
+                );
+              }
+
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
             },
             child: const Text('Adicionar'),
           ),

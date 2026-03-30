@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// Represents a pending sync operation that needs to be replayed
 /// when the device comes back online.
 class PendingOperation {
@@ -61,4 +59,14 @@ class PendingOperation {
   }
 }
 
-enum PendingOperationType { createList, renameList }
+enum PendingOperationType {
+  createList,
+  renameList,
+  deleteList,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  createItem,
+  updateItem,
+  deleteItem,
+}
